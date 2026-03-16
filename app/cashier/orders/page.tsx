@@ -23,7 +23,7 @@ interface Order {
   paymentMethod: string
   status: "preparing" | "ready" | "completed" | "cancelled"
   tableNumber: string
-  batchNumber?: string
+  floorName?: string
   createdAt: string
   updatedAt: string
   isDeleted?: boolean
@@ -106,9 +106,9 @@ export default function CashierOrdersPage() {
                   <h1 className="text-3xl font-bold text-gray-900">Recent Orders</h1>
                   <p className="text-sm text-gray-600 mt-1">
                     Today's sales history
-                    {user?.batchNumber && (
+                    {user?.floorName && (
                       <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-600">
-                        Batch #{user.batchNumber}
+                        Floor: {user.floorName}
                       </span>
                     )}
                   </p>
@@ -201,7 +201,7 @@ export default function CashierOrdersPage() {
                           <td className="py-4 px-6">
                             <div className="flex flex-col gap-1">
                               <span className="inline-flex items-center px-2 py-0.5 rounded bg-purple-50 text-purple-700 text-[10px] font-black border border-purple-100 w-fit">
-                                {order.batchNumber ? `Batch #${order.batchNumber}` : 'Global'}
+                                {order.floorName ? `Floor: ${order.floorName}` : 'Global'}
                               </span>
                               <span className="inline-flex items-center px-2 py-0.5 rounded bg-blue-50 text-blue-700 text-[10px] font-black border border-blue-100 w-fit">
                                 Table {order.tableNumber}

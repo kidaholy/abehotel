@@ -37,8 +37,8 @@ interface CartSidebarProps {
   setIsDrinksOrder?: (val: boolean) => void
   paperWidth: number
   setPaperWidth: (val: number) => void
-  assignedBatchId?: string
-  setSelectedBatchId?: (val: string) => void
+  assignedFloorId?: string
+  setSelectedFloorId?: (val: string) => void
   onClear?: () => void
 }
 
@@ -60,8 +60,8 @@ export function CartSidebar({
   setIsDrinksOrder,
   paperWidth,
   setPaperWidth,
-  assignedBatchId,
-  setSelectedBatchId,
+  assignedFloorId,
+  setSelectedFloorId,
   onClear,
 }: CartSidebarProps) {
   const { t } = useLanguage()
@@ -74,20 +74,20 @@ export function CartSidebar({
 
   // Settings State for Tables
   const [tables, setTables] = useState<any[]>([])
-  const [batches, setBatches] = useState<any[]>([])
-  const [activeBatchTab, setActiveBatchTab] = useState<string>("")
+  const [floors, setFloors] = useState<any[]>([])
+  const [activeFloorTab, setActiveFloorTab] = useState<string>("")
   const [isTableModalOpen, setIsTableModalOpen] = useState(false)
 
   useEffect(() => {
-    // Fetch tables and batches
+    // Fetch tables and floors
     const fetchData = async () => {
       if (!token) return
 
       try {
         const headers = { Authorization: `Bearer ${token}` }
-        const [tablesRes, batchesRes] = await Promise.all([
+        const [tablesRes, floorsRes] = await Promise.all([
           fetch("/api/tables", { headers }),
-          fetch("/api/batches", { headers })
+          fetch("/api/floors", { headers })
         ])
 
         if (tablesRes.ok) {
@@ -95,29 +95,29 @@ export function CartSidebar({
           console.log(`📡 Loaded ${tData.length} tables`)
           setTables(tData)
         }
-        if (batchesRes.ok) {
-          const data = await batchesRes.json()
-          console.log(`📡 Loaded ${data.length} batches`)
-          setBatches(data)
-          // If we have an assignedBatchId, use it as initial tab, otherwise used the first batch
-          if (assignedBatchId) {
-            setActiveBatchTab(assignedBatchId)
+        if (floorsRes.ok) {
+          const data = await floorsRes.json()
+          console.log(`📡 Loaded ${data.length} floors`)
+          setFloors(data)
+          // If we have an assignedFloorId, use it as initial tab, otherwise used the first floor
+          if (assignedFloorId) {
+            setActiveFloorTab(assignedFloorId)
           } else if (data.length > 0) {
-            setActiveBatchTab(data[0]._id)
+            setActiveFloorTab(data[0]._id)
           }
         }
       } catch (err) { console.error("Failed to load data", err) }
     }
     fetchData()
-  }, [token, assignedBatchId])
+  }, [token, assignedFloorId])
 
 
-  // Helper to get batch name for selected context
-  const getSelectedBatchDisplay = () => {
-    const bId = assignedBatchId || activeBatchTab;
-    if (!bId) return "";
-    const batch = batches.find(b => String(b._id) === String(bId))
-    return batch ? `Batch #${batch.batchNumber}` : ""
+  // Helper to get floor name for selected context
+  const getSelectedFloorDisplay = () => {
+    const fId = assignedFloorId || activeFloorTab;
+    if (!fId) return "";
+    const floor = floors.find(f => String(f._id) === String(fId))
+    return floor ? `Floor: ${floor.name}` : ""
   }
 
   const containerClasses = isEmbedded
@@ -222,27 +222,27 @@ export function CartSidebar({
                 <DialogHeader className="mb-2">
                   <DialogTitle className="text-lg">Select Table</DialogTitle>
                 </DialogHeader>
-                <Tabs value={activeBatchTab} onValueChange={setActiveBatchTab} className="flex-1 flex flex-col overflow-hidden">
+                <Tabs value={activeFloorTab} onValueChange={setActiveFloorTab} className="flex-1 flex flex-col overflow-hidden">
                   <TabsList className="bg-transparent h-auto flex flex-wrap justify-start gap-1 p-0 mb-3">
-                    {batches.map(batch => (
-                      <TabsTrigger key={batch._id} value={batch._id} className="data-[state=active]:bg-[#2d5a41] data-[state=active]:text-white px-3 py-1.5 rounded-full text-[10px] font-bold border border-gray-100 bg-gray-50">
-                        Batch #{batch.batchNumber}
+                    {floors.map(floor => (
+                      <TabsTrigger key={floor._id} value={floor._id} className="data-[state=active]:bg-[#2d5a41] data-[state=active]:text-white px-3 py-1.5 rounded-full text-[10px] font-bold border border-gray-100 bg-gray-50">
+                        {floor.name}
                       </TabsTrigger>
                     ))}
                   </TabsList>
                   <div className="flex-1 overflow-y-auto pr-1">
-                    {batches.map(batch => (
-                      <TabsContent key={batch._id} value={batch._id} className="mt-0">
+                    {floors.map(floor => (
+                      <TabsContent key={floor._id} value={floor._id} className="mt-0">
                         <div className="grid grid-cols-4 gap-2">
                           {tables.map(table => (
                             <button
                               key={table._id}
                               onClick={() => {
                                 setTableNumber(table.tableNumber)
-                                if (setSelectedBatchId) setSelectedBatchId(batch._id)
+                                if (setSelectedFloorId) setSelectedFloorId(floor._id)
                                 setIsTableModalOpen(false)
                               }}
-                              className={`p-3 rounded-lg border flex flex-col items-center justify-center transition-all ${tableNumber === table.tableNumber && assignedBatchId === batch._id
+                              className={`p-3 rounded-lg border flex flex-col items-center justify-center transition-all ${tableNumber === table.tableNumber && assignedFloorId === floor._id
                                 ? "bg-[#2d5a41] border-[#2d5a41] text-white shadow-md scale-105"
                                 : "bg-white border-gray-50 hover:border-[#2d5a41] text-gray-700"
                                 }`}

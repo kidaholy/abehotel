@@ -13,7 +13,7 @@ interface Order {
   totalAmount: number
   createdAt: string
   items: any[]
-  batchNumber?: string
+  floorName?: string
   tableNumber?: string
 }
 
@@ -135,9 +135,9 @@ export default function ChefOrdersPage() {
                           <h3 className="font-mono text-sm sm:text-base font-bold text-foreground">
                             #{order.orderNumber}
                           </h3>
-                          {order.batchNumber && (
+                          {order.floorName && (
                             <span className="text-[10px] sm:text-xs font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full">
-                              Batch #{order.batchNumber}
+                              Floor: {order.floorName}
                             </span>
                           )}
                           {order.tableNumber && (

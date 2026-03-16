@@ -21,7 +21,7 @@ interface Order {
   createdAt: string
   customerName?: string
   tableNumber: string
-  batchNumber?: string
+  floorName?: string
   delayMinutes?: number
   thresholdMinutes?: number
   totalPreparationTime?: number
@@ -666,8 +666,8 @@ export default function AdminOrdersPage() {
                           <div className="flex-shrink-0 lg:w-48">
                             <div className="flex items-center gap-2 mb-1">
                               <h3 className="text-xl font-black text-gray-800">#{order.orderNumber}</h3>
-                              {order.batchNumber && (
-                                <span className="bg-blue-50 text-blue-600 px-2 py-0.5 rounded text-[10px] font-black tracking-widest uppercase">B#{order.batchNumber}</span>
+                              {order.floorName && (
+                                <span className="bg-blue-50 text-blue-600 px-2 py-0.5 rounded text-[10px] font-black tracking-widest uppercase">F:{order.floorName}</span>
                               )}
                               <span className="bg-gray-100 text-gray-500 px-2 py-0.5 rounded text-[10px] font-black tracking-widest uppercase">{order.tableNumber}</span>
                             </div>
