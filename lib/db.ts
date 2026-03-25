@@ -1,0 +1,59 @@
+import mongoose from "mongoose"
+import "./dns-fix"
+
+const MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost:27017/restaurant-management"
+
+// Standard Mongoose connection caching for Next.js/Vercel
+let cached = (global as any).mongoose
+
+if (!cached) {
+  cached = (global as any).mongoose = { conn: null, promise: null }
+}
+
+export async function connectDB() {
+  if (cached.conn) {
+    return cached.conn
+  }
+
+  if (!cached.promise) {
+    console.log("🔄 Initializing new MongoDB connection...")
+    cached.promise = mongoose.connect(MONGODB_URI, {
+      maxPoolSize: 10,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+      bufferCommands: false,
+    }).then(async (m) => {
+      console.log("✅ MongoDB connected successfully")
+
+      // 🚀 BOOTSTRAP MODELS: Force registration of all schemas
+      // This prevents "Schema hasn't been registered" errors in serverless environments
+      await Promise.all([
+        import("./models/user"),
+        import("./models/table"),
+        import("./models/batch"),
+        import("./models/order"),
+        import("./models/menu-item"),
+        import("./models/stock"),
+        import("./models/category")
+      ])
+      console.log("📦 All Mongoose models registered")
+
+      return m
+    })
+  }
+
+  try {
+    cached.conn = await cached.promise
+  } catch (e: any) {
+    cached.promise = null
+    console.error("❌ MongoDB connection error:", {
+      message: e.message,
+      code: e.code,
+      reason: e.reason ? "Topology mismatch or network issue" : "Unknown",
+      stack: e.stack?.split('\n').slice(0, 2).join('\n')
+    })
+    throw e
+  }
+
+  return cached.conn
+}
