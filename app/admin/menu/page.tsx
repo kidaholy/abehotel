@@ -11,6 +11,25 @@ import { useLanguage } from "@/context/language-context"
 import { compressImage, validateImageFile } from "@/lib/utils/image-utils"
 import { ConfirmationCard, NotificationCard } from "@/components/confirmation-card"
 import { useConfirmation } from "@/hooks/use-confirmation"
+import { 
+  Plus, 
+  Hash, 
+  ArrowLeftRight, 
+  Loader2, 
+  QrCode, 
+  Search, 
+  AlertTriangle, 
+  Trash2, 
+  X, 
+  Utensils, 
+  Coffee, 
+  RefreshCw, 
+  Download, 
+  Smartphone,
+  ChevronDown,
+  Monitor,
+  Leaf
+} from "lucide-react"
 
 interface MenuItem {
   _id: string
@@ -589,7 +608,7 @@ export default function AdminMenuPage() {
                         onClick={() => { resetForm(); setShowCreateForm(true); }}
                         className="w-full bg-white text-[#8B4513] font-black py-4 rounded-xl shadow-lg hover:bg-gray-100 transition-all text-xs uppercase tracking-widest transform active:scale-95 flex items-center justify-center gap-2"
                       >
-                        ➕ {t("adminMenu.addNewItem")}
+                        <Plus size={18} /> {t("adminMenu.addNewItem")}
                       </button>
 
                       <div className="grid grid-cols-2 gap-2">
@@ -598,13 +617,13 @@ export default function AdminMenuPage() {
                           className="bg-white/10 hover:bg-white/20 text-white font-black py-3 rounded-xl transition-all text-[10px] uppercase tracking-widest border border-white/20 flex items-center justify-center gap-1"
                           title="Auto-fix ID gaps"
                         >
-                          🔢 {t("adminMenu.reindex") || "Re-index"}
+                          <Hash size={14} /> {t("adminMenu.reindex") || "Re-index"}
                         </button>
                         <button
                           onClick={() => { setSwapMode(!swapMode); setSwapSourceId(null); }}
                           className={`font-black py-3 rounded-xl border text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-1 ${swapMode ? "bg-purple-600 text-white border-purple-600 shadow-inner" : "bg-white/10 text-white border-white/20 hover:bg-white/20"}`}
                         >
-                          🔄 {swapMode ? t("common.cancel") : t("adminMenu.swap") || "Swap"}
+                          <ArrowLeftRight size={14} /> {swapMode ? t("common.cancel") : t("adminMenu.swap") || "Swap"}
                         </button>
                       </div>
 
@@ -614,8 +633,8 @@ export default function AdminMenuPage() {
                           onClick={handleExportDropdownToggle}
                           className="w-full bg-white/5 hover:bg-white/10 text-white/70 hover:text-white font-black py-2.5 rounded-xl transition-all text-[9px] uppercase tracking-widest border border-white/10 flex items-center justify-center gap-1"
                         >
-                          📥 Export CSV
-                          <span className="text-[8px] ml-0.5">▼</span>
+                          <Download size={14} /> Export CSV
+                          <ChevronDown size={10} className="ml-0.5" />
                         </button>
 
                         <button
@@ -623,23 +642,23 @@ export default function AdminMenuPage() {
                           disabled={qrGenerating}
                           className="bg-white/5 hover:bg-white/10 text-white/70 hover:text-white font-black py-2.5 rounded-xl transition-all text-[9px] uppercase tracking-widest border border-white/10 flex items-center justify-center gap-2 disabled:opacity-50"
                         >
-                          {qrGenerating ? '⏳' : '📱'} QR Menu
+                          {qrGenerating ? <Loader2 size={14} className="animate-spin" /> : <QrCode size={14} />} QR Menu
                         </button>
                       </div>
                     </div>
                   </div>
                 </div>
-                <div className="absolute -bottom-4 -right-4 text-8xl opacity-10 transform -rotate-12">☕</div>
+                <div className="absolute -bottom-4 -right-4 text-white opacity-10 transform -rotate-12"><Coffee size={120} /></div>
               </div>
 
               {/* Filters Card */}
               <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
                 <h2 className="text-xs font-black uppercase tracking-widest text-gray-400 mb-4 flex items-center gap-2">
-                  <span>🔍</span> {t("adminMenu.filters")}
+                  <Search size={14} /> {t("adminMenu.filters")}
                 </h2>
                 <div className="space-y-4">
                   <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
                     <input
                       type="text"
                       placeholder={t("adminMenu.searchPlaceholder")}
@@ -673,8 +692,8 @@ export default function AdminMenuPage() {
                               </option>
                             ))}
                           </select>
-                          <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 text-[10px]">
-                            ▼
+                          <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                            <ChevronDown size={14} />
                           </div>
                         </div>
                       </div>
@@ -690,7 +709,7 @@ export default function AdminMenuPage() {
                   <div>
                     <h1 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight flex items-center gap-3">
                       {t("adminMenu.title")}
-                      {loading && <span className="text-xl animate-spin text-[#8B4513]">↻</span>}
+                      {loading && <RefreshCw size={24} className="animate-spin text-[#8B4513]" />}
                     </h1>
                     <p className="text-gray-400 text-xs md:text-sm font-bold uppercase tracking-widest">{t("adminMenu.subtitle")}</p>
                   </div>
@@ -710,7 +729,7 @@ export default function AdminMenuPage() {
                         : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
                         }`}
                     >
-                      {tab === 'Food' ? '🍽️' : '🥤'} {tab}
+                      {tab === 'Food' ? <Utensils size={18} /> : <Coffee size={18} />} {tab}
                       <span className="text-[10px] opacity-70">({menuItems.filter(i => (i.mainCategory || 'Food') === tab).length})</span>
                     </button>
                   ))}
@@ -718,7 +737,7 @@ export default function AdminMenuPage() {
 
                 {error && (
                   <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-600 rounded-2xl font-bold flex items-center gap-3">
-                    <span>⚠️</span> {error}
+                    <AlertTriangle size={18} /> {error}
                   </div>
                 )}
 
@@ -730,7 +749,7 @@ export default function AdminMenuPage() {
                         {item.image ? (
                           <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center text-5xl opacity-30">☕</div>
+                          <div className="w-full h-full flex items-center justify-center text-[#8B4513] opacity-30"><Coffee size={64} /></div>
                         )}
                         <div className="absolute top-4 left-4 flex flex-col gap-2 z-10">
                           <div className="bg-white/90 backdrop-blur-md px-2.5 py-1 rounded-lg text-[9px] font-black text-[#8B4513] shadow-sm border border-white/50">
@@ -764,7 +783,7 @@ export default function AdminMenuPage() {
                             onClick={() => handleDelete(item)}
                             className="w-10 h-10 bg-white border border-gray-100 text-red-500 flex items-center justify-center rounded-xl hover:bg-red-50 hover:border-red-100 transition-all transform active:scale-95 shadow-sm"
                           >
-                            🗑️
+                            <Trash2 size={16} />
                           </button>
                         </div>
                       </div>
@@ -774,7 +793,7 @@ export default function AdminMenuPage() {
 
                 {!loading && filteredItems.length === 0 && (
                   <div className="text-center py-32">
-                    <div className="text-7xl mb-6 opacity-20">🍃</div>
+                    <div className="text-gray-200 mb-6 flex justify-center"><Leaf size={64} /></div>
                     <h2 className="text-2xl font-bold text-gray-400">{t("adminMenu.empty")}</h2>
                     <p className="text-gray-400">{t("adminMenu.emptyDesc")}</p>
                   </div>
@@ -791,7 +810,7 @@ export default function AdminMenuPage() {
               <button
                 onClick={resetForm}
                 className="absolute top-6 right-6 w-10 h-10 bg-gray-50 rounded-2xl flex items-center justify-center font-bold text-gray-400 hover:bg-red-50 hover:text-red-500 transition-all z-10"
-              >✕</button>
+              >                <X size={20} /></button>
 
               <div className="flex-1 overflow-y-auto p-6 md:p-10 pt-16 md:pt-20 scrollbar-hide">
                 <h2 className="text-2xl md:text-3xl font-black text-gray-900 mb-8 tracking-tight">
@@ -1001,7 +1020,7 @@ export default function AdminMenuPage() {
                     {/* Stock Linkage Configuration */}
                     <div className="bg-[#f5bc6b]/10 p-6 rounded-[30px] border border-[#f5bc6b]/20">
                       <h3 className="text-sm font-black text-[#8b6e3f] uppercase tracking-widest mb-4 flex items-center gap-2">
-                        <span>📦</span> Stock Linkage (Optional)
+                        <Package size={16} /> Stock Linkage (Optional)
                       </h3>
                       <div className="grid grid-cols-1 gap-4">
                         <div>
@@ -1054,7 +1073,7 @@ export default function AdminMenuPage() {
                   {/* Distribution Variants */}
                   <div className="md:col-span-2 bg-blue-50/50 p-6 rounded-[30px] border border-blue-100">
                     <h3 className="text-sm font-black text-blue-700 uppercase tracking-widest mb-2 flex items-center gap-2">
-                      <span>🔀</span> Distribution Variants (Optional)
+                      <ArrowLeftRight size={16} /> Distribution Variants (Optional)
                     </h3>
                     <p className="text-[11px] text-gray-400 font-medium mb-4">Add options the cashier must choose from when ordering this item (e.g. Hot, Cold, Spicy, Mild).</p>
 
@@ -1103,7 +1122,7 @@ export default function AdminMenuPage() {
                               onClick={() => setFormData(prev => ({ ...prev, distributions: prev.distributions.filter((_, i) => i !== idx) }))}
                               className="text-blue-400 hover:text-red-500 transition-colors leading-none"
                             >
-                              ✕
+                                <X size={20} />
                             </button>
                           </span>
                         ))}
@@ -1171,10 +1190,10 @@ export default function AdminMenuPage() {
               <button
                 onClick={() => setShowQrModal(false)}
                 className="absolute top-5 right-5 w-9 h-9 bg-gray-50 rounded-xl flex items-center justify-center font-bold text-gray-400 hover:bg-red-50 hover:text-red-500 transition-all z-10"
-              >✕</button>
+              >                <X size={20} /></button>
 
               <div className="p-8 flex flex-col items-center">
-                <h2 className="text-2xl font-black text-gray-900 mb-1 tracking-tight">📱 Menu QR Code</h2>
+                <h2 className="text-2xl font-black text-gray-900 mb-1 tracking-tight"><Smartphone size={24} className="inline mr-2" /> Menu QR Code</h2>
                 <p className="text-sm text-gray-400 mb-6">Customers scan this to view the menu</p>
 
                 <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 mb-6">
@@ -1190,13 +1209,13 @@ export default function AdminMenuPage() {
                     onClick={handleDownloadQr}
                     className="flex-1 bg-[#8B4513] text-white font-black py-3 rounded-xl text-xs uppercase tracking-widest hover:bg-[#A0522D] transition-colors shadow-lg flex items-center justify-center gap-2"
                   >
-                    📥 Download
+                    <Download size={14} /> Download
                   </button>
                   <button
                     onClick={handlePrintQr}
                     className="flex-1 bg-gray-100 text-gray-700 font-black py-3 rounded-xl text-xs uppercase tracking-widest hover:bg-gray-200 transition-colors flex items-center justify-center gap-2"
                   >
-                    🖨️ Print
+                    <Printer size={14} /> Print
                   </button>
                 </div>
               </div>
@@ -1245,14 +1264,14 @@ export default function AdminMenuPage() {
                 onClick={() => handleExportCSV('food')}
                 className="w-full px-4 py-3 text-left text-sm hover:bg-gradient-to-r hover:from-amber-50 hover:to-orange-50 flex items-center gap-3 text-gray-700 font-medium transition-all"
               >
-                <span className="text-lg">🍽️</span>
+                <Utensils size={18} />
                 <span>Food Only</span>
               </button>
               <button
                 onClick={() => handleExportCSV('drinks')}
                 className="w-full px-4 py-3 text-left text-sm hover:bg-gradient-to-r hover:from-amber-50 hover:to-orange-50 flex items-center gap-3 text-gray-700 font-medium transition-all"
               >
-                <span className="text-lg">🥤</span>
+                <Coffee size={18} />
                 <span>Drinks Only</span>
               </button>
               <div className="my-1 border-t border-gray-100 mx-2" />
@@ -1260,7 +1279,7 @@ export default function AdminMenuPage() {
                 onClick={() => handleExportCSV('all')}
                 className="w-full px-4 py-3 text-left text-sm hover:bg-gradient-to-r hover:from-amber-50 hover:to-orange-50 flex items-center gap-3 text-gray-700 font-bold transition-all bg-amber-50/50"
               >
-                <span className="text-lg">📊</span>
+                <Hash size={18} />
                 <span>All Items</span>
               </button>
             </div>
@@ -1293,7 +1312,7 @@ function CategoryManager({ show, onClose, categories, onAdd, onDelete, onUpdate,
       <div className="bg-white rounded-[40px] p-8 max-w-md w-full custom-shadow">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold bubbly-text">{title}</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-red-500">✕</button>
+          <button onClick={onClose} className="text-gray-400 hover:text-red-500"><X size={20} /></button>
         </div>
 
         <form onSubmit={onAdd} className="mb-6">
@@ -1328,7 +1347,7 @@ function CategoryManager({ show, onClose, categories, onAdd, onDelete, onUpdate,
                     autoFocus
                   />
                   <button onClick={() => handleSaveEdit(cat._id)} className="text-green-500 hover:scale-110 transition-transform">✓</button>
-                  <button onClick={() => setEditingId(null)} className="text-gray-400 hover:scale-110 transition-transform">✕</button>
+                  <button onClick={() => setEditingId(null)} className="text-gray-400 hover:scale-110 transition-transform"><X size={18} /></button>
                 </div>
               ) : (
                 <>
@@ -1339,13 +1358,13 @@ function CategoryManager({ show, onClose, categories, onAdd, onDelete, onUpdate,
                       className="text-amber-500 hover:text-amber-600 p-1 text-sm"
                       title="Rename"
                     >
-                      ✏️
+                      <Pencil size={14} />
                     </button>
                     <button
                       onClick={() => onDelete(cat._id)}
                       className="text-red-400 hover:text-red-600 p-1"
                     >
-                      🗑️
+                      <Trash2 size={14} />
                     </button>
                   </div>
                 </>

@@ -10,7 +10,7 @@ import { useAuth } from "@/context/auth-context"
 import { useLanguage } from "@/context/language-context"
 import { ConfirmationCard, NotificationCard } from "@/components/confirmation-card"
 import { useConfirmation } from "@/hooks/use-confirmation"
-import { ShoppingCart, RefreshCw, X, Search, Hash } from 'lucide-react'
+import { ShoppingCart, RefreshCw, X, Search, Hash, Utensils, Coffee } from 'lucide-react'
 import { motion, AnimatePresence } from "framer-motion"
 import { useMemo, useRef } from "react"
 import { useSettings } from "@/context/settings-context"
@@ -501,17 +501,17 @@ export default function CashierPOSPage() {
               {/* Main Category Filter (Food/Drinks) */}
               <div className="px-4 md:px-0 mb-4 flex gap-2">
                 {(['Food', 'Drinks'] as const).map(tab => (
-                  <button
-                    key={tab}
-                    onClick={() => { setMainCategoryFilter(tab); setCategoryFilter('all') }}
-                    className={`flex items-center gap-2 px-6 py-2.5 rounded-full font-black text-sm transition-all ${mainCategoryFilter === tab
-                      ? 'bg-[#2d5a41] text-white shadow-md'
-                      : 'bg-white text-gray-500 hover:bg-gray-100 border border-gray-200'
-                      }`}
-                  >
-                    {tab === 'Food' ? '🍽️' : '🥤'} {tab}
-                    <span className="text-[10px] opacity-70">({menuItems.filter(i => (i.mainCategory || 'Food') === tab).length})</span>
-                  </button>
+                    <button
+                      key={tab}
+                      onClick={() => { setMainCategoryFilter(tab); setCategoryFilter('all') }}
+                      className={`flex items-center gap-2 px-6 py-2.5 rounded-full font-black text-sm transition-all ${mainCategoryFilter === tab
+                        ? 'bg-[#2d5a41] text-white shadow-md'
+                        : 'bg-white text-gray-500 hover:bg-gray-100 border border-gray-200'
+                        }`}
+                    >
+                      {tab === 'Food' ? <Utensils size={16} /> : <Coffee size={16} />} {tab}
+                      <span className="text-[10px] opacity-70">({menuItems.filter(i => (i.mainCategory || 'Food') === tab).length})</span>
+                    </button>
                 ))}
               </div>
 
@@ -561,7 +561,9 @@ export default function CashierPOSPage() {
                   </div>
                 ) : filteredItems.length === 0 ? (
                   <div className="text-center py-20">
-                    <div className="text-6xl mb-4 opacity-30">🍽️</div>
+                    <div className="flex justify-center mb-4 opacity-20">
+                      <Utensils size={64} />
+                    </div>
                     <h2 className="text-xl font-medium text-gray-400">No items found</h2>
                   </div>
                 ) : (

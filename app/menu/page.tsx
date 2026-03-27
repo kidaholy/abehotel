@@ -13,32 +13,57 @@ import { AnimatedLoading } from "@/components/animated-loading"
 import { AnimatedButton } from "@/components/animated-button"
 import { useAuth } from "@/context/auth-context"
 import { useLanguage } from "@/context/language-context"
-import { ShoppingCart, X } from 'lucide-react'
-import { motion, AnimatePresence } from "framer-motion"
 import { ConfirmationCard, NotificationCard } from "@/components/confirmation-card"
 import { useConfirmation } from "@/hooks/use-confirmation"
+import { motion, AnimatePresence } from "framer-motion"
+import { 
+  Coffee, 
+  IceCream, 
+  Soup, 
+  Flame, 
+  CupSoda, 
+  GlassWater, 
+  Martini, 
+  Egg, 
+  Leaf, 
+  Beef, 
+  Sandwich as SandwichIcon, 
+  Utensils, 
+  UtensilsCrossed, 
+  ShoppingCart,
+  Pizza,
+  Croissant,
+  Timer,
+  CheckCircle2,
+  XCircle,
+  ConciergeBell,
+  RefreshCw,
+  Frown,
+  Cake,
+  X
+} from 'lucide-react'
 
 // Category icon mapping function
 const getCategoryIcon = (category: string) => {
-  const icons: Record<string, string> = {
-    "Hot Coffee": "☕",
-    "Iced & Cold Coffee": "🧊",
-    "Tea & Infusions": "🍵",
-    "Hot Specialties": "🔥",
-    "Drinks": "🥤",
-    "Juice": "🧃",
-    "Mojito": "🍹",
-    "Breakfast": "🍳",
-    "Salad": "🥗",
-    "Burrito": "🌯",
-    "Burgers": "🍔",
-    "Wraps": "🌯",
-    "Sandwich": "🥪",
-    "Pasta": "🍝",
-    "Chicken": "🍗",
-    "Ethiopian Taste": "🇪🇹",
+  const icons: Record<string, React.ReactNode> = {
+    "Hot Coffee": <Coffee size={18} />,
+    "Iced & Cold Coffee": <IceCream size={18} />,
+    "Tea & Infusions": <Soup size={18} />,
+    "Hot Specialties": <Flame size={18} />,
+    "Drinks": <CupSoda size={18} />,
+    "Juice": <GlassWater size={18} />,
+    "Mojito": <Martini size={18} />,
+    "Breakfast": <Egg size={18} />,
+    "Salad": <Leaf size={18} />,
+    "Burrito": <Beef size={18} />,
+    "Burgers": <Beef size={18} />,
+    "Wraps": <Beef size={18} />,
+    "Sandwich": <SandwichIcon size={18} />,
+    "Pasta": <UtensilsCrossed size={18} />,
+    "Chicken": <Beef size={18} />,
+    "Ethiopian Taste": <Utensils size={18} />,
   }
-  return icons[category] || "🍽️"
+  return icons[category] || <Utensils size={18} />
 }
 
 interface MenuItem {
@@ -229,10 +254,12 @@ export default function MenuPage() {
                 {/* Welcome Banner */}
                 <div className="bg-[#D2691E] rounded-[40px] p-8 mb-6 custom-shadow relative overflow-hidden group">
                   <div className="relative z-10">
-                    <h1 className="text-4xl font-bold text-white mb-2 bubbly-text">{t("menu.title")} 🥐</h1>
+                    <h1 className="text-4xl font-bold text-white mb-2 bubbly-text flex items-center gap-3">{t("menu.title")} <Croissant size={32} /></h1>
                     <p className="text-white/90 font-medium">{t("menu.subtitle")}</p>
                   </div>
-                  <div className="absolute right-0 top-1/2 -translate-y-1/2 text-9xl opacity-20 group-hover:scale-110 transition-transform duration-500">☕</div>
+                  <div className="absolute right-0 top-1/2 -translate-y-1/2 text-white/10 group-hover:scale-110 transition-transform duration-500">
+                    <Coffee size={160} />
+                  </div>
                 </div>
 
                 {/* Menu Grid Container */}
@@ -252,7 +279,7 @@ export default function MenuPage() {
                         variant="glow"
                         size="lg"
                       >
-                        🔄 {t("menu.tryAgain")}
+                        <RefreshCw size={18} /> {t("menu.tryAgain")}
                       </AnimatedButton>
                     </div>
                   )}
@@ -270,7 +297,7 @@ export default function MenuPage() {
                               : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
                               }`}
                           >
-                            {tab === 'Food' ? '🍽️' : '🥤'} {tab}
+                            {tab === 'Food' ? <Utensils size={18} /> : <Coffee size={18} />} {tab}
                             <span className="text-[10px] opacity-70">({menuItems.filter(i => (i.mainCategory || 'Food') === tab).length})</span>
                           </button>
                         ))}
@@ -288,7 +315,7 @@ export default function MenuPage() {
                                 : "bg-gray-100 text-gray-500 hover:bg-gray-200"
                                 }`}
                             >
-                              {cat === "all" ? t("menu.allItems") : `${getCategoryIcon(cat)} ${cat}`}
+                              {cat === "all" ? t("menu.allItems") : <span className="flex items-center gap-2">{getCategoryIcon(cat)} {cat}</span>}
                             </button>
                           ))}
                         </div>
@@ -297,7 +324,7 @@ export default function MenuPage() {
                       {/* Empty State */}
                       {filteredItems.length === 0 && (
                         <div className="text-center py-20">
-                          <div className="text-6xl mb-4 opacity-30">🍽️</div>
+                          <div className="text-gray-200 mb-4 opacity-30 flex justify-center"><Utensils size={64} /></div>
                           <h2 className="text-2xl font-bold text-gray-400">{t("menu.noItems")}</h2>
                         </div>
                       )}
@@ -326,7 +353,7 @@ export default function MenuPage() {
               <div className="hidden md:block md:col-span-4 lg:col-span-3 sticky top-4">
                 <div className="bg-white rounded-[40px] p-6 custom-shadow min-h-[500px] border border-gray-100">
                   <h2 className="text-2xl font-bold text-[#1a1a1a] mb-6 flex items-center gap-2">
-                    <span>🛒</span> {t("menu.currentOrder")}
+                    <ShoppingCart size={24} /> {t("menu.currentOrder")}
                   </h2>
                   <CartSidebar
                     items={cartItems}
@@ -443,7 +470,7 @@ export default function MenuPage() {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="text-center">
-        <div className="text-6xl mb-4">🍽️</div>
+        <div className="text-gray-200 mb-4 flex justify-center"><Frown size={64} /></div>
         <h1 className="text-3xl font-bold text-foreground mb-2">{t("menu.restricted")}</h1>
         <p className="text-muted-foreground mb-6">{t("menu.restrictedDesc")}</p>
         <Link href="/cashier" className="btn-primary">
@@ -502,7 +529,7 @@ function MenuItemCard({
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <div className="text-5xl opacity-50 animate-float">🍰</div>
+            <div className="text-gray-300 opacity-50 animate-float"><Cake size={64} /></div>
           </div>
         )}
 
@@ -515,7 +542,7 @@ function MenuItemCard({
         </div>
 
         {/* Category icon */}
-        <div className="absolute top-2 left-2 text-2xl animate-wiggle">
+        <div className="absolute top-2 left-2 text-[#8B4513] animate-wiggle">
           {getCategoryIcon(item.category)}
         </div>
       </div>
@@ -534,7 +561,7 @@ function MenuItemCard({
         <div className="flex items-center gap-2">
           {item.preparationTime && (
             <div className="flex items-center gap-1 text-xs bg-primary/20 text-foreground px-2 py-1 rounded animate-zoom-in-out">
-              <span className="animate-rotate-360">⏱</span> {item.preparationTime}m
+              <Timer size={12} className="animate-pulse" /> {item.preparationTime}m
             </div>
           )}
         </div>
@@ -558,7 +585,7 @@ function MenuItemCard({
           </>
         ) : (
           <>
-            <span className="group-hover:animate-wiggle">🛒</span> {t("menu.addToOrder")}
+            <ShoppingCart size={18} className="group-hover:animate-wiggle" /> {t("menu.addToOrder")}
           </>
         )}
       </AnimatedButton>

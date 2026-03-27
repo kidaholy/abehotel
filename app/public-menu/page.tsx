@@ -5,28 +5,50 @@ import Image from "next/image"
 import { motion, AnimatePresence } from "framer-motion"
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel"
 import { cn } from "@/lib/utils"
+import { 
+  Utensils, 
+  Coffee, 
+  IceCream, 
+  Soup, 
+  Flame, 
+  CupSoda, 
+  GlassWater, 
+  Martini, 
+  Egg, 
+  Leaf, 
+  Beef, 
+  Sandwich as SandwichIcon, 
+  UtensilsCrossed,
+  Pizza,
+  Sparkles,
+  Cake,
+  Croissant,
+  Timer,
+  RefreshCw,
+  Frown
+} from "lucide-react"
 
 // Category icon mapping
 const getCategoryIcon = (category: string) => {
-    const icons: Record<string, string> = {
-        "Hot Coffee": "☕",
-        "Iced & Cold Coffee": "🧊",
-        "Tea & Infusions": "🍵",
-        "Hot Specialties": "🔥",
-        "Drinks": "🥤",
-        "Juice": "🧃",
-        "Mojito": "🍹",
-        "Breakfast": "🍳",
-        "Salad": "🥗",
-        "Burrito": "🌯",
-        "Burgers": "🍔",
-        "Wraps": "🌯",
-        "Sandwich": "🥪",
-        "Pasta": "🍝",
-        "Chicken": "🍗",
-        "Ethiopian Taste": "🇪🇹",
+    const icons: Record<string, React.ReactNode> = {
+        "Hot Coffee": <Coffee size={18} />,
+        "Iced & Cold Coffee": <IceCream size={18} />,
+        "Tea & Infusions": <Soup size={18} />,
+        "Hot Specialties": <Flame size={18} />,
+        "Drinks": <CupSoda size={18} />,
+        "Juice": <GlassWater size={18} />,
+        "Mojito": <Martini size={18} />,
+        "Breakfast": <Egg size={18} />,
+        "Salad": <Leaf size={18} />,
+        "Burrito": <Beef size={18} />,
+        "Burgers": <Beef size={18} />,
+        "Wraps": <Beef size={18} />,
+        "Sandwich": <SandwichIcon size={18} />,
+        "Pasta": <UtensilsCrossed size={18} />,
+        "Chicken": <Beef size={18} />,
+        "Ethiopian Taste": <Utensils size={18} />,
     }
-    return icons[category] || "🍽️"
+    return icons[category] || <Utensils size={18} />
 }
 
 interface MenuItem {
@@ -82,10 +104,10 @@ export default function PublicMenuPage() {
             {/* Hero Header */}
             <div className="relative overflow-hidden bg-gradient-to-r from-[#8B4513] via-[#A0522D] to-[#D2691E]">
                 <div className="absolute inset-0 opacity-10">
-                    <div className="absolute top-4 left-10 text-6xl animate-bounce" style={{ animationDelay: '0s' }}>☕</div>
-                    <div className="absolute top-8 right-20 text-5xl animate-bounce" style={{ animationDelay: '0.5s' }}>🍰</div>
-                    <div className="absolute bottom-4 left-1/3 text-4xl animate-bounce" style={{ animationDelay: '1s' }}>🥐</div>
-                    <div className="absolute bottom-2 right-1/4 text-5xl animate-bounce" style={{ animationDelay: '1.5s' }}>🍹</div>
+                    <div className="absolute top-4 left-10 text-[#FFFBF0] animate-bounce" style={{ animationDelay: '0s' }}><Coffee size={48} /></div>
+                    <div className="absolute top-8 right-20 text-[#FFFBF0] animate-bounce" style={{ animationDelay: '0.5s' }}><Cake size={40} /></div>
+                    <div className="absolute bottom-4 left-1/3 text-[#FFFBF0] animate-bounce" style={{ animationDelay: '1s' }}><Croissant size={32} /></div>
+                    <div className="absolute bottom-2 right-1/4 text-[#FFFBF0] animate-bounce" style={{ animationDelay: '1.5s' }}><Martini size={40} /></div>
                 </div>
                 <div className="relative max-w-5xl mx-auto px-4 py-10 text-center">
                     <motion.div
@@ -93,8 +115,8 @@ export default function PublicMenuPage() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.6 }}
                     >
-                        <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-2 tracking-tight drop-shadow-lg">
-                            🍽️ Our Menu
+                        <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-2 tracking-tight drop-shadow-lg flex items-center justify-center gap-2">
+                            <Utensils size={36} /> Our Menu
                         </h1>
                         <p className="text-lg text-white/80 font-medium">
                             Fresh & delicious — crafted with love
@@ -114,7 +136,7 @@ export default function PublicMenuPage() {
                         <div className="relative w-20 h-20 mb-4">
                             <div className="absolute inset-0 border-4 border-amber-200 rounded-full animate-ping" />
                             <div className="absolute inset-2 border-4 border-t-[#8B4513] border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin" />
-                            <div className="absolute inset-0 flex items-center justify-center text-3xl">☕</div>
+                            <div className="absolute inset-0 flex items-center justify-center text-[#8B4513]"><Coffee size={32} /></div>
                         </div>
                         <p className="text-[#8B4513] font-semibold text-lg">Loading menu...</p>
                     </div>
@@ -123,14 +145,14 @@ export default function PublicMenuPage() {
                 {/* Error */}
                 {error && (
                     <div className="text-center py-16">
-                        <div className="text-6xl mb-4">😢</div>
+                    <div className="text-gray-200 mb-4 flex justify-center"><Frown size={64} /></div>
                         <h2 className="text-2xl font-bold text-red-500 mb-2">Oops!</h2>
                         <p className="text-gray-500 mb-6">{error}</p>
                         <button
                             onClick={() => window.location.reload()}
                             className="px-6 py-3 bg-[#8B4513] text-white rounded-full font-bold hover:bg-[#A0522D] transition-colors shadow-lg"
                         >
-                            🔄 Try Again
+                            <RefreshCw size={18} /> Try Again
                         </button>
                     </div>
                 )}
@@ -148,7 +170,7 @@ export default function PublicMenuPage() {
                                         : 'bg-white text-gray-500 hover:bg-amber-50 hover:text-[#8B4513] border border-gray-200'
                                         }`}
                                 >
-                                    {tab === 'Food' ? '🍽️' : '🥤'} {tab}
+                                    {tab === 'Food' ? <Utensils size={20} /> : <Coffee size={20} />} {tab}
                                     <span className="text-xs opacity-70 bg-black/10 px-2 py-0.5 rounded-full">
                                         {menuItems.filter(i => (i.mainCategory || 'Food') === tab).length}
                                     </span>
@@ -177,7 +199,7 @@ export default function PublicMenuPage() {
                                                         : "bg-white text-gray-500 hover:bg-amber-50 hover:text-[#8B4513] border-gray-200"
                                                 )}
                                             >
-                                                <span>{cat === "all" ? "✨" : getCategoryIcon(cat)}</span>
+                                                <span>{cat === "all" ? <Sparkles size={16} /> : getCategoryIcon(cat)}</span>
                                                 <span>{cat === "all" ? "All" : cat}</span>
                                             </button>
                                         </CarouselItem>
@@ -193,7 +215,7 @@ export default function PublicMenuPage() {
                         {/* Empty */}
                         {filteredItems.length === 0 && (
                             <div className="text-center py-20">
-                                <div className="text-7xl mb-4 opacity-40">🍽️</div>
+                                <div className="text-gray-200 mb-4 flex justify-center opacity-40"><Utensils size={64} /></div>
                                 <h2 className="text-2xl font-bold text-gray-400">No items found</h2>
                                 <p className="text-gray-400 mt-1">Try a different category</p>
                             </div>
@@ -227,9 +249,7 @@ export default function PublicMenuPage() {
                                                         sizes="100px"
                                                     />
                                                 ) : (
-                                                    <span className="text-4xl opacity-40">
-                                                        {getCategoryIcon(item.category)}
-                                                    </span>
+                                                    getCategoryIcon(item.category)
                                                 )}
 
                                                 {/* Price Overlay for Mobile accessibility if needed, but we put it on right */}
@@ -258,7 +278,7 @@ export default function PublicMenuPage() {
                                                     </span>
                                                     {item.preparationTime && (
                                                         <span className="flex items-center gap-1 text-[10px] text-gray-400 font-medium">
-                                                            ⏱ {item.preparationTime} min
+                                                            <Timer size={10} /> {item.preparationTime} min
                                                         </span>
                                                     )}
                                                 </div>
@@ -277,7 +297,7 @@ export default function PublicMenuPage() {
                         {/* Footer */}
                         <div className="text-center mt-12 pb-8">
                             <div className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm px-6 py-3 rounded-full shadow-sm border border-gray-100">
-                                <span className="text-lg">☕</span>
+                                <Coffee size={18} className="text-[#8B4513]" />
                                 <span className="text-sm text-gray-500 font-medium">Powered by Abekut</span>
                             </div>
                         </div>

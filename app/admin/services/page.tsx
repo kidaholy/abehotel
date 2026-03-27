@@ -7,7 +7,34 @@ import { BentoNavbar } from "@/components/bento-navbar"
 import { useAuth } from "@/context/auth-context"
 import { ConfirmationCard, NotificationCard } from "@/components/confirmation-card"
 import { useConfirmation } from "@/hooks/use-confirmation"
-import { RefreshCw } from "lucide-react"
+import { 
+  RefreshCw, 
+  ConciergeBell, 
+  Utensils, 
+  Bed, 
+  Layers, 
+  Building, 
+  Search, 
+  Plus, 
+  Trash2, 
+  Pencil, 
+  Wine, 
+  Sparkles,
+  Shirt,
+  Car,
+  Dumbbell,
+  Wrench,
+  Stethoscope,
+  Briefcase,
+  Pizza,
+  Coffee,
+  Target,
+  Waves,
+  Grape,
+  Package,
+  CheckCircle2,
+  XCircle
+} from "lucide-react"
 
 interface Service {
   _id: string
@@ -51,12 +78,30 @@ interface Floor {
   type: string
 }
 
-const ICONS = ["🛎️", "🧹", "👕", "🚗", "💆", "🍽️", "🌿", "🛁", "🔧", "📦", "🍳", "☕", "🎯", "🏊", "🎾", "🧺", "🛒", "🧴"]
+const ICONS = ["ConciergeBell", "Sparkles", "Shirt", "Car", "Dumbbell", "Utensils", "Leaf", "Waves", "Wrench", "Package", "Pizza", "Coffee", "Target", "Waves", "Trophy", "Package", "ShoppingCart", "Stethoscope"]
+const ICON_MAP: Record<string, React.ReactNode> = {
+  ConciergeBell: <ConciergeBell size={20} />,
+  Sparkles: <Sparkles size={20} />,
+  Shirt: <Shirt size={20} />,
+  Car: <Car size={20} />,
+  Dumbbell: <Dumbbell size={20} />,
+  Utensils: <Utensils size={20} />,
+  Leaf: <Layers size={20} />, // Using layers for greenery/nature vibes
+  Waves: <Waves size={20} />,
+  Wrench: <Wrench size={20} />,
+  Package: <Package size={20} />,
+  Pizza: <Pizza size={20} />,
+  Coffee: <Coffee size={20} />,
+  Target: <Target size={20} />,
+  Trophy: <Building size={20} />,
+  ShoppingCart: <ShoppingCart size={20} />,
+  Stethoscope: <Stethoscope size={20} />
+}
 const DEFAULT_CATEGORIES = ["Housekeeping", "Laundry", "Transportation", "Wellness", "Dining", "Maintenance", "Business", "Other"]
 
 const emptyForm = {
   name: "", description: "", category: "", price: "", unit: "per request",
-  isAvailable: true, icon: "🛎️"
+  isAvailable: true, icon: "ConciergeBell"
 }
 
 type Tab = "services" | "menu" | "rooms" | "floors"
@@ -254,7 +299,7 @@ export default function AdminServicesPage() {
     } else {
       const s = service as Service
       setEditingService(s)
-      setFormData({ name: s.name, description: s.description || "", category: s.category, price: s.price.toString(), unit: s.unit || "per request", isAvailable: s.isAvailable, icon: s.icon || "🛎️" })
+      setFormData({ name: s.name, description: s.description || "", category: s.category, price: s.price.toString(), unit: s.unit || "per request", isAvailable: s.isAvailable, icon: s.icon || "ConciergeBell" })
     }
     setShowForm(true)
   }
@@ -283,14 +328,14 @@ export default function AdminServicesPage() {
           {/* Master Tabs */}
           <div className="flex bg-white p-2 rounded-2xl shadow-sm border border-gray-200 overflow-x-auto gap-2">
             {[
-              { id: "services", label: "Core Services", icon: "🛎️" },
-              { id: "menu", label: "Menu Items", icon: "🍽️" },
-              { id: "rooms", label: "Hotel Rooms", icon: "🛏️" },
-              { id: "floors", label: "Floor Setup", icon: "🏢" }
+              { id: "services", label: "Core Services", icon: <ConciergeBell size={18} /> },
+              { id: "menu", label: "Menu Items", icon: <Utensils size={18} /> },
+              { id: "rooms", label: "Hotel Rooms", icon: <Bed size={18} /> },
+              { id: "floors", label: "Floor Setup", icon: <Layers size={18} /> }
             ].map(tab => (
               <button key={tab.id} onClick={() => setActiveTab(tab.id as Tab)}
                 className={`flex items-center gap-2 px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all shrink-0 ${activeTab === tab.id ? "bg-[#8B4513] text-white shadow-lg" : "text-gray-400 hover:bg-gray-50"}`}>
-                <span className="text-sm">{tab.icon}</span> {tab.label}
+                {tab.icon} {tab.label}
               </button>
             ))}
           </div>
@@ -300,8 +345,9 @@ export default function AdminServicesPage() {
             <div className="lg:col-span-3 flex flex-col gap-4 lg:sticky lg:top-4">
               <div className="bg-[#8B4513] rounded-2xl p-6 shadow-xl shadow-[#8B4513]/20 text-white relative overflow-hidden">
                 <div className="relative z-10">
-                  <h1 className="text-2xl font-black mb-1 tracking-tight">
-                    {activeTab === "services" ? "Services 🛎️" : activeTab === "menu" ? "Menu 🍽️" : activeTab === "rooms" ? "Rooms 🛏️" : "Floor Setup 🏢"}
+                  <h1 className="text-2xl font-black mb-1 tracking-tight flex items-center gap-2">
+                    {activeTab === "services" ? "Services" : activeTab === "menu" ? "Menu" : activeTab === "rooms" ? "Rooms" : "Floor Setup"}
+                    {activeTab === "services" ? <ConciergeBell size={24} /> : activeTab === "menu" ? <Utensils size={24} /> : activeTab === "rooms" ? <Bed size={24} /> : <Building size={24} />}
                   </h1>
                   <p className="opacity-70 text-xs font-bold uppercase tracking-widest mb-5">
                     {activeTab === "services" ? `${services.length} registered` : activeTab === "menu" ? `${menuItems.length} items` : activeTab === "rooms" ? `${rooms.length} rooms` : `${floors.length} floors`}
@@ -310,7 +356,7 @@ export default function AdminServicesPage() {
                   {activeTab !== "menu" && activeTab !== "floors" && (
                     <button onClick={() => { resetForm(); setShowForm(true) }}
                       className="w-full bg-white text-[#8B4513] px-4 py-3.5 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg hover:bg-gray-50 transition-all flex items-center justify-center gap-2 active:scale-95">
-                      ➕ {activeTab === "services" ? "Add New Service" : "Add New Room"}
+                      <Plus size={16} /> {activeTab === "services" ? "Add New Service" : "Add New Room"}
                     </button>
                   )}
                   
@@ -319,7 +365,7 @@ export default function AdminServicesPage() {
                   </button>
                 </div>
                 <div className="absolute -bottom-4 -right-4 text-8xl opacity-10 transform -rotate-12">
-                  {activeTab === "services" ? "🛎️" : activeTab === "menu" ? "🍷" : activeTab === "rooms" ? "🛌" : "🏢"}
+                  {activeTab === "services" ? <ConciergeBell size={96} /> : activeTab === "menu" ? <Wine size={96} /> : activeTab === "rooms" ? <Bed size={96} /> : <Building size={96} />}
                 </div>
               </div>
 
@@ -412,16 +458,18 @@ export default function AdminServicesPage() {
                           <div key={service._id} className="group bg-gray-50 rounded-[2rem] p-5 border-2 border-transparent hover:border-[#8B4513]/10 hover:bg-white transition-all">
                             <div className="flex items-start justify-between mb-4">
                               <div className="flex items-center gap-3">
-                                <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-2xl shadow-sm group-hover:scale-110 transition-transform">{service.icon || "🛎️"}</div>
+                                <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-[#8B4513] shadow-sm group-hover:scale-110 transition-transform">
+                                  {ICON_MAP[service.icon || "ConciergeBell"] || <ConciergeBell size={24} />}
+                                </div>
                                 <div>
                                   <h3 className="font-black text-gray-900 leading-tight">{service.name}</h3>
                                   <span className="text-[10px] font-bold uppercase tracking-widest text-[#8B4513]/40 bg-[#8B4513]/5 px-2 py-0.5 rounded-full">{service.category}</span>
                                 </div>
                               </div>
-                              <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button onClick={() => handleEdit(service)} className="w-8 h-8 bg-white rounded-lg flex items-center justify-center text-gray-400 hover:text-[#8B4513] shadow-sm">✏️</button>
-                                <button onClick={() => handleDelete(service)} className="w-8 h-8 bg-white rounded-lg flex items-center justify-center text-gray-400 hover:text-red-500 shadow-sm">🗑️</button>
-                              </div>
+                                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <button onClick={() => handleEdit(service)} className="w-8 h-8 bg-white rounded-lg flex items-center justify-center text-gray-400 hover:text-[#8B4513] shadow-sm"><Pencil size={14} /></button>
+                                  <button onClick={() => handleDelete(service)} className="w-8 h-8 bg-white rounded-lg flex items-center justify-center text-gray-400 hover:text-red-500 shadow-sm"><Trash2 size={14} /></button>
+                                </div>
                             </div>
                             <div className="flex items-end justify-between">
                               <div>
@@ -451,7 +499,7 @@ export default function AdminServicesPage() {
                                 : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
                                 }`}
                             >
-                              {tab === 'Food' ? '🍽️' : '🥤'} {tab}
+                              {tab === 'Food' ? <Utensils size={16} /> : <Coffee size={16} />} {tab}
                               <span className="text-[10px] opacity-70">({menuItems.filter(i => (i.mainCategory || 'Food') === tab).length})</span>
                             </button>
                           ))}
@@ -473,7 +521,7 @@ export default function AdminServicesPage() {
                                   {(item as any).image ? (
                                     <img src={(item as any).image} alt={item.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                                   ) : (
-                                    <div className="w-full h-full flex items-center justify-center text-5xl opacity-30">🍽️</div>
+                                    <div className="w-full h-full flex items-center justify-center text-gray-300 opacity-30"><Utensils size={64} /></div>
                                   )}
                                   <div className="absolute top-4 left-4 flex flex-col gap-2 z-10">
                                     <div className="bg-white/90 backdrop-blur-md px-2.5 py-1 rounded-lg text-[10px] font-black text-[#8B4513] shadow-sm border border-white/50">
@@ -504,7 +552,7 @@ export default function AdminServicesPage() {
                                       onClick={() => handleMenuDelete(item)}
                                       className="w-10 h-10 bg-white border border-gray-100 text-red-500 flex items-center justify-center rounded-xl hover:bg-red-50 hover:border-red-100 transition-all transform active:scale-95 shadow-sm"
                                     >
-                                      🗑️
+                                      <Trash2 size={18} />
                                     </button>
                                   </div>
                                 </div>
@@ -519,13 +567,13 @@ export default function AdminServicesPage() {
                         {rooms.map(room => (
                           <div key={room._id} className="group bg-gray-50 rounded-2xl p-5 border-2 border-transparent hover:border-[#8B4513]/10 hover:bg-white transition-all relative">
                             <div className="flex flex-col items-center text-center">
-                              <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-2xl shadow-sm mb-3 group-hover:scale-110 transition-transform">🛏️</div>
+                              <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-[#8B4513] shadow-sm mb-3 group-hover:scale-110 transition-transform"><Bed size={24} /></div>
                               <h3 className="font-black text-gray-900 text-lg">Room {room.roomNumber}</h3>
                               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">{room.category} • {room.price} Br</p>
                               
                               <div className="flex gap-2">
-                                <button onClick={() => handleEdit(room)} className="p-2 bg-white rounded-xl text-xs shadow-sm hover:bg-gray-50 transition-all">✏️ Edit</button>
-                                <button onClick={() => handleRoomDelete(room)} className="p-2 bg-white rounded-xl text-xs shadow-sm hover:bg-red-50 hover:text-red-500 transition-all">🗑️</button>
+                                <button onClick={() => handleEdit(room)} className="p-2 px-3 bg-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm hover:bg-gray-50 transition-all flex items-center gap-1"><Pencil size={12} /> Edit</button>
+                                <button onClick={() => handleRoomDelete(room)} className="p-2 px-3 bg-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-sm hover:bg-red-50 hover:text-red-500 transition-all flex items-center gap-1"><Trash2 size={12} /></button>
                               </div>
                             </div>
                             <div className={`absolute top-3 right-3 w-2 h-2 rounded-full ${room.status === 'available' ? 'bg-green-500' : room.status === 'occupied' ? 'bg-red-500' : 'bg-orange-500'}`} />
@@ -575,7 +623,7 @@ export default function AdminServicesPage() {
         {showForm && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4">
             <div className="bg-white rounded-[2.5rem] shadow-2xl max-w-lg w-full relative overflow-hidden flex flex-col max-h-[90vh]">
-              <button onClick={resetForm} className="absolute top-5 right-5 w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center font-bold text-gray-400 hover:bg-red-50 hover:text-red-500 transition-all z-10">✕</button>
+              <button onClick={resetForm} className="absolute top-5 right-5 w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center font-bold text-gray-400 hover:bg-red-50 hover:text-red-500 transition-all z-10"><X size={18} /></button>
               <div className="flex-1 overflow-y-auto p-6 md:p-8 pt-14">
                 <h2 className="text-xl font-black text-gray-900 mb-6">
                   {activeTab === 'services' ? (editingService ? "Edit Service" : "New Service") : (editingRoom ? "Edit Room" : "New Room")}
@@ -589,8 +637,8 @@ export default function AdminServicesPage() {
                       <div className="flex flex-wrap gap-2">
                         {ICONS.map(icon => (
                           <button key={icon} type="button" onClick={() => setFormData({ ...formData, icon })}
-                            className={`w-10 h-10 rounded-xl text-lg border-2 transition-all ${formData.icon === icon ? "border-[#8B4513] bg-[#8B4513]/5 scale-110 shadow-md" : "border-gray-100 bg-gray-50 hover:border-gray-300"}`}>
-                            {icon}
+                            className={`w-10 h-10 rounded-xl flex items-center justify-center border-2 transition-all ${formData.icon === icon ? "border-[#8B4513] bg-[#8B4513]/5 scale-110 shadow-md text-[#8B4513]" : "border-gray-100 bg-gray-50 hover:border-gray-300 text-gray-400"}`}>
+                            {ICON_MAP[icon]}
                           </button>
                         ))}
                       </div>

@@ -6,15 +6,31 @@ import { BentoNavbar } from "@/components/bento-navbar"
 import { useAuth } from "@/context/auth-context"
 import { NotificationCard } from "@/components/confirmation-card"
 import { useConfirmation } from "@/hooks/use-confirmation"
-import { RefreshCw } from "lucide-react"
+import { 
+  RefreshCw, 
+  Hotel, 
+  Key, 
+  Utensils, 
+  Megaphone, 
+  Calendar, 
+  MessageSquare, 
+  ConciergeBell, 
+  ClipboardList, 
+  DoorOpen, 
+  Diamond,
+  Users,
+  CheckCircle2,
+  Trash2,
+  Phone
+} from "lucide-react"
 
 const INQUIRY_TYPES = [
-  { value: "check_in", label: "Check-In", icon: "🏨" },
-  { value: "check_out", label: "Check-Out", icon: "🔑" },
-  { value: "room_service", label: "Room Service", icon: "🍽️" },
-  { value: "complaint", label: "Complaint", icon: "📢" },
-  { value: "reservation", label: "Reservation", icon: "📅" },
-  { value: "general", label: "General Inquiry", icon: "💬" },
+  { value: "check_in", label: "Check-In", icon: <Hotel size={20} /> },
+  { value: "check_out", label: "Check-Out", icon: <Key size={20} /> },
+  { value: "room_service", label: "Room Service", icon: <Utensils size={20} /> },
+  { value: "complaint", label: "Complaint", icon: <Megaphone size={20} /> },
+  { value: "reservation", label: "Reservation", icon: <Calendar size={20} /> },
+  { value: "general", label: "General Inquiry", icon: <MessageSquare size={20} /> },
 ]
 
 const STATUS_STYLES: Record<string, string> = {
@@ -151,8 +167,8 @@ export default function ReceptionDashboard() {
           {/* Header */}
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-blue-50 rounded-lg border border-blue-100">
-                <span className="text-2xl">🛎️</span>
+              <div className="p-3 bg-blue-50 rounded-lg border border-blue-100 text-blue-600">
+                <ConciergeBell size={24} />
               </div>
               <div>
                 <h1 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight">Reception Desk</h1>
@@ -165,7 +181,7 @@ export default function ReceptionDashboard() {
             {/* Form */}
             <div className="lg:col-span-7">
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 md:p-8">
-                <h2 className="text-xs font-black text-gray-500 mb-6 uppercase tracking-widest">📝 New Guest Request</h2>
+                <h2 className="text-xs font-black text-gray-500 mb-6 uppercase tracking-widest flex items-center gap-2"><ClipboardList size={14} /> New Guest Request</h2>
                 <form onSubmit={handleSubmit} className="space-y-5">
 
                   <div>
@@ -180,7 +196,7 @@ export default function ReceptionDashboard() {
                               : "bg-gray-50 text-gray-500 border-gray-100 hover:border-[#8B4513]/30 hover:bg-orange-50"
                           }`}
                         >
-                          <span className="text-lg">{type.icon}</span>
+                          {type.icon}
                           <span>{type.label}</span>
                         </button>
                       ))}
@@ -233,7 +249,7 @@ export default function ReceptionDashboard() {
                         : "bg-blue-50 border-blue-200 text-blue-700"
                     }`}>
                       <div className="flex items-center gap-3">
-                        <span className="text-xl">{floors.find(f => f._id === (selectedRoom.floorId?._id || selectedRoom.floorId))?.isVIP ? "💎" : "🚪"}</span>
+                        <span className="text-xl text-[#8B4513]">{floors.find(f => f._id === (selectedRoom.floorId?._id || selectedRoom.floorId))?.isVIP ? <Diamond size={20} /> : <DoorOpen size={20} />}</span>
                         <div>
                           <p className="font-black text-xs uppercase tracking-widest">
                             {floors.find(f => f._id === (selectedRoom.floorId?._id || selectedRoom.floorId))?.isVIP ? "VIP Location" : "Standard Location"}
@@ -248,7 +264,7 @@ export default function ReceptionDashboard() {
                   {formData.inquiryType === 'room_service' && (
                     <div className="space-y-4 pt-4 border-t border-gray-100">
                       <div className="flex items-center justify-between">
-                         <h3 className="text-xs font-black text-gray-500 uppercase tracking-widest">🍽️ Service Catalog</h3>
+                         <h3 className="text-xs font-black text-gray-500 uppercase tracking-widest flex items-center gap-2"><Utensils size={14} /> Service Catalog</h3>
                          <span className="text-[10px] font-bold text-gray-400">
                            {floors.find(f => f._id === (selectedRoom?.floorId?._id || selectedRoom?.floorId))?.isVIP ? "Showing All Items (VIP Access)" : "Standard Menu Only"}
                          </span>
@@ -278,7 +294,7 @@ export default function ReceptionDashboard() {
                                  item.isVIP ? "bg-purple-50/50" : "bg-gray-50"
                                }`}>
                                <div className="flex items-center gap-3">
-                                 {item.isVIP && <span className="text-sm">💎</span>}
+                                 {item.isVIP && <Diamond size={14} className="text-purple-600" />}
                                  <div>
                                    <p className="font-bold text-sm text-gray-900">{item.name}</p>
                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{item.category} {item.isVIP && "• VIP"}</p>
@@ -313,7 +329,7 @@ export default function ReceptionDashboard() {
 
                   <button type="submit" disabled={submitting}
                     className="w-full bg-[#8B4513] text-white py-4 rounded-xl font-black text-sm uppercase tracking-widest shadow-lg shadow-[#8B4513]/20 hover:bg-[#A0522D] transition-all hover:scale-[1.01] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
-                    {submitting ? "Submitting…" : "✓ Submit Request"}
+                    {submitting ? "Submitting…" : <span className="flex items-center justify-center gap-2"><CheckCircle2 size={18} /> Submit Request</span>}
                   </button>
                 </form>
               </div>
@@ -323,7 +339,7 @@ export default function ReceptionDashboard() {
             <div className="lg:col-span-5">
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 h-full">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xs font-black text-gray-500 uppercase tracking-widest">📋 My Submissions ({submissions.length})</h2>
+                  <h2 className="text-xs font-black text-gray-500 uppercase tracking-widest flex items-center gap-2"><ClipboardList size={14} /> My Submissions ({submissions.length})</h2>
                   <button onClick={fetchSubmissions} className="text-gray-400 hover:text-gray-600 transition-colors">
                     <RefreshCw className={`w-4 h-4 ${loadingSubmissions ? "animate-spin" : ""}`} />
                   </button>
@@ -332,7 +348,7 @@ export default function ReceptionDashboard() {
                   <div className="flex items-center justify-center py-16"><RefreshCw className="w-6 h-6 animate-spin text-gray-300" /></div>
                 ) : submissions.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-16 text-center">
-                    <div className="text-5xl mb-3 opacity-20">🏨</div>
+                    <div className="text-gray-200 mb-3"><Hotel size={48} /></div>
                     <p className="text-gray-400 text-sm font-bold uppercase tracking-widest">No submissions yet</p>
                   </div>
                 ) : (
@@ -342,8 +358,8 @@ export default function ReceptionDashboard() {
                       return (
                         <div key={s._id} className="bg-gray-50 rounded-xl p-4 border border-gray-100">
                           <div className="flex items-start justify-between gap-2 mb-2">
-                            <div className="flex items-center gap-2">
-                              <span className="text-lg">{type?.icon ?? "💬"}</span>
+                            <div className="flex items-center gap-2 text-[#8B4513]">
+                              {type?.icon ?? <MessageSquare size={18} />}
                               <span className="font-black text-gray-900 text-sm">{s.guestName}</span>
                             </div>
                             <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full uppercase border ${STATUS_STYLES[s.status] || STATUS_STYLES.pending}`}>
@@ -351,16 +367,16 @@ export default function ReceptionDashboard() {
                             </span>
                           </div>
                           <div className="flex flex-wrap gap-2 text-[11px] text-gray-500 font-medium">
-                            {s.roomNumber && <span>🚪 Room {s.roomNumber}</span>}
-                            {s.phone && <span>📞 {s.phone}</span>}
-                            {s.guests && <span>👥 {s.guests} guest{parseInt(s.guests) > 1 ? "s" : ""}</span>}
-                            {s.checkIn && <span>📅 {s.checkIn} → {s.checkOut || "?"}</span>}
+                            {s.roomNumber && <span className="flex items-center gap-1"><DoorOpen size={12} /> Room {s.roomNumber}</span>}
+                            {s.phone && <span className="flex items-center gap-1"><Phone size={12} /> {s.phone}</span>}
+                            {s.guests && <span className="flex items-center gap-1"><Users size={12} /> {s.guests} guest{parseInt(s.guests) > 1 ? "s" : ""}</span>}
+                            {s.checkIn && <span className="flex items-center gap-1"><Calendar size={12} /> {s.checkIn} → {s.checkOut || "?"}</span>}
                           </div>
                           {s.notes && (
                             <p className="mt-2 text-xs text-gray-500 bg-white rounded-lg p-2 border border-gray-100 italic">"{s.notes}"</p>
                           )}
                           {s.reviewNote && (
-                            <p className="mt-2 text-xs text-blue-600 bg-blue-50 rounded-lg p-2 border border-blue-100">💬 {s.reviewNote}</p>
+                            <p className="mt-2 text-xs text-blue-600 bg-blue-50 rounded-lg p-2 border border-blue-100 flex items-center gap-2"><MessageSquare size={12} /> {s.reviewNote}</p>
                           )}
                         </div>
                       )

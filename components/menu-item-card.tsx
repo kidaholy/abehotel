@@ -2,6 +2,23 @@
 
 import Image from "next/image"
 import { useLanguage } from "@/context/language-context"
+import { 
+  Coffee, 
+  IceCream, 
+  Soup, 
+  Flame, 
+  CupSoda, 
+  GlassWater, 
+  Martini, 
+  Egg, 
+  Leaf, 
+  Beef, 
+  Sandwich as SandwichIcon, 
+  Utensils, 
+  UtensilsCrossed, 
+  ShoppingCart,
+  Pizza
+} from 'lucide-react'
 
 interface MenuItemCardProps {
   menuId?: string
@@ -29,26 +46,26 @@ export function MenuItemCard({
   index = 0,
 }: MenuItemCardProps) {
   const { t } = useLanguage()
-  const getCategoryEmoji = (cat: string) => {
-    const emojiMap: Record<string, string> = {
-      "Hot Coffee": "☕",
-      "Iced & Cold Coffee": "🧊",
-      "Tea & Infusions": "🍵",
-      "Hot Specialties": "🔥",
-      "Drinks": "🥤",
-      "Juice": "🧃",
-      "Mojito": "🍹",
-      Breakfast: "🥞",
-      Salad: "🥗",
-      Burrito: "🌯",
-      Burgers: "🍔",
-      Wraps: "🌯",
-      Sandwich: "🥪",
-      Pasta: "🍝",
-      Chicken: "🍗",
-      "Ethiopian Taste": "🇪🇹",
+  const getCategoryIcon = (cat: string) => {
+    const iconMap: Record<string, React.ReactNode> = {
+      "Hot Coffee": <Coffee size={18} />,
+      "Iced & Cold Coffee": <IceCream size={18} />,
+      "Tea & Infusions": <Soup size={18} />,
+      "Hot Specialties": <Flame size={18} />,
+      "Drinks": <CupSoda size={18} />,
+      "Juice": <GlassWater size={18} />,
+      "Mojito": <Martini size={18} />,
+      Breakfast: <Egg size={18} />,
+      Salad: <Leaf size={18} />,
+      Burrito: <Beef size={18} />,
+      Burgers: <Beef size={18} />,
+      Wraps: <Beef size={18} />,
+      Sandwich: <SandwichIcon size={18} />,
+      Pasta: <UtensilsCrossed size={18} />,
+      Chicken: <Beef size={18} />,
+      "Ethiopian Taste": <Utensils size={18} />,
     }
-    return emojiMap[cat] || "🍴"
+    return iconMap[cat] || <Utensils size={18} />
   }
 
   return (
@@ -74,7 +91,9 @@ export function MenuItemCard({
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gray-50/50 md:bg-transparent">
-            <div className="text-2xl md:text-6xl opacity-60 md:opacity-70">{getCategoryEmoji(category)}</div>
+            <div className="text-gray-400 group-hover:text-accent transition-colors duration-300">
+              {getCategoryIcon(category)}
+            </div>
           </div>
         )}
       </div>
@@ -123,7 +142,7 @@ export function MenuItemCard({
               <>
                 <span className="text-xs md:hidden leading-none">+ {t("menu.add")}</span>
                 <span className="hidden md:inline flex items-center justify-center gap-2">
-                  <span>🛒</span> {t("menu.add")}
+                  <ShoppingCart size={16} /> {t("menu.add")}
                 </span>
               </>
             )}
