@@ -8,9 +8,9 @@ interface User {
   id: string
   name: string
   email: string
-  role: "admin" | "cashier" | "chef" | "display" | "store_keeper"
-  batchId?: string
-  batchNumber?: string
+  role: "admin" | "cashier" | "chef" | "display" | "store_keeper" | "reception"
+  floorId?: string
+  floorNumber?: string
 }
 
 interface AuthContextType {
@@ -139,6 +139,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       chef: "/chef",
       display: "/display",
       store_keeper: "/admin/store",
+      reception: "/reception",
     }
     router.push(roleRoutes[data.user.role] || "/login")
   }

@@ -1,7 +1,7 @@
 import mongoose, { Schema, Document } from "mongoose"
 
-export interface IBatch extends Document {
-    batchNumber: string
+export interface IFloor extends Document {
+    floorNumber: string
     description?: string
     order: number
     isActive: boolean
@@ -10,9 +10,9 @@ export interface IBatch extends Document {
     updatedAt: Date
 }
 
-const BatchSchema = new Schema<IBatch>(
+const FloorSchema = new Schema<IFloor>(
     {
-        batchNumber: { type: String, required: true, trim: true, unique: true },
+        floorNumber: { type: String, required: true, trim: true, unique: true },
         description: { type: String },
         order: { type: Number, default: 0 },
         isActive: { type: Boolean, default: true },
@@ -21,6 +21,6 @@ const BatchSchema = new Schema<IBatch>(
     { timestamps: true }
 )
 
-const Batch = mongoose.models.Batch || mongoose.model<IBatch>("Batch", BatchSchema)
+const Floor = mongoose.models.Floor || mongoose.model<IFloor>("Floor", FloorSchema)
 
-export default Batch
+export default Floor

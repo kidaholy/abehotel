@@ -30,6 +30,7 @@ export function BentoNavbar() {
         { label: t("nav.store"), href: "/admin/store" },
         { label: t("nav.stock"), href: "/admin/stock" },
         { label: t("nav.reports"), href: "/admin/reports" },
+        { label: "Services", href: "/admin/services" },
         { label: t("nav.settings"), href: "/admin/settings" }
     ]
 
@@ -39,7 +40,8 @@ export function BentoNavbar() {
 
     const cashierLinks = [
         { label: t("nav.pos"), href: "/cashier" },
-        { label: t("nav.recentOrders"), href: "/cashier/orders" }
+        { label: t("nav.recentOrders"), href: "/cashier/orders" },
+        { label: "Reception Requests", href: "/cashier/reception-requests" }
     ]
 
     const guestLinks = [
@@ -47,10 +49,15 @@ export function BentoNavbar() {
         { label: t("nav.browseMenu"), href: "/menu" }
     ]
 
+    const receptionLinks = [
+        { label: "Reception Desk", href: "/reception" }
+    ]
+
     const links = user?.role === "admin" ? adminLinks :
         user?.role === "store_keeper" ? storeKeeperLinks :
             user?.role === "cashier" ? cashierLinks :
-                user?.role === "chef" ? [{ label: t("nav.kitchen"), href: "/chef" }] : guestLinks
+                user?.role === "chef" ? [{ label: t("nav.kitchen"), href: "/chef" }] :
+                    user?.role === "reception" ? receptionLinks : guestLinks
 
     return (
         <>

@@ -47,7 +47,7 @@ export default function CashierPOSPage() {
   const [paperWidth, setPaperWidth] = useState(80)
   const [searchTerm, setSearchTerm] = useState("")
   const [idSearchTerm, setIdSearchTerm] = useState("")
-  const [selectedBatchId, setSelectedBatchId] = useState<string>("")
+  const [selectedFloorId, setSelectedFloorId] = useState<string>("")
   const [variantModal, setVariantModal] = useState<{ item: MenuItem } | null>(null)
   const { token, user, logout } = useAuth()
   const { t } = useLanguage()
@@ -180,8 +180,8 @@ export default function CashierPOSPage() {
             // A full page reload might be needed or we rely on AuthProvider to re-check.
             // For now, let's just log it. In a real app, we'd want a refreshUser method in context.
             // Actually, let's force a reload if floorId changed significantly to ensure consistency
-            if (data.user.batchId !== user?.batchId) {
-              console.log("Batch assignment changed, reloading...")
+            if (data.user.floorId !== user?.floorId) {
+              console.log("Floor assignment changed, reloading...")
               localStorage.setItem("user", JSON.stringify(data.user))
               window.location.reload()
             }
@@ -308,7 +308,7 @@ export default function CashierPOSPage() {
           paymentMethod: "cash",
           status: "pending",
           tableNumber: finalTableNumber,
-          batchId: selectedBatchId || user?.batchId
+          floorId: selectedFloorId || user?.floorId
         }),
       })
 
@@ -586,8 +586,8 @@ export default function CashierPOSPage() {
                 setIsDrinksOrder={setIsDrinksOrder}
                 paperWidth={paperWidth}
                 setPaperWidth={setPaperWidth}
-                assignedBatchId={selectedBatchId || user?.batchId}
-                setSelectedBatchId={setSelectedBatchId}
+                assignedFloorId={selectedFloorId || user?.floorId}
+                setSelectedFloorId={setSelectedFloorId}
                 onClear={handleClearCart}
               />
             </div>
@@ -630,8 +630,8 @@ export default function CashierPOSPage() {
                       setIsDrinksOrder={setIsDrinksOrder}
                       paperWidth={paperWidth}
                       setPaperWidth={setPaperWidth}
-                      assignedBatchId={selectedBatchId || user?.batchId}
-                      setSelectedBatchId={setSelectedBatchId}
+                      assignedFloorId={selectedFloorId || user?.floorId}
+                      setSelectedFloorId={setSelectedFloorId}
                       onClear={handleClearCart}
                     />
                   </div>

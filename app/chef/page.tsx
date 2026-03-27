@@ -26,7 +26,7 @@ interface Order {
   items: OrderItem[]
   status: "pending" | "preparing" | "ready" | "completed" | "cancelled"
   notes?: string
-  batchNumber?: string
+  floorNumber?: string
   tableNumber?: string
   createdAt: string
   updatedAt: string
@@ -337,9 +337,9 @@ function OrderCard({
           <div>
             <h3 className="font-bold text-lg text-gray-900">#{order.orderNumber}</h3>
             <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-              {order.batchNumber && (
+              {order.floorNumber && (
                 <span className="text-[10px] font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full">
-                  Batch #{order.batchNumber}
+                  Floor #{order.floorNumber}
                 </span>
               )}
               {order.tableNumber && (

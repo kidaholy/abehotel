@@ -156,7 +156,7 @@ export default function MenuPage() {
           paymentMethod: "cash",
           status: "pending",
           tableNumber,
-          batchId: user?.batchId
+          floorId: user?.floorId
         }),
       })
 
@@ -318,7 +318,7 @@ export default function MenuPage() {
                     setTableNumber={setTableNumber}
                     paperWidth={paperWidth}
                     setPaperWidth={setPaperWidth}
-                    assignedBatchId={user?.batchId}
+                    assignedFloorId={user?.floorId}
                   />
                 </div>
               </div>
@@ -383,7 +383,7 @@ export default function MenuPage() {
                       setTableNumber={setTableNumber}
                       paperWidth={paperWidth}
                       setPaperWidth={setPaperWidth}
-                      assignedBatchId={user?.batchId}
+                      assignedFloorId={user?.floorId}
                     />
                   </div>
                 </motion.div>

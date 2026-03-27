@@ -750,7 +750,7 @@ export default function ReportsPage() {
                                                                 </div>
                                                                 <div className="flex justify-between items-end mt-4">
                                                                     <div className="flex items-center gap-2">
-                                                                        {order.batchNumber && <span className="bg-blue-50 text-blue-600 px-2 py-0.5 rounded text-[9px] font-black uppercase">Batch #{order.batchNumber}</span>}
+                                                                        {order.floorNumber && <span className="bg-blue-50 text-blue-600 px-2 py-0.5 rounded text-[9px] font-black uppercase">Floor #{order.floorNumber}</span>}
                                                                         {order.tableNumber && <span className="bg-white border border-gray-200 px-2 py-1 rounded text-[10px] font-black text-gray-600">{order.tableNumber}</span>}
                                                                         <span className="text-[10px] font-bold text-gray-400">{displayItems.reduce((s: any, i: any) => s + (i.quantity || 0), 0)} ITEMS</span>
                                                                     </div>

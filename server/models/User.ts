@@ -5,7 +5,7 @@ interface IUser {
   name: string
   email: string
   password: string
-  role: "admin" | "cashier" | "chef"
+  role: "admin" | "cashier" | "chef" | "reception"
   isActive: boolean
   createdAt: Date
   updatedAt: Date
@@ -17,7 +17,7 @@ const userSchema = new Schema<IUser>(
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-    role: { type: String, enum: ["admin", "cashier", "chef"], default: "cashier" },
+    role: { type: String, enum: ["admin", "cashier", "chef", "reception"], default: "cashier" },
     isActive: { type: Boolean, default: true },
   },
   { timestamps: true },

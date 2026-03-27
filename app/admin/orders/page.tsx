@@ -21,7 +21,7 @@ interface Order {
   createdAt: string
   customerName?: string
   tableNumber: string
-  batchNumber?: string
+  floorNumber?: string
   delayMinutes?: number
   thresholdMinutes?: number
   totalPreparationTime?: number
@@ -600,7 +600,7 @@ export default function AdminOrdersPage() {
                       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
                       <input
                         type="text"
-                        placeholder="Search batch, table, order..."
+                        placeholder="Search floor, table, order..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="w-full pl-12 pr-4 py-3 bg-white border-2 border-gray-100 rounded-2xl text-sm font-bold focus:border-[#8B4513] focus:ring-0 transition-all outline-none shadow-sm"
@@ -666,8 +666,8 @@ export default function AdminOrdersPage() {
                           <div className="flex-shrink-0 lg:w-48">
                             <div className="flex items-center gap-2 mb-1">
                               <h3 className="text-xl font-black text-gray-800">#{order.orderNumber}</h3>
-                              {order.batchNumber && (
-                                <span className="bg-blue-50 text-blue-600 px-2 py-0.5 rounded text-[10px] font-black tracking-widest uppercase">B#{order.batchNumber}</span>
+                              {order.floorNumber && (
+                                <span className="bg-blue-50 text-blue-600 px-2 py-0.5 rounded text-[10px] font-black tracking-widest uppercase">B#{order.floorNumber}</span>
                               )}
                               <span className="bg-gray-100 text-gray-500 px-2 py-0.5 rounded text-[10px] font-black tracking-widest uppercase">{order.tableNumber}</span>
                             </div>

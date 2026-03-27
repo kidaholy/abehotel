@@ -4,7 +4,7 @@ import { connectDB } from "@/lib/db"
 import User from "@/lib/models/user"
 import MenuItem from "@/lib/models/menu-item"
 import Order from "@/lib/models/order"
-import Batch from "@/lib/models/batch"
+import Floor from "@/lib/models/floor"
 import Category from "@/lib/models/category"
 import { validateSession } from "@/lib/auth"
 
@@ -105,9 +105,9 @@ export async function GET(request: Request) {
 
       // Fetch fresh user data to return to client
       if (decoded.id) {
-        const rawUser = await User.findById(decoded.id).select("-password").populate("batchId").lean() as any
-        if (rawUser && rawUser.batchId && typeof rawUser.batchId === 'object') {
-          currentUser = { ...rawUser, batchNumber: rawUser.batchId.batchNumber, batchId: rawUser.batchId._id }
+        const rawUser = await User.findById(decoded.id).select("-password").populate("floorId").lean() as any
+        if (rawUser && rawUser.floorId && typeof rawUser.floorId === 'object') {
+          currentUser = { ...rawUser, floorNumber: rawUser.floorId.floorNumber, floorId: rawUser.floorId._id }
         } else {
           currentUser = rawUser
         }

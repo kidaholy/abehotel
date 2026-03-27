@@ -44,12 +44,12 @@ export default function AdminSettingsPage() {
 
   // Table & Management State
   const [activeTab, setActiveTab] = useState("branding")
-  const [batches, setBatches] = useState<any[]>([])
+  const [floors, setFloors] = useState<any[]>([])
   const [tables, setTables] = useState<any[]>([])
 
   // Edit States
-  const [editingBatch, setEditingBatch] = useState<any>(null)
-  const [newBatch, setNewBatch] = useState({ batchNumber: "", order: 0 })
+  const [editingFloor, setEditingFloor] = useState<any>(null)
+  const [newFloor, setNewFloor] = useState({ floorNumber: "", order: 0 })
 
   const [editingTable, setEditingTable] = useState<any>(null)
   const [newTable, setNewTable] = useState({ tableNumber: "", capacity: "" })
@@ -76,18 +76,18 @@ export default function AdminSettingsPage() {
 
   useEffect(() => {
     if (activeTab === "tables") {
-      fetchBatches()
+      fetchFloors()
       fetchTables()
     } else if (activeTab === "categories") {
       fetchCategories()
     }
   }, [activeTab, categoryType])
 
-  const fetchBatches = async () => {
+  const fetchFloors = async () => {
     try {
-      const res = await fetch("/api/admin/batches", { headers: { Authorization: `Bearer ${token}` } })
-      if (res.ok) setBatches(await res.json())
-    } catch (err) { console.error("Failed to fetch batches", err) }
+      const res = await fetch("/api/admin/floors", { headers: { Authorization: `Bearer ${token}` } })
+      if (res.ok) setFloors(await res.json())
+    } catch (err) { console.error("Failed to fetch floors", err) }
   }
 
   const fetchTables = async () => {
@@ -104,12 +104,12 @@ export default function AdminSettingsPage() {
     } catch (err) { console.error("Failed to fetch categories", err) }
   }
 
-  // --- Batch Handlers ---
-  const handleAddBatch = async () => {
+  // --- Floor Handlers ---
+  const handleAddFloor = async () => {
     try {
-      const url = "/api/admin/batches"
-      const method = editingBatch ? "PUT" : "POST"
-      const body = editingBatch ? { ...newBatch, id: editingBatch._id } : newBatch
+      const url = "/api/admin/floors"
+      const method = editingFloor ? "PUT" : "POST"
+      const body = editingFloor ? { ...newFloor, id: editingFloor._id } : newFloor
 
       const res = await fetch(url, {
         method,
@@ -117,27 +117,27 @@ export default function AdminSettingsPage() {
         body: JSON.stringify(body)
       })
       if (res.ok) {
-        setNewBatch({ batchNumber: "", order: 0 })
-        setEditingBatch(null)
-        fetchBatches()
-        notify({ title: "Success", message: `Batch ${editingBatch ? 'updated' : 'added'} successfully`, type: "success" })
+        setNewFloor({ floorNumber: "", order: 0 })
+        setEditingFloor(null)
+        fetchFloors()
+        notify({ title: "Success", message: `Floor ${editingFloor ? 'updated' : 'added'} successfully`, type: "success" })
       } else {
         const err = await res.json()
         notify({ title: "Error", message: err.message, type: "error" })
       }
-    } catch (err) { notify({ title: "Error", message: "Failed to save batch", type: "error" }) }
+    } catch (err) { notify({ title: "Error", message: "Failed to save floor", type: "error" }) }
   }
 
-  const handleDeleteBatch = async (id: string) => {
-    if (!await confirm({ title: "Delete Batch", message: "Are you sure? Associated tables will become unassigned.", type: "warning", confirmText: "Delete", cancelText: "Cancel" })) return
+  const handleDeleteFloor = async (id: string) => {
+    if (!await confirm({ title: "Delete Floor", message: "Are you sure? Associated tables will become unassigned.", type: "warning", confirmText: "Delete", cancelText: "Cancel" })) return
     try {
-      const res = await fetch(`/api/admin/batches?id=${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } })
+      const res = await fetch(`/api/admin/floors?id=${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } })
       if (res.ok) {
-        fetchBatches()
-        fetchTables() // Refresh tables as their batch association might have changed (if backend handled it)
-        notify({ title: "Success", message: "Batch deleted", type: "success" })
+        fetchFloors()
+        fetchTables() // Refresh tables as their floor association might have changed (if backend handled it)
+        notify({ title: "Success", message: "Floor deleted", type: "success" })
       }
-    } catch (err) { notify({ title: "Error", message: "Failed to delete batch", type: "error" }) }
+    } catch (err) { notify({ title: "Error", message: "Failed to delete floor", type: "error" }) }
   }
 
   // --- Table Handlers ---
@@ -798,36 +798,36 @@ export default function AdminSettingsPage() {
 
                 {activeTab === "tables" && (
                   <div className="space-y-8">
-                    {/* Batch Management Section */}
+                    {/* Floor Management Section */}
                     <div className="bg-gray-50 p-6 rounded-3xl border border-gray-100">
                       <h3 className="font-black text-xs uppercase tracking-widest text-[#8B4513] mb-4">
-                        Manage Batches
+                        Manage Floors
                       </h3>
                       <div className="flex gap-3 mb-4">
                         <input
                           type="text"
-                          placeholder="Batch Number (e.g. #1)"
-                          value={newBatch.batchNumber}
-                          onChange={(e) => setNewBatch({ ...newBatch, batchNumber: e.target.value })}
+                          placeholder="Floor Number (e.g. #1)"
+                          value={newFloor.floorNumber}
+                          onChange={(e) => setNewFloor({ ...newFloor, floorNumber: e.target.value })}
                           className="flex-1 bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-[#8B4513]/5"
                         />
                         <input
                           type="number"
                           placeholder="Order"
-                          value={newBatch.order}
-                          onChange={(e) => setNewBatch({ ...newBatch, order: parseInt(e.target.value) || 0 })}
+                          value={newFloor.order}
+                          onChange={(e) => setNewFloor({ ...newFloor, order: parseInt(e.target.value) || 0 })}
                           className="w-24 bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-[#8B4513]/5"
                         />
                         <button
-                          onClick={handleAddBatch}
-                          disabled={!newBatch.batchNumber}
+                          onClick={handleAddFloor}
+                          disabled={!newFloor.floorNumber}
                           className="bg-[#8B4513] text-white px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest disabled:opacity-50 hover:bg-[#A0522D] transition-all shadow-lg shadow-[#8B4513]/20"
                         >
-                          {editingBatch ? "Update" : "Add"}
+                          {editingFloor ? "Update" : "Add"}
                         </button>
-                        {editingBatch && (
+                        {editingFloor && (
                           <button
-                            onClick={() => { setEditingBatch(null); setNewBatch({ batchNumber: "", order: 0 }) }}
+                            onClick={() => { setEditingFloor(null); setNewFloor({ floorNumber: "", order: 0 }) }}
                             className="bg-gray-200 text-gray-600 px-4 py-3 rounded-xl font-bold"
                           >
                             Cancel
@@ -836,13 +836,13 @@ export default function AdminSettingsPage() {
                       </div>
 
                       <div className="flex flex-wrap gap-2">
-                        {batches.map(batch => {
+                        {floors.map(floor => {
                           return (
-                            <div key={batch._id} className="bg-white border border-gray-200 rounded-xl px-3 py-2 flex items-center gap-2 shadow-sm hover:shadow-md transition-all">
-                              <span className="font-bold text-sm text-gray-700">Batch #{batch.batchNumber}</span>
+                            <div key={floor._id} className="bg-white border border-gray-200 rounded-xl px-3 py-2 flex items-center gap-2 shadow-sm hover:shadow-md transition-all">
+                              <span className="font-bold text-sm text-gray-700">Floor #{floor.floorNumber}</span>
                               <div className="flex items-center gap-1 ml-1 border-l pl-2 border-gray-100">
-                                <button onClick={() => { setEditingBatch(batch); setNewBatch({ batchNumber: batch.batchNumber, order: batch.order }) }} className="text-gray-400 hover:text-[#8B4513] transition-colors">✏️</button>
-                                <button onClick={() => handleDeleteBatch(batch._id)} className="text-gray-400 hover:text-red-500 transition-colors">🗑️</button>
+                                <button onClick={() => { setEditingFloor(floor); setNewFloor({ floorNumber: floor.floorNumber, order: floor.order }) }} className="text-gray-400 hover:text-[#8B4513] transition-colors">✏️</button>
+                                <button onClick={() => handleDeleteFloor(floor._id)} className="text-gray-400 hover:text-red-500 transition-colors">🗑️</button>
                               </div>
                             </div>
                           )

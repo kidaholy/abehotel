@@ -5,10 +5,11 @@ interface IUser {
   email: string
   password: string
   plainPassword?: string
-  role: "admin" | "cashier" | "chef" | "display" | "store_keeper"
+  role: "admin" | "cashier" | "chef" | "display" | "store_keeper" | "reception"
   isActive: boolean
-  batchId?: mongoose.Types.ObjectId | string
+  floorId?: mongoose.Types.ObjectId | string
   assignedCategories?: string[]
+  canManageReception?: boolean
   createdAt: Date
   updatedAt: Date
 }
@@ -19,10 +20,11 @@ const userSchema = new Schema<IUser>(
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     plainPassword: { type: String },
-    role: { type: String, enum: ["admin", "cashier", "chef", "display", "store_keeper"], default: "cashier" },
+    role: { type: String, enum: ["admin", "cashier", "chef", "display", "store_keeper", "reception"], default: "cashier" },
     isActive: { type: Boolean, default: true },
-    batchId: { type: Schema.Types.ObjectId, ref: "Batch" },
+    floorId: { type: Schema.Types.ObjectId, ref: "Floor" },
     assignedCategories: [{ type: String }],
+    canManageReception: { type: Boolean, default: false },
   },
   { timestamps: true },
 )

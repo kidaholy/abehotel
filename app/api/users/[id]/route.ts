@@ -66,7 +66,7 @@ export async function PUT(request: Request, context: any) {
       return NextResponse.json({ message: "Invalid JSON in request body" }, { status: 400 })
     }
 
-    const { name, email, role, password, isActive, batchId, assignedCategories } = requestBody
+    const { name, email, role, password, isActive, floorId, assignedCategories, canManageReception } = requestBody
     console.log("📝 Update data received:", { name, email, role, isActive, hasPassword: !!password, assignedCategories })
     console.log("🔍 Looking for user with ID:", params?.id)
 
@@ -77,9 +77,9 @@ export async function PUT(request: Request, context: any) {
     }
 
     // Validate role
-    if (role && !['admin', 'cashier', 'chef', 'display', 'store_keeper'].includes(role)) {
+    if (role && !['admin', 'cashier', 'chef', 'display', 'store_keeper', 'reception'].includes(role)) {
       console.log("❌ Invalid role:", role)
-      return NextResponse.json({ message: "Invalid role. Must be admin, cashier, chef, display, or store_keeper" }, { status: 400 })
+      return NextResponse.json({ message: "Invalid role" }, { status: 400 })
     }
 
     // Extract user ID from URL as fallback
@@ -162,8 +162,9 @@ export async function PUT(request: Request, context: any) {
     if (email) updateData.email = email
     if (role) updateData.role = role
     if (typeof isActive === 'boolean') updateData.isActive = isActive
-    if (batchId !== undefined) updateData.batchId = batchId || null
+    if (floorId !== undefined) updateData.floorId = floorId || null
     if (assignedCategories !== undefined) updateData.assignedCategories = assignedCategories
+    if (typeof canManageReception === 'boolean') updateData.canManageReception = canManageReception
 
     // Hash new password if provided
     if (password) {

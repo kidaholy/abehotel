@@ -29,6 +29,9 @@ export default function Sidebar({ role, userName }: SidebarProps) {
       { label: "Kitchen", href: "/chef" },
       { label: "Orders", href: "/chef/orders" },
     ],
+    reception: [
+      { label: "Dashboard", href: "/reception" },
+    ],
   }
 
   const items = menuItems[role as keyof typeof menuItems] || []

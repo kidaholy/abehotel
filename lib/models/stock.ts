@@ -4,7 +4,7 @@ import mongoose, { Schema, Document, CallbackError } from "mongoose"
 export interface IRestockEntry {
     date: Date
     quantityAdded: number
-    totalPurchaseCost: number // Total cost paid for this restock batch
+    totalPurchaseCost: number // Total cost paid for this restock floor
     unitCostAtTime: number // Selling price per unit at time of restock
     notes?: string
     restockedBy?: mongoose.Types.ObjectId

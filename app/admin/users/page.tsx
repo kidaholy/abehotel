@@ -14,15 +14,16 @@ interface User {
   email: string
   password: string
   plainPassword?: string
-  role: "admin" | "chef" | "cashier" | "display" | "store_keeper"
+  role: "admin" | "chef" | "cashier" | "display" | "store_keeper" | "reception"
   isActive: boolean
-  batchId?: string
+  floorId?: string
   assignedCategories?: string[]
+  canManageReception?: boolean
 }
 
-interface Batch {
+interface Floor {
   _id: string
-  batchNumber: string
+  floorNumber: string
 }
 
 export default function AdminUsersPage() {
@@ -35,11 +36,12 @@ export default function AdminUsersPage() {
     name: "",
     email: "",
     password: "",
-    role: "cashier" as "admin" | "chef" | "cashier" | "display" | "store_keeper",
-    batchId: "",
+    role: "cashier" as "admin" | "chef" | "cashier" | "display" | "store_keeper" | "reception",
+    floorId: "",
     assignedCategories: [] as string[],
+    canManageReception: false,
   })
-  const [batches, setBatches] = useState<Batch[]>([])
+  const [floors, setFloors] = useState<Floor[]>([])
   const [categories, setCategories] = useState<{ _id: string, name: string }[]>([])
 
   const { token, user: currentUser } = useAuth()
@@ -54,7 +56,7 @@ export default function AdminUsersPage() {
   useEffect(() => {
     if (token) {
       fetchUsers()
-      fetchBatches()
+      fetchFloors()
       fetchCategories()
     }
   }, [token])
@@ -72,16 +74,16 @@ export default function AdminUsersPage() {
     }
   }
 
-  const fetchBatches = async () => {
+  const fetchFloors = async () => {
     try {
-      const response = await fetch("/api/batches", {
+      const response = await fetch("/api/floors", {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (response.ok) {
-        setBatches(await response.json())
+        setFloors(await response.json())
       }
     } catch (err) {
-      console.error("Failed to fetch batches")
+      console.error("Failed to fetch floors")
     }
   }
 
@@ -230,8 +232,9 @@ export default function AdminUsersPage() {
       email: userToEdit.email,
       password: "",
       role: userToEdit.role,
-      batchId: userToEdit.batchId || "",
+      floorId: userToEdit.floorId || "",
       assignedCategories: userToEdit.assignedCategories || [],
+      canManageReception: userToEdit.canManageReception ?? false,
     })
     setShowForm(true)
   }
@@ -243,8 +246,9 @@ export default function AdminUsersPage() {
       email: "",
       password: "",
       role: "cashier",
-      batchId: "",
+      floorId: "",
       assignedCategories: [],
+      canManageReception: false,
     })
     setShowForm(false)
   }
@@ -298,7 +302,8 @@ export default function AdminUsersPage() {
                           ? { color: "bg-orange-600 text-white", label: "Chef" }
                           : u.role === "display"
                             ? { color: "bg-purple-600 text-white", label: "Display" } :
-                            u.role === "store_keeper" ? { color: "bg-emerald-600 text-white", label: "Store Keeper" }
+                            u.role === "store_keeper" ? { color: "bg-emerald-600 text-white", label: "Store Keeper" } :
+                            u.role === "reception" ? { color: "bg-blue-600 text-white", label: "Reception" }
                               : { color: "bg-[#CD853F] text-white", label: "Cashier" }
 
                       return (
@@ -310,7 +315,7 @@ export default function AdminUsersPage() {
                             </div>
                           )}
                           <div className="w-14 h-14 md:w-16 md:h-16 bg-white rounded-2xl flex items-center justify-center text-2xl md:text-3xl mb-4 shadow-sm group-hover:scale-110 transition-transform">
-                            {u.role === "admin" ? "🎩" : u.role === "chef" ? "🍳" : u.role === "display" ? "📺" : u.role === "store_keeper" ? "📦" : "☕"}
+                            {u.role === "admin" ? "🎩" : u.role === "chef" ? "🍳" : u.role === "display" ? "📺" : u.role === "store_keeper" ? "📦" : u.role === "reception" ? "🛎️" : "☕"}
                           </div>
                           {u.role === "chef" && u.assignedCategories && u.assignedCategories.length > 0 && (
                             <div className="mb-3 flex flex-wrap gap-1.5 pt-1">
@@ -321,10 +326,10 @@ export default function AdminUsersPage() {
                               ))}
                             </div>
                           )}
-                          {(u.role === "cashier" || u.role === "display") && u.batchId && (
+                          {(u.role === "cashier" || u.role === "display") && u.floorId && (
                             <div className="mb-2">
                               <span className="text-[10px] font-black uppercase tracking-widest text-[#8B4513] bg-[#8B4513]/5 px-2 py-1 rounded">
-                                📍 {batches.find(b => b._id === u.batchId)?.batchNumber ? `Batch #${batches.find(b => b._id === u.batchId)?.batchNumber}` : "Assigned Batch"}
+                                📍 {floors.find(b => b._id === u.floorId)?.floorNumber ? `Floor #${floors.find(b => b._id === u.floorId)?.floorNumber}` : "Assigned Floor"}
                               </span>
                             </div>
                           )}
@@ -412,14 +417,14 @@ export default function AdminUsersPage() {
                   <div className="space-y-2">
                     <label className="text-sm font-bold text-gray-600 ml-2">{t("adminUsers.accessLevel")}</label>
                     <div className="flex flex-wrap gap-2">
-                      {["cashier", "chef", "admin", "display", "store_keeper"].map(r => (
+                      {["cashier", "chef", "admin", "display", "store_keeper", "reception"].map(r => (
                         <button
                           key={r}
                           type="button"
                           onClick={() => setFormData({ ...formData, role: r as any })}
                           className={`flex-1 min-w-[120px] py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all ${formData.role === r ? "bg-[#8B4513] text-white shadow-lg" : "bg-gray-50 text-gray-400 hover:bg-gray-100"}`}
                         >
-                          {r === "display" ? "Display" : t(`adminUsers.${r}`)}
+                          {r === "display" ? "Display" : r === "reception" ? "Reception" : t(`adminUsers.${r}`)}
                         </button>
                       ))}
                     </div>
@@ -427,15 +432,15 @@ export default function AdminUsersPage() {
 
                   {(formData.role === "cashier" || formData.role === "display") && (
                     <div className="space-y-2 animate-fade-in">
-                      <label className="text-sm font-bold text-gray-600 ml-2">Assigned Batch</label>
+                      <label className="text-sm font-bold text-gray-600 ml-2">Assigned Floor</label>
                       <select
-                        value={formData.batchId}
-                        onChange={e => setFormData({ ...formData, batchId: e.target.value })}
+                        value={formData.floorId}
+                        onChange={e => setFormData({ ...formData, floorId: e.target.value })}
                         className="w-full bg-gray-50 border-none rounded-2xl p-4 outline-none focus:ring-4 focus:ring-[#8B4513]/10 font-medium appearance-none"
                       >
-                        <option value="">All Batches (Global)</option>
-                        {batches.map(batch => (
-                          <option key={batch._id} value={batch._id}>Batch #{batch.batchNumber}</option>
+                        <option value="">All Floors (Global)</option>
+                        {floors.map(floor => (
+                          <option key={floor._id} value={floor._id}>Floor #{floor.floorNumber}</option>
                         ))}
                       </select>
                     </div>
@@ -517,6 +522,31 @@ export default function AdminUsersPage() {
                       )}
 
                       {categories.length === 0 && <p className="text-center text-gray-400 py-4 text-[10px] font-bold uppercase tracking-widest bg-white rounded-2xl border border-dashed border-gray-200">No categories found</p>}
+                    </div>
+                  )}
+
+                  {/* Reception Privilege Toggle - Cashier only */}
+                  {formData.role === "cashier" && (
+                    <div className="space-y-2 animate-fade-in">
+                      <label className="text-sm font-bold text-gray-600 ml-2">Special Privileges</label>
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, canManageReception: !formData.canManageReception })}
+                        className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl border-2 transition-all font-bold text-sm ${
+                          formData.canManageReception
+                            ? "bg-blue-600 text-white border-blue-600 shadow-lg"
+                            : "bg-gray-50 text-gray-500 border-gray-100 hover:border-blue-300"
+                        }`}
+                      >
+                        <span className="flex items-center gap-2">
+                          <span>🛎️</span>
+                          <span>Can Manage Reception Requests</span>
+                        </span>
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${formData.canManageReception ? "bg-white/20" : "bg-gray-200"}`}>
+                          {formData.canManageReception ? "ON" : "OFF"}
+                        </span>
+                      </button>
+                      <p className="text-xs text-gray-400 ml-2">Grants this cashier the ability to approve or deny reception requests.</p>
                     </div>
                   )}
 

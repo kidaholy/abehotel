@@ -3,7 +3,7 @@ import { signToken } from "@/lib/auth"
 import bcrypt from "bcryptjs"
 import { connectDB } from "@/lib/db"
 import User from "@/lib/models/user"
-import Batch from "@/lib/models/batch"
+import Floor from "@/lib/models/floor"
 
 export async function POST(request: Request) {
   try {
@@ -41,11 +41,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "Invalid credentials" }, { status: 401 })
     }
 
-    // Lookup batch number if user has a batch assignment
-    let batchNumber = ""
-    if (user.batchId) {
-      const batch = await Batch.findById(user.batchId).lean()
-      if (batch) batchNumber = batch.batchNumber
+    // Lookup floor number if user has a floor assignment
+    let floorNumber = ""
+    if (user.floorId) {
+      const floor = await Floor.findById(user.floorId).lean()
+      if (floor) floorNumber = floor.floorNumber
     }
 
     // Generate token
@@ -53,7 +53,7 @@ export async function POST(request: Request) {
       id: user._id,
       email: user.email,
       role: user.role,
-      batchId: user.batchId
+      floorId: user.floorId
     })
 
     return NextResponse.json({
@@ -63,8 +63,8 @@ export async function POST(request: Request) {
         name: user.name,
         email: user.email,
         role: user.role,
-        batchId: user.batchId,
-        batchNumber,
+        floorId: user.floorId,
+        floorNumber,
       },
     })
   } catch (error: any) {

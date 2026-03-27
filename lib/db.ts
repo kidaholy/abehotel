@@ -30,11 +30,13 @@ export async function connectDB() {
       await Promise.all([
         import("./models/user"),
         import("./models/table"),
-        import("./models/batch"),
+        import("./models/floor"),
         import("./models/order"),
         import("./models/menu-item"),
         import("./models/stock"),
-        import("./models/category")
+        import("./models/category"),
+        import("./models/reception-request"),
+        import("./models/service"),
       ])
       console.log("📦 All Mongoose models registered")
 
