@@ -22,6 +22,7 @@ export async function connectDB() {
       serverSelectionTimeoutMS: 5000,
       socketTimeoutMS: 45000,
       bufferCommands: false,
+      family: 4,
     }).then(async (m) => {
       console.log("✅ MongoDB connected successfully")
 

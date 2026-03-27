@@ -7,6 +7,7 @@ import { BentoNavbar } from "@/components/bento-navbar"
 import { useAuth } from "@/context/auth-context"
 import { ConfirmationCard, NotificationCard } from "@/components/confirmation-card"
 import { useConfirmation } from "@/hooks/use-confirmation"
+import { MenuManagementSection } from "@/components/admin/menu-management-section"
 import { 
   RefreshCw, 
   ConciergeBell, 
@@ -33,7 +34,10 @@ import {
   Grape,
   Package,
   CheckCircle2,
-  XCircle
+  XCircle,
+  ShoppingCart,
+  ExternalLink,
+  X
 } from "lucide-react"
 
 interface Service {
@@ -113,7 +117,6 @@ export default function AdminServicesPage() {
 
   const [activeTab, setActiveTab] = useState<Tab>("services")
   const [services, setServices] = useState<Service[]>([])
-  const [menuItems, setMenuItems] = useState<MenuItem[]>([])
   const [rooms, setRooms] = useState<Room[]>([])
   const [floors, setFloors] = useState<Floor[]>([])
   
@@ -137,15 +140,13 @@ export default function AdminServicesPage() {
       setLoading(true)
       const headers = { Authorization: `Bearer ${token}` }
       
-      const [resServices, resMenu, resRooms, resFloors] = await Promise.all([
+      const [resServices, resRooms, resFloors] = await Promise.all([
         fetch("/api/admin/services", { headers }),
-        fetch("/api/admin/menu", { headers }),
         fetch("/api/admin/rooms", { headers }),
         fetch("/api/admin/floors", { headers })
       ])
 
       if (resServices.ok) setServices(await resServices.json())
-      if (resMenu.ok) setMenuItems(await resMenu.json())
       if (resRooms.ok) setRooms(await resRooms.json())
       if (resFloors.ok) setFloors(await resFloors.json())
     } catch (error) {
@@ -341,42 +342,42 @@ export default function AdminServicesPage() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-            {/* Sidebar */}
-            <div className="lg:col-span-3 flex flex-col gap-4 lg:sticky lg:top-4">
-              <div className="bg-[#8B4513] rounded-2xl p-6 shadow-xl shadow-[#8B4513]/20 text-white relative overflow-hidden">
-                <div className="relative z-10">
-                  <h1 className="text-2xl font-black mb-1 tracking-tight flex items-center gap-2">
-                    {activeTab === "services" ? "Services" : activeTab === "menu" ? "Menu" : activeTab === "rooms" ? "Rooms" : "Floor Setup"}
-                    {activeTab === "services" ? <ConciergeBell size={24} /> : activeTab === "menu" ? <Utensils size={24} /> : activeTab === "rooms" ? <Bed size={24} /> : <Building size={24} />}
-                  </h1>
-                  <p className="opacity-70 text-xs font-bold uppercase tracking-widest mb-5">
-                    {activeTab === "services" ? `${services.length} registered` : activeTab === "menu" ? `${menuItems.length} items` : activeTab === "rooms" ? `${rooms.length} rooms` : `${floors.length} floors`}
-                  </p>
-                  
-                  {activeTab !== "menu" && activeTab !== "floors" && (
-                    <button onClick={() => { resetForm(); setShowForm(true) }}
-                      className="w-full bg-white text-[#8B4513] px-4 py-3.5 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg hover:bg-gray-50 transition-all flex items-center justify-center gap-2 active:scale-95">
-                      <Plus size={16} /> {activeTab === "services" ? "Add New Service" : "Add New Room"}
+            {/* Sidebar - Hidden for Menu tab to avoid double sidebars */}
+            {activeTab !== "menu" && (
+              <div className="lg:col-span-3 flex flex-col gap-4 lg:sticky lg:top-4">
+                <div className="bg-[#8B4513] rounded-2xl p-6 shadow-xl shadow-[#8B4513]/20 text-white relative overflow-hidden">
+                  <div className="relative z-10">
+                    <h1 className="text-2xl font-black mb-1 tracking-tight flex items-center gap-2">
+                      {activeTab === "services" ? "Services" : activeTab === "rooms" ? "Rooms" : "Floor Setup"}
+                      {activeTab === "services" ? <ConciergeBell size={24} /> : activeTab === "rooms" ? <Bed size={24} /> : <Building size={24} />}
+                    </h1>
+                    <p className="opacity-70 text-xs font-bold uppercase tracking-widest mb-5">
+                      {activeTab === "services" ? `${services.length} registered` : activeTab === "rooms" ? `${rooms.length} rooms` : `${floors.length} floors`}
+                    </p>
+                    
+                    {activeTab !== "floors" && (
+                      <button onClick={() => { resetForm(); setShowForm(true) }}
+                        className="w-full bg-white text-[#8B4513] px-4 py-3.5 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg hover:bg-gray-100 transition-all flex items-center justify-center gap-2 active:scale-95">
+                        <Plus size={16} /> {activeTab === "services" ? "Add New Service" : "Add New Room"}
+                      </button>
+                    )}
+                    
+                    <button onClick={fetchData} className="mt-2 w-full bg-white/10 hover:bg-white/20 text-white px-4 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2">
+                      <RefreshCw className={`w-3 h-3 ${loading ? "animate-spin" : ""}`} /> Refresh
                     </button>
-                  )}
-                  
-                  <button onClick={fetchData} className="mt-2 w-full bg-white/10 hover:bg-white/20 text-white px-4 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2">
-                    <RefreshCw className={`w-3 h-3 ${loading ? "animate-spin" : ""}`} /> Refresh
-                  </button>
+                  </div>
+                  <div className="absolute -bottom-4 -right-4 text-8xl opacity-10 transform -rotate-12">
+                    {activeTab === "services" ? <ConciergeBell size={96} /> : activeTab === "rooms" ? <Bed size={96} /> : <Building size={96} />}
+                  </div>
                 </div>
-                <div className="absolute -bottom-4 -right-4 text-8xl opacity-10 transform -rotate-12">
-                  {activeTab === "services" ? <ConciergeBell size={96} /> : activeTab === "menu" ? <Wine size={96} /> : activeTab === "rooms" ? <Bed size={96} /> : <Building size={96} />}
-                </div>
-              </div>
 
-              {/* Filters (only for services and menu) */}
-              {(activeTab === "services" || activeTab === "menu") && (
-                <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-200 space-y-4">
-                  <h2 className="text-xs font-black uppercase tracking-widest text-gray-400">🔍 Search</h2>
-                  <input type="text" placeholder="Search..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
-                    className="w-full bg-gray-50 rounded-xl px-4 py-3 text-sm font-medium border-none outline-none focus:ring-4 focus:ring-[#8B4513]/10" />
-                  
-                  {activeTab === "services" && (
+                {/* Filters (only for services) */}
+                {activeTab === "services" && (
+                  <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-200 space-y-4">
+                    <h2 className="text-xs font-black uppercase tracking-widest text-gray-400">🔍 Search</h2>
+                    <input type="text" placeholder="Search..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
+                      className="w-full bg-gray-50 rounded-xl px-4 py-3 text-sm font-medium border-none outline-none focus:ring-4 focus:ring-[#8B4513]/10" />
+                    
                     <div className="space-y-1">
                       {categories.map(cat => (
                         <button key={cat} onClick={() => setCategoryFilter(cat)}
@@ -385,54 +386,43 @@ export default function AdminServicesPage() {
                         </button>
                       ))}
                     </div>
-                  )}
-                </div>
-              )}
+                  </div>
+                )}
 
-              {/* Stats Card */}
-              <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-200">
-                <h2 className="text-xs font-black uppercase tracking-widest text-gray-400 mb-3">📊 Summary</h2>
-                <div className="space-y-2">
-                   {activeTab === "services" ? (
-                     <>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-500 font-medium">Available</span>
-                          <span className="font-black text-green-600">{services.filter(s => s.isAvailable).length}</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-500 font-medium">Categories</span>
-                          <span className="font-black text-gray-900">{new Set(services.map(s => s.category)).size}</span>
-                        </div>
-                     </>
-                   ) : activeTab === "menu" ? (
-                     <>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-500 font-medium">VIP Items</span>
-                          <span className="font-black text-purple-600">{menuItems.filter(i => i.isVIP).length}</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-500 font-medium">Categories</span>
-                          <span className="font-black text-gray-900">{new Set(menuItems.map(i => i.category)).size}</span>
-                        </div>
-                     </>
-                   ) : (
-                     <>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-500 font-medium">VIP Floors</span>
-                          <span className="font-black text-purple-600">{floors.filter(f => f.isVIP).length}</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-500 font-medium">Total Rooms</span>
-                          <span className="font-black text-gray-900">{rooms.length}</span>
-                        </div>
-                     </>
-                   )}
+                {/* Stats Card */}
+                <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-200">
+                  <h2 className="text-xs font-black uppercase tracking-widest text-gray-400 mb-3">📊 Summary</h2>
+                  <div className="space-y-2">
+                     {activeTab === "services" ? (
+                       <>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-500 font-medium">Available</span>
+                            <span className="font-black text-green-600">{services.filter(s => s.isAvailable).length}</span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-500 font-medium">Categories</span>
+                            <span className="font-black text-gray-900">{new Set(services.map(s => s.category)).size}</span>
+                          </div>
+                       </>
+                     ) : (
+                       <>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-500 font-medium">VIP Floors</span>
+                            <span className="font-black text-purple-600">{floors.filter(f => f.isVIP).length}</span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-500 font-medium">Total Rooms</span>
+                            <span className="font-black text-gray-900">{rooms.length}</span>
+                          </div>
+                       </>
+                     )}
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
             {/* Main Content Area */}
-            <div className="lg:col-span-9">
+            <div className={activeTab === "menu" ? "lg:col-span-12" : "lg:col-span-9"}>
               <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 min-h-[600px]">
                 <div className="flex items-center justify-between mb-6">
                   <div>
@@ -487,79 +477,11 @@ export default function AdminServicesPage() {
                     )}
 
                     {activeTab === "menu" && (
-                      <div className="space-y-6">
-                        {/* Food / Drinks top-level tabs */}
-                        <div className="flex gap-2 mb-6">
-                          {(['Food', 'Drinks'] as const).map(tab => (
-                            <button
-                              key={tab}
-                              onClick={() => { setMainCategoryFilter(tab); setCategoryFilter('all') }}
-                              className={`flex items-center gap-2 px-6 py-2.5 rounded-full font-black text-sm transition-all ${mainCategoryFilter === tab
-                                ? 'bg-[#8B4513] text-white shadow-md'
-                                : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                                }`}
-                            >
-                              {tab === 'Food' ? <Utensils size={16} /> : <Coffee size={16} />} {tab}
-                              <span className="text-[10px] opacity-70">({menuItems.filter(i => (i.mainCategory || 'Food') === tab).length})</span>
-                            </button>
-                          ))}
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                          {menuItems
-                            .filter(i => (i.mainCategory || 'Food') === mainCategoryFilter)
-                            .filter(i => !searchTerm || i.name.toLowerCase().includes(searchTerm.toLowerCase()) || (i.menuId && i.menuId.toLowerCase().includes(searchTerm.toLowerCase())))
-                            .sort((a, b) => {
-                              const idA = a.menuId || ""
-                              const idB = b.menuId || ""
-                              return idA.localeCompare(idB, undefined, { numeric: true, sensitivity: 'base' })
-                            })
-                            .map(item => (
-                              <div key={item._id} className="bg-gray-50 rounded-2xl overflow-hidden border border-gray-100 hover:shadow-xl transition-all group flex flex-col relative">
-                                {/* Item Image */}
-                                <div className="h-40 bg-gray-200 relative overflow-hidden">
-                                  {(item as any).image ? (
-                                    <img src={(item as any).image} alt={item.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                                  ) : (
-                                    <div className="w-full h-full flex items-center justify-center text-gray-300 opacity-30"><Utensils size={64} /></div>
-                                  )}
-                                  <div className="absolute top-4 left-4 flex flex-col gap-2 z-10">
-                                    <div className="bg-white/90 backdrop-blur-md px-2.5 py-1 rounded-lg text-[10px] font-black text-[#8B4513] shadow-sm border border-white/50">
-                                      #{item.menuId}
-                                    </div>
-                                  </div>
-                                  <div className={`absolute top-4 right-4 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest z-10 backdrop-blur-md border border-white/50 shadow-sm ${item.available ? "bg-green-100/90 text-green-700" : "bg-red-100/90 text-red-700"}`}>
-                                    {item.available ? "Active" : "Hidden"}
-                                  </div>
-                                </div>
-
-                                <div className="p-5 flex-1 flex flex-col relative bg-white/50 backdrop-blur-sm">
-                                  <h3 className="font-black text-lg text-slate-800 mb-0.5 truncate">{item.name}</h3>
-                                  <p className="text-[10px] font-black text-[#8B4513] uppercase tracking-widest mb-4 opacity-70">{item.category}</p>
-                                  <div className="flex items-end gap-1 mb-6">
-                                    <span className="text-2xl font-black text-slate-900">{item.price}</span>
-                                    <span className="text-xs font-black text-slate-400 mb-1">Br</span>
-                                  </div>
-
-                                  <div className="flex gap-2 mt-auto">
-                                    <button
-                                      onClick={() => router.push(`/admin/menu`)}
-                                      className="flex-1 font-black py-3 rounded-xl bg-white border border-gray-100 text-slate-500 hover:border-[#8B4513]/20 hover:text-[#8B4513] transition-all text-[10px] uppercase tracking-widest transform active:scale-95"
-                                    >
-                                      Edit / Manage
-                                    </button>
-                                    <button
-                                      onClick={() => handleMenuDelete(item)}
-                                      className="w-10 h-10 bg-white border border-gray-100 text-red-500 flex items-center justify-center rounded-xl hover:bg-red-50 hover:border-red-100 transition-all transform active:scale-95 shadow-sm"
-                                    >
-                                      <Trash2 size={18} />
-                                    </button>
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                        </div>
-                      </div>
+                      <MenuManagementSection 
+                        confirm={confirm} 
+                        notify={notify} 
+                        showTitle={false} 
+                      />
                     )}
 
                     {activeTab === "rooms" && (

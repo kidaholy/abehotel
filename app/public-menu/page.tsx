@@ -259,7 +259,7 @@ export default function PublicMenuPage() {
                                             <div className="flex-grow min-w-0">
                                                 <div className="flex justify-between items-start mb-0.5">
                                                     <h3 className="text-base font-bold text-gray-800 transition-colors group-hover:text-[#8B4513] truncate pr-2">
-                                                        {item.name}
+                                                        {item.menuId ? `#${item.menuId} ` : ""}{item.name}
                                                     </h3>
                                                     <span className="text-base font-extrabold text-[#8B4513] whitespace-nowrap">
                                                         {item.price} Br

@@ -104,8 +104,8 @@ export function MenuItemCard({
             {name}
           </h3>
           <div className="flex items-center gap-1.5 mt-0.5 whitespace-nowrap">
-            <span className="text-[10px] md:text-xs text-gray-400 font-mono">#{menuId || index}</span>
-            <span className="text-gray-300 md:hidden">•</span>
+            {menuId && <span className="text-[10px] md:text-xs text-gray-400 font-mono">#{menuId}</span>}
+            {menuId && <span className="text-gray-300 md:hidden">•</span>}
             <span className="text-[11px] font-black text-accent md:hidden">
               {price} {t("common.currencyBr")}
             </span>
