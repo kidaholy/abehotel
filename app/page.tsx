@@ -72,8 +72,8 @@ export default function WelcomePage() {
                         <div className="bg-[#D2691E] rounded-[60px] p-10 relative overflow-hidden min-h-[300px] flex flex-col justify-between custom-shadow card-hover-effect transition-all duration-300 group school-card">
                             <div className="flex justify-between items-start">
                                 <div>
-                                    <h2 className="text-5xl font-bold bubbly-text text-[#8B0000] mb-2">የስጋ ቤት</h2>
-                                    <p className="text-[#8B0000]/80 text-base font-medium">Quality beef products & steaks</p>
+                                    <h2 className="text-5xl font-bold bubbly-text text-[#8B0000] mb-2">አገልግሎቶች</h2>
+                                    <p className="text-[#8B0000]/80 text-base font-medium">Browse our full menu and services</p>
                                 </div>
                                 <div className="relative w-28 h-28 hidden sm:block group-hover:scale-110 transition-transform duration-500">
                                     <Image src="/beef.png" alt="Beef Icon" fill className="object-contain drop-shadow-xl" />
@@ -82,7 +82,7 @@ export default function WelcomePage() {
 
                             <div className="flex items-center gap-4 relative z-10">
                                 <Link href="/menu" className="bg-black text-[#D2691E] px-9 py-3.5 rounded-full font-bold uppercase text-sm tracking-widest bubbly-button">
-                                    View Menu
+                                    {t("nav.services")}
                                 </Link>
                             </div>
                         </div>

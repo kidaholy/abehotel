@@ -137,12 +137,12 @@ export default function AdminDashboardPage() {
               </Card>
             </Link>
 
-            <Link href="/admin/menu">
+            <Link href="/admin/services">
               <Card className="hover:shadow-md transition-shadow cursor-pointer border-gray-200">
                 <CardContent className="p-6 text-center">
-                  <ShoppingCart className="h-10 w-10 text-[#8B4513] mx-auto mb-3" />
-                  <h3 className="font-semibold text-lg text-gray-900 mb-1">Update Menu</h3>
-                  <p className="text-sm text-gray-600">Add or modify items</p>
+                  <BarChart3 className="h-10 w-10 text-[#8B4513] mx-auto mb-3" />
+                  <h3 className="font-semibold text-lg text-gray-900 mb-1">Services</h3>
+                  <p className="text-sm text-gray-600">Manage Menu, Rooms & Floors</p>
                 </CardContent>
               </Card>
             </Link>

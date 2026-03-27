@@ -24,13 +24,12 @@ export function BentoNavbar() {
     // Role-specific links
     const adminLinks = [
         { label: t("nav.overview"), href: "/admin" },
-        { label: t("nav.menu"), href: "/admin/menu" },
         { label: t("nav.orders"), href: "/admin/orders" },
         { label: t("nav.users"), href: "/admin/users" },
         { label: t("nav.store"), href: "/admin/store" },
         { label: t("nav.stock"), href: "/admin/stock" },
         { label: t("nav.reports"), href: "/admin/reports" },
-        { label: "Services", href: "/admin/services" },
+        { label: t("nav.services"), href: "/admin/services" },
         { label: t("nav.settings"), href: "/admin/settings" }
     ]
 
@@ -46,7 +45,7 @@ export function BentoNavbar() {
 
     const guestLinks = [
         { label: t("nav.home"), href: "/" },
-        { label: t("nav.browseMenu"), href: "/menu" }
+        { label: t("nav.services"), href: "/menu" }
     ]
 
     const receptionLinks = [

@@ -58,7 +58,8 @@
         "available": "ይገኛል",
         "restricted": "የሜኑ መግቢያ ተገድቧል",
         "restrictedDesc": "ይህ ገጽ ለካሺየሮች ብቻ ነው የሚፈቀደው",
-        "goToPos": "ወደ ሽያጭ ሲስተም ሂድ"
+        "goToPos": "ወደ ሽያጭ ሲስተም ሂድ",
+        "serviceCatalog": "የአገልግሎት ዝርዝር"
     },
     "nav": {
         "overview": "አጠቃላይ እይታ",
@@ -77,6 +78,7 @@
         "kitchen": "ወጥ ቤት",
         "logout": "ውጣ",
         "transfers": "የውስጥ ዝውውር",
+        "services": "አገልግሎቶች",
         "hi": "ሰላም"
     },
     "adminMenu": {

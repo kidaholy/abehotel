@@ -33,7 +33,7 @@ export async function PUT(request: Request, context: any) {
     console.log("📝 Menu item update data:", updateData)
 
     // First check if the item exists
-    const existingItem = await MenuItem.findById(params.id)
+    const existingItem = await (MenuItem as any).findById(params.id)
     if (!existingItem) {
       console.error("❌ Menu item not found in database:", params.id)
       return NextResponse.json({ message: "Menu item not found" }, { status: 404 })
@@ -49,7 +49,7 @@ export async function PUT(request: Request, context: any) {
 
       if (!isNaN(oldNumericId) && !isNaN(newNumericId)) {
         // Find all items except the one we are updating
-        const allItems = await MenuItem.find({ _id: { $ne: params.id } }).lean()
+        const allItems = await (MenuItem as any).find({ _id: { $ne: params.id } }).lean()
 
         let itemsToShift: any[] = []
         let delta = 0
@@ -75,7 +75,7 @@ export async function PUT(request: Request, context: any) {
         if (itemsToShift.length > 0) {
           // Step 1: Shift to unique temporary IDs
           for (const item of itemsToShift) {
-            await MenuItem.updateOne(
+            await (MenuItem as any).updateOne(
               { _id: item._id },
               { $set: { menuId: `TEMP_PUT_REORDER_${item._id}_${Date.now()}` } }
             )
@@ -84,7 +84,7 @@ export async function PUT(request: Request, context: any) {
           // Step 2: Set to final shifted IDs
           for (const item of itemsToShift) {
             const currentNumericId = parseInt(item.menuId, 10)
-            await MenuItem.updateOne(
+            await (MenuItem as any).updateOne(
               { _id: item._id },
               { $set: { menuId: (currentNumericId + delta).toString() } }
             )
@@ -93,7 +93,7 @@ export async function PUT(request: Request, context: any) {
       }
 
       // Log the change
-      await AuditLog.create({
+      await (AuditLog as any).create({
         entityType: 'MenuItem',
         entityId: params.id,
         action: 'update',
@@ -142,7 +142,7 @@ export async function PUT(request: Request, context: any) {
 
     console.log("🔄 Performing MongoDB update with data:", JSON.stringify(updateData, null, 2))
 
-    const menuItem = await MenuItem.findByIdAndUpdate(
+    const menuItem = await (MenuItem as any).findByIdAndUpdate(
       params.id,
       updateData,
       { new: true, runValidators: true }
@@ -157,7 +157,7 @@ export async function PUT(request: Request, context: any) {
     console.log("🖼️ Updated image URL:", menuItem.image)
 
     // Verify the update by fetching the item again
-    const verificationItem = await MenuItem.findById(params.id)
+    const verificationItem = await (MenuItem as any).findById(params.id)
     console.log("🔍 Verification fetch - Image URL:", verificationItem?.image)
 
     if (verificationItem?.image !== updateData.image) {
@@ -204,7 +204,7 @@ export async function DELETE(request: Request, context: any) {
       return NextResponse.json({ message: "Invalid menu item ID format" }, { status: 400 })
     }
 
-    const menuItem = await MenuItem.findByIdAndDelete(params.id)
+    const menuItem = await (MenuItem as any).findByIdAndDelete(params.id)
 
     if (!menuItem) {
       return NextResponse.json({ message: "Menu item not found" }, { status: 404 })
@@ -213,7 +213,7 @@ export async function DELETE(request: Request, context: any) {
     const deletedMenuId = parseInt(menuItem.menuId, 10)
     if (!isNaN(deletedMenuId)) {
       // Find all items with numeric menuId > the deleted one
-      const allItems = await MenuItem.find({}).lean()
+      const allItems = await (MenuItem as any).find({}).lean()
       const itemsToShift = allItems.filter(item => {
         const itemNumericId = parseInt(item.menuId, 10)
         return !isNaN(itemNumericId) && itemNumericId > deletedMenuId
@@ -222,7 +222,7 @@ export async function DELETE(request: Request, context: any) {
       // Shift them down by 1 using a multi-step process to avoid duplicate key errors
       // Step 1: Shift to temporary IDs
       for (const item of itemsToShift) {
-        await MenuItem.updateOne(
+        await (MenuItem as any).updateOne(
           { _id: item._id },
           { $set: { menuId: `TEMP_DELETE_SHIFT_${item._id}_${Date.now()}` } }
         )
@@ -231,7 +231,7 @@ export async function DELETE(request: Request, context: any) {
       // Step 2: Set to final decremented IDs
       for (const item of itemsToShift) {
         const originalNumericId = parseInt(item.menuId, 10)
-        await MenuItem.updateOne(
+        await (MenuItem as any).updateOne(
           { _id: item._id },
           { $set: { menuId: (originalNumericId - 1).toString() } }
         )

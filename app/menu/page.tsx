@@ -72,8 +72,27 @@ export default function MenuPage() {
 
   // Selection state for Table
   const [tableNumber, setTableNumber] = useState("")
+  const [selectedFloorId, setSelectedFloorId] = useState<string>("")
+  const [floors, setFloors] = useState<any[]>([])
   const [showMobileCart, setShowMobileCart] = useState(false)
   const [paperWidth, setPaperWidth] = useState(80)
+
+  // Fetch floors to determine VIP status
+  useEffect(() => {
+    const fetchFloors = async () => {
+      if (!token) return
+      try {
+        const res = await fetch("/api/floors", {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        if (res.ok) setFloors(await res.json())
+      } catch (err) { console.error("Floor fetch error:", err) }
+    }
+    fetchFloors()
+  }, [token])
+
+  const currentFloor = floors.find(f => f._id === selectedFloorId)
+  const isVipContext = currentFloor?.isVIP || false
 
   // Fetch menu items from API
   useEffect(() => {
@@ -189,6 +208,7 @@ export default function MenuPage() {
   const itemsInTab = menuItems.filter(item => (item.mainCategory || 'Food') === mainCategoryFilter)
   const categories = ["all", ...new Set(itemsInTab.map((item) => item.category))]
   const filteredItems = (categoryFilter === "all" ? itemsInTab : itemsInTab.filter((item) => item.category === categoryFilter))
+    .filter((item: any) => !item.isVIP || isVipContext)
     .sort((a, b) => {
       const idA = a.menuId || ""
       const idB = b.menuId || ""
@@ -318,7 +338,8 @@ export default function MenuPage() {
                     setTableNumber={setTableNumber}
                     paperWidth={paperWidth}
                     setPaperWidth={setPaperWidth}
-                    assignedFloorId={user?.floorId}
+                    assignedFloorId={selectedFloorId || user?.floorId}
+                    setSelectedFloorId={setSelectedFloorId}
                   />
                 </div>
               </div>
@@ -383,7 +404,8 @@ export default function MenuPage() {
                       setTableNumber={setTableNumber}
                       paperWidth={paperWidth}
                       setPaperWidth={setPaperWidth}
-                      assignedFloorId={user?.floorId}
+                      assignedFloorId={selectedFloorId || user?.floorId}
+                      setSelectedFloorId={setSelectedFloorId}
                     />
                   </div>
                 </motion.div>

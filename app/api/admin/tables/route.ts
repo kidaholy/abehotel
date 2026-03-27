@@ -6,7 +6,7 @@ import { validateSession } from "@/lib/auth"
 export async function GET(request: Request) {
     try {
         await connectDB()
-        const tables = await Table.find({}).sort({ tableNumber: 1 })
+        const tables = await Table.find({}).sort({ tableNumber: 1 }).populate('floorId')
         return NextResponse.json(tables)
     } catch (error: any) {
         return NextResponse.json({ message: "Failed to fetch tables" }, { status: 500 })
@@ -21,7 +21,7 @@ export async function POST(request: Request) {
         }
 
         await connectDB()
-        const { tableNumber, name, capacity } = await request.json()
+        const { tableNumber, name, capacity, floorId, isVIP } = await request.json()
 
         if (!tableNumber) {
             return NextResponse.json({ message: "Table Number is required" }, { status: 400 })
@@ -32,7 +32,7 @@ export async function POST(request: Request) {
             return NextResponse.json({ message: "Table Number already exists" }, { status: 400 })
         }
 
-        const table = await Table.create({ tableNumber, name, capacity, status: "active" })
+        const table = await Table.create({ tableNumber, name, capacity, floorId, isVIP: isVIP || false, status: "active" })
         return NextResponse.json(table, { status: 201 })
     } catch (error: any) {
         return NextResponse.json({ message: error.message || "Failed to create table" }, { status: 500 })
@@ -47,7 +47,7 @@ export async function PUT(request: Request) {
         }
 
         await connectDB()
-        const { id, tableNumber, name, capacity } = await request.json()
+        const { id, tableNumber, name, capacity, floorId, isVIP } = await request.json()
 
         if (!id || !tableNumber) {
             return NextResponse.json({ message: "ID and Table Number are required" }, { status: 400 })
@@ -61,7 +61,7 @@ export async function PUT(request: Request) {
 
         const updatedTable = await Table.findByIdAndUpdate(
             id,
-            { tableNumber, name, capacity },
+            { tableNumber, name, capacity, floorId, isVIP },
             { new: true }
         )
 

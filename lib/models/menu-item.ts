@@ -29,6 +29,7 @@ interface IMenuItem {
   reportUnit?: 'kg' | 'liter' | 'piece'
   reportQuantity?: number
   distributions?: string[]  // e.g. ["Hot", "Cold", "Iced"]
+  isVIP: boolean
 }
 
 const RecipeIngredientSchema = new Schema<IRecipeIngredient>({
@@ -60,6 +61,7 @@ const menuItemSchema = new Schema<IMenuItem>(
     reportUnit: { type: String, enum: ['kg', 'liter', 'piece'], default: 'piece' },
     reportQuantity: { type: Number, default: 0 },
     distributions: [{ type: String }],
+    isVIP: { type: Boolean, default: false },
   },
   { timestamps: true }
 )

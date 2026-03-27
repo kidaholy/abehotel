@@ -20,7 +20,7 @@ export async function GET(request: Request) {
         if (!(await verifyAdmin(request))) return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
 
         await connectDB()
-        const floors = await Floor.find({}).sort({ order: 1 })
+        const floors = await (Floor as any).find({}).sort({ order: 1 })
         return NextResponse.json(floors)
     } catch (error: any) {
         return NextResponse.json({ message: "Failed to fetch floors" }, { status: 500 })
@@ -32,13 +32,13 @@ export async function POST(request: Request) {
         if (!(await verifyAdmin(request))) return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
 
         await connectDB()
-        const { floorNumber, description, order } = await request.json()
+        const { floorNumber, description, order, isVIP, type } = await request.json()
 
         if (!floorNumber) {
             return NextResponse.json({ message: "Floor Number is required" }, { status: 400 })
         }
 
-        const floor = await Floor.create({ floorNumber, description, order: order || 0 })
+        const floor = await (Floor as any).create({ floorNumber, description, order: order || 0, isVIP: isVIP || false, type: type || 'standard' })
         return NextResponse.json(floor, { status: 201 })
     } catch (error: any) {
         return NextResponse.json({ message: error.message || "Failed to create floor" }, { status: 500 })
@@ -50,15 +50,15 @@ export async function PUT(request: Request) {
         if (!(await verifyAdmin(request))) return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
 
         await connectDB()
-        const { id, floorNumber, description, order, isActive } = await request.json()
+        const { id, floorNumber, description, order, isActive, isVIP, type } = await request.json()
 
         if (!id) {
             return NextResponse.json({ message: "ID is required" }, { status: 400 })
         }
 
-        const updatedFloor = await Floor.findByIdAndUpdate(
+        const updatedFloor = await (Floor as any).findByIdAndUpdate(
             id,
-            { floorNumber, description, order, isActive },
+            { floorNumber, description, order, isActive, isVIP, type },
             { new: true }
         )
 
@@ -84,11 +84,11 @@ export async function DELETE(request: Request) {
         await connectDB()
 
         // 1. Find the floor to get its floorNumber if needed for unassigning/cascading
-        const floor = await Floor.findById(id)
+        const floor = await (Floor as any).findById(id)
         if (!floor) return NextResponse.json({ message: "Floor not found" }, { status: 404 })
 
         // 2. Delete the floor (Tables are now global and independent)
-        await Floor.findByIdAndDelete(id)
+        await (Floor as any).findByIdAndDelete(id)
         return NextResponse.json({ message: "Floor deleted" })
     } catch (error: any) {
         return NextResponse.json({ message: "Failed to delete floor" }, { status: 500 })

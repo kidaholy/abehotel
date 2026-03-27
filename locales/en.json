@@ -58,7 +58,8 @@
         "available": "Available",
         "restricted": "Menu Access Restricted",
         "restrictedDesc": "This page is only available for cashiers",
-        "goToPos": "Go to POS System"
+        "goToPos": "Go to POS System",
+        "serviceCatalog": "Service Catalog"
     },
     "nav": {
         "overview": "Overview",
@@ -77,6 +78,7 @@
         "kitchen": "Kitchen",
         "logout": "LOGOUT",
         "transfers": "Internal Transfers",
+        "services": "Services",
         "hi": "Hi"
     },
     "adminMenu": {

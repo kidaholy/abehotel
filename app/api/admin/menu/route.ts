@@ -17,11 +17,11 @@ export async function GET(request: Request) {
     await connectDB()
     console.log("📊 Database connected for menu retrieval")
 
-    const menuItems = await MenuItem.find({}).populate("stockItemId", "name unit status").lean()
+    const menuItems = await (MenuItem as any).find({}).populate("stockItemId", "name unit status").lean()
     console.log(`🍽️ Found ${menuItems.length} menu items in database`)
 
     // Convert ObjectId to string for frontend compatibility
-    const serializedItems = menuItems.map(item => ({
+    const serializedItems = menuItems.map((item: any) => ({
       ...item,
       _id: item._id.toString()
     })).sort((a: any, b: any) => {
@@ -51,8 +51,8 @@ export async function POST(request: Request) {
     await connectDB()
     console.log("📊 Database connected for menu item creation")
 
-    const { menuId, name, mainCategory, category, price, description, image, preparationTime, available, stockItemId, stockConsumption } = await request.json()
-    console.log("📝 Menu item data received:", { menuId, name, mainCategory, category, price, stockItemId })
+    const { menuId, name, mainCategory, category, price, description, image, preparationTime, available, stockItemId, stockConsumption, isVIP } = await request.json()
+    console.log("📝 Menu item data received:", { menuId, name, mainCategory, category, price, stockItemId, isVIP })
 
     if (!name || !price) {
       return NextResponse.json({ message: "Name and price are required" }, { status: 400 })
@@ -62,7 +62,7 @@ export async function POST(request: Request) {
     let finalMenuId = menuId ? menuId.toString().trim() : ""
     if (!finalMenuId) {
       // Find the items and extract the highest number
-      const allItems = await MenuItem.find({}, { menuId: 1 }).lean()
+      const allItems = await (MenuItem as any).find({}, { menuId: 1 }).lean()
       let maxId = 0
 
       allItems.forEach((item: any) => {
@@ -83,7 +83,7 @@ export async function POST(request: Request) {
     const numericId = parseInt(finalMenuId, 10)
     if (!isNaN(numericId)) {
       // Find all menu items, sort them by numeric menuId
-      const allItems = await MenuItem.find({}).lean()
+      const allItems = await (MenuItem as any).find({}).lean()
 
       // Get all items that need to be shifted (>= numericId)
       // Sort in DESCENDING order so we process higher IDs first (safest)
@@ -95,7 +95,7 @@ export async function POST(request: Request) {
       // Multi-step shift process to avoid duplicate key errors (index: menuId_1)
       // Step 1: Shift everything to unique temporary IDs
       for (const item of itemsToShift) {
-        await MenuItem.updateOne(
+        await (MenuItem as any).updateOne(
           { _id: item._id },
           { $set: { menuId: `TEMP_POST_${item._id}_${Date.now()}` } }
         )
@@ -105,7 +105,7 @@ export async function POST(request: Request) {
       // We use the original numeric ID collected before the temporary rename
       for (const item of itemsToShift) {
         const originalNumericId = parseInt(item.menuId, 10)
-        await MenuItem.updateOne(
+        await (MenuItem as any).updateOne(
           { _id: item._id },
           { $set: { menuId: (originalNumericId + 1).toString() } }
         )
@@ -125,6 +125,7 @@ export async function POST(request: Request) {
       available: available !== false,
       stockItemId: stockItemId || null,
       stockConsumption: stockConsumption ? Number(stockConsumption) : 0,
+      isVIP: isVIP || false,
     })
     await menuItem.save()
 

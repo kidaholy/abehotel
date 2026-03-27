@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { useRouter } from "next/navigation"
 import { ProtectedRoute } from "@/components/protected-route"
 import { BentoNavbar } from "@/components/bento-navbar"
 import { useAuth } from "@/context/auth-context"
@@ -11,12 +12,43 @@ import { RefreshCw } from "lucide-react"
 interface Service {
   _id: string
   name: string
+  mainCategory?: string
   description?: string
   category: string
   price: number
   unit?: string
   isAvailable: boolean
   icon?: string
+}
+
+interface Room {
+  _id: string
+  roomNumber: string
+  name?: string
+  floorId: any
+  type: string
+  category: string
+  price: number
+  status: string
+  isActive: boolean
+}
+
+interface MenuItem {
+  _id: string
+  menuId: string
+  name: string
+  category: string
+  mainCategory?: string
+  price: number
+  available: boolean
+  isVIP: boolean
+}
+
+interface Floor {
+  _id: string
+  floorNumber: string
+  isVIP: boolean
+  type: string
 }
 
 const ICONS = ["🛎️", "🧹", "👕", "🚗", "💆", "🍽️", "🌿", "🛁", "🔧", "📦", "🍳", "☕", "🎯", "🏊", "🎾", "🧺", "🛒", "🧴"]
@@ -27,29 +59,58 @@ const emptyForm = {
   isAvailable: true, icon: "🛎️"
 }
 
+type Tab = "services" | "menu" | "rooms" | "floors"
+
 export default function AdminServicesPage() {
+  const router = useRouter()
   const { token } = useAuth()
   const { confirmationState, confirm, closeConfirmation, notificationState, notify, closeNotification } = useConfirmation()
 
+  const [activeTab, setActiveTab] = useState<Tab>("services")
   const [services, setServices] = useState<Service[]>([])
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([])
+  const [rooms, setRooms] = useState<Room[]>([])
+  const [floors, setFloors] = useState<Floor[]>([])
+  
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editingService, setEditingService] = useState<Service | null>(null)
   const [formData, setFormData] = useState({ ...emptyForm })
   const [formLoading, setFormLoading] = useState(false)
+  
   const [categoryFilter, setCategoryFilter] = useState("all")
   const [searchTerm, setSearchTerm] = useState("")
+  const [mainCategoryFilter, setMainCategoryFilter] = useState<'Food' | 'Drinks'>('Food')
 
-  const fetchServices = useCallback(async () => {
+  const [roomForm, setRoomForm] = useState({
+    roomNumber: "", name: "", floorId: "", type: "standard", category: "Standard", price: "", status: "available"
+  })
+  const [editingRoom, setEditingRoom] = useState<Room | null>(null)
+
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true)
-      const res = await fetch("/api/admin/services", { headers: { Authorization: `Bearer ${token}` } })
-      if (res.ok) setServices(await res.json())
-    } catch { /* silent */ }
-    finally { setLoading(false) }
+      const headers = { Authorization: `Bearer ${token}` }
+      
+      const [resServices, resMenu, resRooms, resFloors] = await Promise.all([
+        fetch("/api/admin/services", { headers }),
+        fetch("/api/admin/menu", { headers }),
+        fetch("/api/admin/rooms", { headers }),
+        fetch("/api/admin/floors", { headers })
+      ])
+
+      if (resServices.ok) setServices(await resServices.json())
+      if (resMenu.ok) setMenuItems(await resMenu.json())
+      if (resRooms.ok) setRooms(await resRooms.json())
+      if (resFloors.ok) setFloors(await resFloors.json())
+    } catch (error) {
+      console.error("Fetch error:", error)
+    } finally {
+      setLoading(false)
+    }
   }, [token])
 
-  useEffect(() => { if (token) fetchServices() }, [token, fetchServices])
+  useEffect(() => { if (token) fetchData() }, [token, fetchData])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -69,10 +130,41 @@ export default function AdminServicesPage() {
       if (res.ok) {
         notify({ title: editingService ? "Service Updated" : "Service Created", message: `"${formData.name}" has been saved.`, type: "success" })
         resetForm()
-        fetchServices()
+        fetchData()
       } else {
         const err = await res.json()
         notify({ title: "Error", message: err.message || "Failed to save", type: "error" })
+      }
+    } catch {
+      notify({ title: "Error", message: "Network error", type: "error" })
+    }
+    setFormLoading(false)
+  }
+
+  const handleRoomSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!roomForm.roomNumber || !roomForm.floorId) {
+      notify({ title: "Missing Fields", message: "Room number and floor are required.", type: "error" })
+      return
+    }
+    setFormLoading(true)
+    try {
+      const url = editingRoom ? `/api/admin/rooms/${editingRoom._id}` : "/api/admin/rooms"
+      const method = editingRoom ? "PUT" : "POST"
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ ...roomForm, price: parseFloat(roomForm.price || "0") }),
+      })
+      if (res.ok) {
+        notify({ title: editingRoom ? "Room Updated" : "Room Created", message: `Room ${roomForm.roomNumber} has been saved.`, type: "success" })
+        setEditingRoom(null)
+        setRoomForm({ roomNumber: "", name: "", floorId: "", type: "standard", category: "Standard", price: "", status: "available" })
+        setShowForm(false)
+        fetchData()
+      } else {
+        const err = await res.json()
+        notify({ title: "Error", message: err.message || "Failed to save room", type: "error" })
       }
     } catch {
       notify({ title: "Error", message: "Network error", type: "error" })
@@ -88,7 +180,19 @@ export default function AdminServicesPage() {
     if (!confirmed) return
     try {
       const res = await fetch(`/api/admin/services/${service._id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } })
-      if (res.ok) { fetchServices(); notify({ title: "Deleted", message: `"${service.name}" removed.`, type: "success" }) }
+      if (res.ok) { fetchData(); notify({ title: "Deleted", message: `"${service.name}" removed.`, type: "success" }) }
+    } catch { notify({ title: "Error", message: "Failed to delete", type: "error" }) }
+  }
+
+  const handleRoomDelete = async (room: Room) => {
+    const confirmed = await confirm({
+      title: "Delete Room", message: `Delete Room "${room.roomNumber}"?`,
+      type: "danger", confirmText: "Delete", cancelText: "Cancel"
+    })
+    if (!confirmed) return
+    try {
+      const res = await fetch(`/api/admin/rooms/${room._id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } })
+      if (res.ok) { fetchData(); notify({ title: "Deleted", message: `Room removed.`, type: "success" }) }
     } catch { notify({ title: "Error", message: "Failed to delete", type: "error" }) }
   }
 
@@ -99,19 +203,67 @@ export default function AdminServicesPage() {
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ ...service, isAvailable: !service.isAvailable }),
       })
-      if (res.ok) fetchServices()
+      if (res.ok) fetchData()
     } catch { /* silent */ }
   }
 
-  const handleEdit = (service: Service) => {
-    setEditingService(service)
-    setFormData({ name: service.name, description: service.description || "", category: service.category, price: service.price.toString(), unit: service.unit || "per request", isAvailable: service.isAvailable, icon: service.icon || "🛎️" })
+  const handleToggleVip = async (type: 'floor' | 'menu' | 'table', id: string, current: boolean) => {
+    try {
+      let url = ""
+      let body = {}
+      if (type === 'floor') {
+        url = "/api/admin/floors"
+        body = { id, isVIP: !current }
+      } else if (type === 'menu') {
+        url = `/api/admin/menu/${id}`
+        body = { isVIP: !current }
+      }
+      
+      const res = await fetch(url, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify(body),
+      })
+      if (res.ok) fetchData()
+    } catch { /* silent */ }
+  }
+
+  const handleMenuDelete = async (item: MenuItem) => {
+    const confirmed = await (confirm as any)({
+      title: "Delete Menu Item",
+      message: `Delete "${item.name}"?`,
+      type: "danger",
+      confirmText: "Delete",
+      cancelText: "Cancel"
+    })
+    if (!confirmed) return
+    try {
+      const res = await fetch(`/api/admin/menu/${item._id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } })
+      if (res.ok) { fetchData(); notify({ title: "Deleted", message: "Menu item removed.", type: "success" }) }
+    } catch { notify({ title: "Error", message: "Failed to delete", type: "error" }) }
+  }
+
+  const handleEdit = (service: Service | Room) => {
+    if ((service as any).roomNumber) {
+      const r = service as Room
+      setEditingRoom(r)
+      setRoomForm({
+        roomNumber: r.roomNumber, name: r.name || "", floorId: r.floorId?._id || r.floorId || "",
+        type: r.type, category: r.category, price: r.price.toString(), status: r.status
+      })
+    } else {
+      const s = service as Service
+      setEditingService(s)
+      setFormData({ name: s.name, description: s.description || "", category: s.category, price: s.price.toString(), unit: s.unit || "per request", isAvailable: s.isAvailable, icon: s.icon || "🛎️" })
+    }
     setShowForm(true)
   }
 
   const resetForm = () => {
     setEditingService(null)
+    setEditingRoom(null)
     setFormData({ ...emptyForm })
+    setRoomForm({ roomNumber: "", name: "", floorId: "", type: "standard", category: "Standard", price: "", status: "available" })
     setShowForm(false)
   }
 
@@ -128,131 +280,291 @@ export default function AdminServicesPage() {
         <div className="max-w-7xl mx-auto space-y-6">
           <BentoNavbar />
 
+          {/* Master Tabs */}
+          <div className="flex bg-white p-2 rounded-2xl shadow-sm border border-gray-200 overflow-x-auto gap-2">
+            {[
+              { id: "services", label: "Core Services", icon: "🛎️" },
+              { id: "menu", label: "Menu Items", icon: "🍽️" },
+              { id: "rooms", label: "Hotel Rooms", icon: "🛏️" },
+              { id: "floors", label: "Floor Setup", icon: "🏢" }
+            ].map(tab => (
+              <button key={tab.id} onClick={() => setActiveTab(tab.id as Tab)}
+                className={`flex items-center gap-2 px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all shrink-0 ${activeTab === tab.id ? "bg-[#8B4513] text-white shadow-lg" : "text-gray-400 hover:bg-gray-50"}`}>
+                <span className="text-sm">{tab.icon}</span> {tab.label}
+              </button>
+            ))}
+          </div>
+
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             {/* Sidebar */}
             <div className="lg:col-span-3 flex flex-col gap-4 lg:sticky lg:top-4">
               <div className="bg-[#8B4513] rounded-2xl p-6 shadow-xl shadow-[#8B4513]/20 text-white relative overflow-hidden">
                 <div className="relative z-10">
-                  <h1 className="text-2xl font-black mb-1 tracking-tight">Services 🛎️</h1>
-                  <p className="opacity-70 text-xs font-bold uppercase tracking-widest mb-5">{services.length} services registered</p>
-                  <button onClick={() => { resetForm(); setShowForm(true) }}
-                    className="w-full bg-white text-[#8B4513] px-4 py-3.5 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg hover:bg-gray-50 transition-all flex items-center justify-center gap-2 active:scale-95">
-                    ➕ Add New Service
-                  </button>
-                  <button onClick={fetchServices} className="mt-2 w-full bg-white/10 hover:bg-white/20 text-white px-4 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2">
+                  <h1 className="text-2xl font-black mb-1 tracking-tight">
+                    {activeTab === "services" ? "Services 🛎️" : activeTab === "menu" ? "Menu 🍽️" : activeTab === "rooms" ? "Rooms 🛏️" : "Floor Setup 🏢"}
+                  </h1>
+                  <p className="opacity-70 text-xs font-bold uppercase tracking-widest mb-5">
+                    {activeTab === "services" ? `${services.length} registered` : activeTab === "menu" ? `${menuItems.length} items` : activeTab === "rooms" ? `${rooms.length} rooms` : `${floors.length} floors`}
+                  </p>
+                  
+                  {activeTab !== "menu" && activeTab !== "floors" && (
+                    <button onClick={() => { resetForm(); setShowForm(true) }}
+                      className="w-full bg-white text-[#8B4513] px-4 py-3.5 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg hover:bg-gray-50 transition-all flex items-center justify-center gap-2 active:scale-95">
+                      ➕ {activeTab === "services" ? "Add New Service" : "Add New Room"}
+                    </button>
+                  )}
+                  
+                  <button onClick={fetchData} className="mt-2 w-full bg-white/10 hover:bg-white/20 text-white px-4 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2">
                     <RefreshCw className={`w-3 h-3 ${loading ? "animate-spin" : ""}`} /> Refresh
                   </button>
                 </div>
-                <div className="absolute -bottom-4 -right-4 text-8xl opacity-10 transform -rotate-12">🛎️</div>
-              </div>
-
-              {/* Filters */}
-              <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-200 space-y-4">
-                <h2 className="text-xs font-black uppercase tracking-widest text-gray-400">🔍 Filter</h2>
-                <input type="text" placeholder="Search services..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
-                  className="w-full bg-gray-50 rounded-xl px-4 py-3 text-sm font-medium border-none outline-none focus:ring-4 focus:ring-[#8B4513]/10" />
-                <div className="space-y-1">
-                  {categories.map(cat => (
-                    <button key={cat} onClick={() => setCategoryFilter(cat)}
-                      className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold capitalize transition-all ${categoryFilter === cat ? "bg-[#8B4513] text-white" : "text-gray-500 hover:bg-gray-50"}`}>
-                      {cat === "all" ? "All Categories" : cat} {cat !== "all" && `(${services.filter(s => s.category === cat).length})`}
-                    </button>
-                  ))}
+                <div className="absolute -bottom-4 -right-4 text-8xl opacity-10 transform -rotate-12">
+                  {activeTab === "services" ? "🛎️" : activeTab === "menu" ? "🍷" : activeTab === "rooms" ? "🛌" : "🏢"}
                 </div>
               </div>
 
-              {/* Stats */}
+              {/* Filters (only for services and menu) */}
+              {(activeTab === "services" || activeTab === "menu") && (
+                <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-200 space-y-4">
+                  <h2 className="text-xs font-black uppercase tracking-widest text-gray-400">🔍 Search</h2>
+                  <input type="text" placeholder="Search..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
+                    className="w-full bg-gray-50 rounded-xl px-4 py-3 text-sm font-medium border-none outline-none focus:ring-4 focus:ring-[#8B4513]/10" />
+                  
+                  {activeTab === "services" && (
+                    <div className="space-y-1">
+                      {categories.map(cat => (
+                        <button key={cat} onClick={() => setCategoryFilter(cat)}
+                          className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold capitalize transition-all ${categoryFilter === cat ? "bg-[#8B4513] text-white" : "text-gray-500 hover:bg-gray-50"}`}>
+                          {cat === "all" ? "All Categories" : cat} {cat !== "all" && `(${services.filter(s => s.category === cat).length})`}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Stats Card */}
               <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-200">
-                <h2 className="text-xs font-black uppercase tracking-widest text-gray-400 mb-3">📊 Overview</h2>
+                <h2 className="text-xs font-black uppercase tracking-widest text-gray-400 mb-3">📊 Summary</h2>
                 <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-500 font-medium">Total Services</span>
-                    <span className="font-black text-gray-900">{services.length}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-500 font-medium">Available</span>
-                    <span className="font-black text-green-600">{services.filter(s => s.isAvailable).length}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-500 font-medium">Unavailable</span>
-                    <span className="font-black text-red-500">{services.filter(s => !s.isAvailable).length}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-500 font-medium">Categories</span>
-                    <span className="font-black text-gray-900">{new Set(services.map(s => s.category)).size}</span>
-                  </div>
+                   {activeTab === "services" ? (
+                     <>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-500 font-medium">Available</span>
+                          <span className="font-black text-green-600">{services.filter(s => s.isAvailable).length}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-500 font-medium">Categories</span>
+                          <span className="font-black text-gray-900">{new Set(services.map(s => s.category)).size}</span>
+                        </div>
+                     </>
+                   ) : activeTab === "menu" ? (
+                     <>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-500 font-medium">VIP Items</span>
+                          <span className="font-black text-purple-600">{menuItems.filter(i => i.isVIP).length}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-500 font-medium">Categories</span>
+                          <span className="font-black text-gray-900">{new Set(menuItems.map(i => i.category)).size}</span>
+                        </div>
+                     </>
+                   ) : (
+                     <>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-500 font-medium">VIP Floors</span>
+                          <span className="font-black text-purple-600">{floors.filter(f => f.isVIP).length}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-500 font-medium">Total Rooms</span>
+                          <span className="font-black text-gray-900">{rooms.length}</span>
+                        </div>
+                     </>
+                   )}
                 </div>
               </div>
             </div>
 
-            {/* Main Grid */}
+            {/* Main Content Area */}
             <div className="lg:col-span-9">
               <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 min-h-[600px]">
                 <div className="flex items-center justify-between mb-6">
                   <div>
-                    <h2 className="text-2xl font-black text-gray-900 tracking-tight">Service Management</h2>
-                    <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mt-0.5">Manage hotel services and amenities</p>
+                    <h2 className="text-2xl font-black text-gray-900 tracking-tight">
+                      {activeTab === "services" ? "Service Catalog" : activeTab === "menu" ? "Dining Integration" : activeTab === "rooms" ? "Room Inventory" : "Floor & VIP Configuration"}
+                    </h2>
+                    <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mt-0.5">
+                      {activeTab === "services" ? "Manage hotel services and amenities" : activeTab === "menu" ? "Sync and flag menu items for room service" : activeTab === "rooms" ? "Monitor and manage hotel rooms" : "Configure floor types and VIP mappings"}
+                    </p>
                   </div>
-                  <span className="bg-[#8B4513]/5 text-[#8B4513] px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest border border-[#8B4513]/10">
-                    {filtered.length} shown
-                  </span>
                 </div>
 
                 {loading ? (
                   <div className="flex flex-col items-center justify-center py-32">
                     <RefreshCw className="w-10 h-10 animate-spin text-gray-300 mb-4" />
-                    <p className="text-gray-400 text-xs font-bold uppercase tracking-widest">Loading services…</p>
-                  </div>
-                ) : filtered.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-32 text-center">
-                    <div className="text-6xl mb-4 opacity-20">🛎️</div>
-                    <h3 className="text-xl font-bold text-gray-400">No services found</h3>
-                    <p className="text-gray-400 text-sm mt-1">Click "Add New Service" to get started.</p>
+                    <p className="text-gray-400 text-xs font-bold uppercase tracking-widest">Loading data…</p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-                    {filtered.map(service => (
-                      <div key={service._id} className={`rounded-2xl p-5 border flex flex-col gap-3 transition-all hover:shadow-md ${service.isAvailable ? "bg-gray-50 border-gray-100" : "bg-gray-50/50 border-dashed border-gray-200 opacity-60"}`}>
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-2xl shadow-sm border border-gray-100 shrink-0">
-                              {service.icon || "🛎️"}
+                  <>
+                    {activeTab === "services" && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                        {filtered.map(service => (
+                          <div key={service._id} className="group bg-gray-50 rounded-[2rem] p-5 border-2 border-transparent hover:border-[#8B4513]/10 hover:bg-white transition-all">
+                            <div className="flex items-start justify-between mb-4">
+                              <div className="flex items-center gap-3">
+                                <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-2xl shadow-sm group-hover:scale-110 transition-transform">{service.icon || "🛎️"}</div>
+                                <div>
+                                  <h3 className="font-black text-gray-900 leading-tight">{service.name}</h3>
+                                  <span className="text-[10px] font-bold uppercase tracking-widest text-[#8B4513]/40 bg-[#8B4513]/5 px-2 py-0.5 rounded-full">{service.category}</span>
+                                </div>
+                              </div>
+                              <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button onClick={() => handleEdit(service)} className="w-8 h-8 bg-white rounded-lg flex items-center justify-center text-gray-400 hover:text-[#8B4513] shadow-sm">✏️</button>
+                                <button onClick={() => handleDelete(service)} className="w-8 h-8 bg-white rounded-lg flex items-center justify-center text-gray-400 hover:text-red-500 shadow-sm">🗑️</button>
+                              </div>
                             </div>
-                            <div className="min-w-0">
-                              <h3 className="font-black text-gray-900 text-sm leading-tight truncate">{service.name}</h3>
-                              <span className="text-[10px] font-bold text-[#8B4513] bg-[#8B4513]/5 px-2 py-0.5 rounded-full capitalize">{service.category}</span>
+                            <div className="flex items-end justify-between">
+                              <div>
+                                <div className="text-sm font-black text-gray-900">{service.price} Br</div>
+                                <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{service.unit || "per request"}</div>
+                              </div>
+                              <button onClick={() => handleToggleAvailability(service)}
+                                className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${service.isAvailable ? "bg-green-600/10 text-green-600" : "bg-red-600/10 text-red-600"}`}>
+                                {service.isAvailable ? "Available" : "Hidden"}
+                              </button>
                             </div>
                           </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {activeTab === "menu" && (
+                      <div className="space-y-6">
+                        {/* Food / Drinks top-level tabs */}
+                        <div className="flex gap-2 mb-6">
+                          {(['Food', 'Drinks'] as const).map(tab => (
+                            <button
+                              key={tab}
+                              onClick={() => { setMainCategoryFilter(tab); setCategoryFilter('all') }}
+                              className={`flex items-center gap-2 px-6 py-2.5 rounded-full font-black text-sm transition-all ${mainCategoryFilter === tab
+                                ? 'bg-[#8B4513] text-white shadow-md'
+                                : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                                }`}
+                            >
+                              {tab === 'Food' ? '🍽️' : '🥤'} {tab}
+                              <span className="text-[10px] opacity-70">({menuItems.filter(i => (i.mainCategory || 'Food') === tab).length})</span>
+                            </button>
+                          ))}
                         </div>
 
-                        {service.description && (
-                          <p className="text-xs text-gray-500 leading-relaxed">{service.description}</p>
-                        )}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                          {menuItems
+                            .filter(i => (i.mainCategory || 'Food') === mainCategoryFilter)
+                            .filter(i => !searchTerm || i.name.toLowerCase().includes(searchTerm.toLowerCase()) || (i.menuId && i.menuId.toLowerCase().includes(searchTerm.toLowerCase())))
+                            .sort((a, b) => {
+                              const idA = a.menuId || ""
+                              const idB = b.menuId || ""
+                              return idA.localeCompare(idB, undefined, { numeric: true, sensitivity: 'base' })
+                            })
+                            .map(item => (
+                              <div key={item._id} className="bg-gray-50 rounded-2xl overflow-hidden border border-gray-100 hover:shadow-xl transition-all group flex flex-col relative">
+                                {/* Item Image */}
+                                <div className="h-40 bg-gray-200 relative overflow-hidden">
+                                  {(item as any).image ? (
+                                    <img src={(item as any).image} alt={item.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center text-5xl opacity-30">🍽️</div>
+                                  )}
+                                  <div className="absolute top-4 left-4 flex flex-col gap-2 z-10">
+                                    <div className="bg-white/90 backdrop-blur-md px-2.5 py-1 rounded-lg text-[10px] font-black text-[#8B4513] shadow-sm border border-white/50">
+                                      #{item.menuId}
+                                    </div>
+                                  </div>
+                                  <div className={`absolute top-4 right-4 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest z-10 backdrop-blur-md border border-white/50 shadow-sm ${item.available ? "bg-green-100/90 text-green-700" : "bg-red-100/90 text-red-700"}`}>
+                                    {item.available ? "Active" : "Hidden"}
+                                  </div>
+                                </div>
 
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <span className="text-xl font-black text-gray-900">{service.price.toLocaleString()}</span>
-                            <span className="text-[10px] text-gray-400 font-bold ml-1">Br / {service.unit}</span>
-                          </div>
-                          <button onClick={() => handleToggleAvailability(service)}
-                            className={`text-[10px] font-black px-3 py-1.5 rounded-full border transition-all ${service.isAvailable ? "bg-green-50 text-green-700 border-green-200 hover:bg-green-100" : "bg-red-50 text-red-600 border-red-200 hover:bg-red-100"}`}>
-                            {service.isAvailable ? "✓ Available" : "✕ Unavailable"}
-                          </button>
-                        </div>
+                                <div className="p-5 flex-1 flex flex-col relative bg-white/50 backdrop-blur-sm">
+                                  <h3 className="font-black text-lg text-slate-800 mb-0.5 truncate">{item.name}</h3>
+                                  <p className="text-[10px] font-black text-[#8B4513] uppercase tracking-widest mb-4 opacity-70">{item.category}</p>
+                                  <div className="flex items-end gap-1 mb-6">
+                                    <span className="text-2xl font-black text-slate-900">{item.price}</span>
+                                    <span className="text-xs font-black text-slate-400 mb-1">Br</span>
+                                  </div>
 
-                        <div className="flex gap-2 pt-1 border-t border-gray-100">
-                          <button onClick={() => handleEdit(service)}
-                            className="flex-1 py-2 bg-white border border-gray-200 text-gray-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:border-[#8B4513]/30 hover:text-[#8B4513] transition-all active:scale-95">
-                            ✏️ Edit
-                          </button>
-                          <button onClick={() => handleDelete(service)}
-                            className="w-9 h-9 bg-white border border-gray-200 text-red-400 rounded-xl flex items-center justify-center hover:bg-red-50 hover:border-red-200 transition-all active:scale-95 text-sm">
-                            🗑️
-                          </button>
+                                  <div className="flex gap-2 mt-auto">
+                                    <button
+                                      onClick={() => router.push(`/admin/menu`)}
+                                      className="flex-1 font-black py-3 rounded-xl bg-white border border-gray-100 text-slate-500 hover:border-[#8B4513]/20 hover:text-[#8B4513] transition-all text-[10px] uppercase tracking-widest transform active:scale-95"
+                                    >
+                                      Edit / Manage
+                                    </button>
+                                    <button
+                                      onClick={() => handleMenuDelete(item)}
+                                      className="w-10 h-10 bg-white border border-gray-100 text-red-500 flex items-center justify-center rounded-xl hover:bg-red-50 hover:border-red-100 transition-all transform active:scale-95 shadow-sm"
+                                    >
+                                      🗑️
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
                         </div>
                       </div>
-                    ))}
-                  </div>
+                    )}
+
+                    {activeTab === "rooms" && (
+                      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+                        {rooms.map(room => (
+                          <div key={room._id} className="group bg-gray-50 rounded-2xl p-5 border-2 border-transparent hover:border-[#8B4513]/10 hover:bg-white transition-all relative">
+                            <div className="flex flex-col items-center text-center">
+                              <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-2xl shadow-sm mb-3 group-hover:scale-110 transition-transform">🛏️</div>
+                              <h3 className="font-black text-gray-900 text-lg">Room {room.roomNumber}</h3>
+                              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">{room.category} • {room.price} Br</p>
+                              
+                              <div className="flex gap-2">
+                                <button onClick={() => handleEdit(room)} className="p-2 bg-white rounded-xl text-xs shadow-sm hover:bg-gray-50 transition-all">✏️ Edit</button>
+                                <button onClick={() => handleRoomDelete(room)} className="p-2 bg-white rounded-xl text-xs shadow-sm hover:bg-red-50 hover:text-red-500 transition-all">🗑️</button>
+                              </div>
+                            </div>
+                            <div className={`absolute top-3 right-3 w-2 h-2 rounded-full ${room.status === 'available' ? 'bg-green-500' : room.status === 'occupied' ? 'bg-red-500' : 'bg-orange-500'}`} />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {activeTab === "floors" && (
+                      <div className="space-y-4">
+                        {floors.map(floor => (
+                          <div key={floor._id} className="flex items-center justify-between p-5 bg-gray-50 rounded-2xl border-2 border-transparent hover:border-[#8B4513]/10 transition-all">
+                             <div className="flex items-center gap-4">
+                               <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-xl shadow-sm font-black">F{floor.floorNumber}</div>
+                               <div>
+                                 <h3 className="font-black text-gray-900 text-lg">Floor {floor.floorNumber}</h3>
+                                 <div className="flex gap-2 mt-1">
+                                   <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${floor.type === 'vip' ? 'bg-purple-600 text-white' : 'bg-blue-600 text-white'}`}>
+                                     {floor.type}
+                                   </span>
+                                   {floor.isVIP && <span className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-amber-500 text-white">VIP Status</span>}
+                                 </div>
+                               </div>
+                             </div>
+                             
+                             <div className="flex items-center gap-6">
+                               <div className="flex flex-col items-center gap-1">
+                                 <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">VIP Floor</span>
+                                 <button onClick={() => handleToggleVip('floor', floor._id, floor.isVIP)}
+                                   className={`w-12 h-6 rounded-full relative transition-all ${floor.isVIP ? "bg-amber-500" : "bg-gray-300"}`}>
+                                   <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${floor.isVIP ? "left-7" : "left-1"}`} />
+                                 </button>
+                               </div>
+                             </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             </div>
@@ -265,80 +577,129 @@ export default function AdminServicesPage() {
             <div className="bg-white rounded-[2.5rem] shadow-2xl max-w-lg w-full relative overflow-hidden flex flex-col max-h-[90vh]">
               <button onClick={resetForm} className="absolute top-5 right-5 w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center font-bold text-gray-400 hover:bg-red-50 hover:text-red-500 transition-all z-10">✕</button>
               <div className="flex-1 overflow-y-auto p-6 md:p-8 pt-14">
-                <h2 className="text-xl font-black text-gray-900 mb-6">{editingService ? "Edit Service" : "New Service"}</h2>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  
-                  {/* Icon Picker */}
-                  <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Icon</label>
-                    <div className="flex flex-wrap gap-2">
-                      {ICONS.map(icon => (
-                        <button key={icon} type="button" onClick={() => setFormData({ ...formData, icon })}
-                          className={`w-10 h-10 rounded-xl text-lg border-2 transition-all ${formData.icon === icon ? "border-[#8B4513] bg-[#8B4513]/5 scale-110 shadow-md" : "border-gray-100 bg-gray-50 hover:border-gray-300"}`}>
-                          {icon}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Name */}
-                  <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5">Service Name *</label>
-                    <input required value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} placeholder="e.g. Room Cleaning"
-                      className="w-full bg-gray-50 rounded-xl px-4 py-3 text-sm font-medium border-none outline-none focus:ring-4 focus:ring-[#8B4513]/10" />
-                  </div>
-
-                  {/* Category */}
-                  <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5">Category *</label>
-                    <div className="flex gap-2">
-                      <select value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value })}
-                        className="flex-1 bg-gray-50 rounded-xl px-4 py-3 text-sm font-medium border-none outline-none focus:ring-4 focus:ring-[#8B4513]/10 appearance-none">
-                        <option value="">Select category…</option>
-                        {DEFAULT_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-                      </select>
-                      <input value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value })} placeholder="or type custom"
-                        className="flex-1 bg-gray-50 rounded-xl px-4 py-3 text-sm font-medium border-none outline-none focus:ring-4 focus:ring-[#8B4513]/10" />
-                    </div>
-                  </div>
-
-                  {/* Price & Unit */}
-                  <div className="grid grid-cols-2 gap-3">
+                <h2 className="text-xl font-black text-gray-900 mb-6">
+                  {activeTab === 'services' ? (editingService ? "Edit Service" : "New Service") : (editingRoom ? "Edit Room" : "New Room")}
+                </h2>
+                
+                {activeTab === 'services' ? (
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    {/* Icon Picker */}
                     <div>
-                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5">Price (Br) *</label>
-                      <input required type="number" min="0" value={formData.price} onChange={e => setFormData({ ...formData, price: e.target.value })} placeholder="0"
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Icon</label>
+                      <div className="flex flex-wrap gap-2">
+                        {ICONS.map(icon => (
+                          <button key={icon} type="button" onClick={() => setFormData({ ...formData, icon })}
+                            className={`w-10 h-10 rounded-xl text-lg border-2 transition-all ${formData.icon === icon ? "border-[#8B4513] bg-[#8B4513]/5 scale-110 shadow-md" : "border-gray-100 bg-gray-50 hover:border-gray-300"}`}>
+                            {icon}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Name */}
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5">Service Name *</label>
+                      <input required value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} placeholder="e.g. Room Cleaning"
                         className="w-full bg-gray-50 rounded-xl px-4 py-3 text-sm font-medium border-none outline-none focus:ring-4 focus:ring-[#8B4513]/10" />
                     </div>
+
+                    {/* Category */}
                     <div>
-                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5">Unit</label>
-                      <input value={formData.unit} onChange={e => setFormData({ ...formData, unit: e.target.value })} placeholder="per request"
-                        className="w-full bg-gray-50 rounded-xl px-4 py-3 text-sm font-medium border-none outline-none focus:ring-4 focus:ring-[#8B4513]/10" />
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5">Category *</label>
+                      <div className="flex gap-2">
+                        <select value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value })}
+                          className="flex-1 bg-gray-50 rounded-xl px-4 py-3 text-sm font-medium border-none outline-none focus:ring-4 focus:ring-[#8B4513]/10 appearance-none">
+                          <option value="">Select category…</option>
+                          {DEFAULT_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                        </select>
+                        <input value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value })} placeholder="or type custom"
+                          className="flex-1 bg-gray-50 rounded-xl px-4 py-3 text-sm font-medium border-none outline-none focus:ring-4 focus:ring-[#8B4513]/10" />
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Description */}
-                  <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5">Description</label>
-                    <textarea rows={3} value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} placeholder="Optional description…"
-                      className="w-full bg-gray-50 rounded-xl px-4 py-3 text-sm font-medium border-none outline-none focus:ring-4 focus:ring-[#8B4513]/10 resize-none" />
-                  </div>
+                    {/* Price & Unit */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5">Price (Br) *</label>
+                        <input required type="number" min="0" value={formData.price} onChange={e => setFormData({ ...formData, price: e.target.value })} placeholder="0"
+                          className="w-full bg-gray-50 rounded-xl px-4 py-3 text-sm font-medium border-none outline-none focus:ring-4 focus:ring-[#8B4513]/10" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5">Unit</label>
+                        <input value={formData.unit} onChange={e => setFormData({ ...formData, unit: e.target.value })} placeholder="per request"
+                          className="w-full bg-gray-50 rounded-xl px-4 py-3 text-sm font-medium border-none outline-none focus:ring-4 focus:ring-[#8B4513]/10" />
+                      </div>
+                    </div>
 
-                  {/* Availability */}
-                  <button type="button" onClick={() => setFormData({ ...formData, isAvailable: !formData.isAvailable })}
-                    className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 transition-all font-bold text-sm ${formData.isAvailable ? "bg-green-600 text-white border-green-600" : "bg-gray-50 text-gray-500 border-gray-100"}`}>
-                    <span>Available for guests</span>
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${formData.isAvailable ? "bg-white/20" : "bg-gray-200"}`}>{formData.isAvailable ? "ON" : "OFF"}</span>
-                  </button>
+                    {/* Description */}
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5">Description</label>
+                      <textarea rows={3} value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} placeholder="Optional description…"
+                        className="w-full bg-gray-50 rounded-xl px-4 py-3 text-sm font-medium border-none outline-none focus:ring-4 focus:ring-[#8B4513]/10 resize-none" />
+                    </div>
 
-                  <div className="flex gap-3 pt-2">
-                    {editingService && (
-                      <button type="button" onClick={resetForm} className="flex-1 py-3.5 text-gray-400 font-bold hover:bg-gray-50 rounded-xl transition-colors">Cancel</button>
-                    )}
-                    <button type="submit" disabled={formLoading} className="flex-[2] bg-[#8B4513] text-white py-3.5 rounded-xl font-black text-sm shadow-xl shadow-[#8B4513]/20 hover:scale-[1.01] transition-transform active:scale-95 disabled:opacity-50">
+                    {/* Availability */}
+                    <button type="button" onClick={() => setFormData({ ...formData, isAvailable: !formData.isAvailable })}
+                      className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 transition-all font-bold text-sm ${formData.isAvailable ? "bg-green-600 text-white border-green-600" : "bg-gray-50 text-gray-500 border-gray-100"}`}>
+                      <span>Available for guests</span>
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${formData.isAvailable ? "bg-white/20" : "bg-gray-200"}`}>{formData.isAvailable ? "ON" : "OFF"}</span>
+                    </button>
+
+                    <button type="submit" disabled={formLoading} className="w-full bg-[#8B4513] text-white py-3.5 rounded-xl font-black text-sm shadow-xl shadow-[#8B4513]/20 hover:scale-[1.01] transition-transform active:scale-95 disabled:opacity-50">
                       {formLoading ? "Saving…" : editingService ? "Update Service" : "Create Service"}
                     </button>
-                  </div>
-                </form>
+                  </form>
+                ) : (
+                  <form onSubmit={handleRoomSubmit} className="space-y-4">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5">Room Number *</label>
+                        <input required value={roomForm.roomNumber} onChange={e => setRoomForm({ ...roomForm, roomNumber: e.target.value })} placeholder="e.g. 101"
+                          className="w-full bg-gray-50 rounded-xl px-4 py-3 text-sm font-medium border-none outline-none focus:ring-4 focus:ring-[#8B4513]/10" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5">Floor *</label>
+                        <select required value={roomForm.floorId} onChange={e => setRoomForm({ ...roomForm, floorId: e.target.value })}
+                          className="w-full bg-gray-50 rounded-xl px-4 py-3 text-sm font-medium border-none outline-none focus:ring-4 focus:ring-[#8B4513]/10 appearance-none">
+                          <option value="">Select Floor…</option>
+                          {floors.map(f => <option key={f._id} value={f._id}>Floor {f.floorNumber} ({f.type})</option>)}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5">Price (Br) *</label>
+                        <input required type="number" min="0" value={roomForm.price} onChange={e => setRoomForm({ ...roomForm, price: e.target.value })} placeholder="0"
+                          className="w-full bg-gray-50 rounded-xl px-4 py-3 text-sm font-medium border-none outline-none focus:ring-4 focus:ring-[#8B4513]/10" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5">Category *</label>
+                        <select value={roomForm.category} onChange={e => setRoomForm({ ...roomForm, category: e.target.value })}
+                          className="w-full bg-gray-50 rounded-xl px-4 py-3 text-sm font-medium border-none outline-none focus:ring-4 focus:ring-[#8B4513]/10 appearance-none">
+                          <option value="Standard">Standard</option>
+                          <option value="Deluxe">Deluxe</option>
+                          <option value="Suite">Suite</option>
+                          <option value="VIP">VIP</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5">Status</label>
+                      <select value={roomForm.status} onChange={e => setRoomForm({ ...roomForm, status: e.target.value })}
+                        className="w-full bg-gray-50 rounded-xl px-4 py-3 text-sm font-medium border-none outline-none focus:ring-4 focus:ring-[#8B4513]/10 appearance-none">
+                        <option value="available">Available</option>
+                        <option value="occupied">Occupied</option>
+                        <option value="maintenance">Maintenance</option>
+                      </select>
+                    </div>
+
+                    <button type="submit" disabled={formLoading} className="w-full bg-[#8B4513] text-white py-3.5 rounded-xl font-black text-sm shadow-xl shadow-[#8B4513]/20 hover:scale-[1.01] transition-transform active:scale-95 disabled:opacity-50">
+                      {formLoading ? "Saving…" : editingRoom ? "Update Room" : "Create Room"}
+                    </button>
+                  </form>
+                )}
               </div>
             </div>
           </div>

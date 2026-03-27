@@ -20,6 +20,7 @@ interface MenuItem {
   _id: string
   menuId?: string
   name: string
+  mainCategory?: string
   description?: string
   category: string
   price: number
@@ -35,6 +36,7 @@ export default function CashierPOSPage() {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([])
   const [cartItems, setCartItems] = useState<CartItem[]>([])
   const [categoryFilter, setCategoryFilter] = useState("all")
+  const [mainCategoryFilter, setMainCategoryFilter] = useState<'Food' | 'Drinks'>('Food')
   const [menuLoading, setMenuLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [orderNumber, setOrderNumber] = useState("")
@@ -400,8 +402,9 @@ export default function CashierPOSPage() {
     }
   }
 
-  const categories = ["all", ...new Set(menuItems.map((item) => item.category))]
+  const categories = ["all", ...new Set(menuItems.filter(i => (i.mainCategory || 'Food') === mainCategoryFilter).map((item) => item.category))]
   const filteredItems = (categoryFilter === "all" ? menuItems : menuItems.filter((item) => item.category === categoryFilter))
+    .filter((item) => (item.mainCategory || 'Food') === mainCategoryFilter)
     .filter((item) => {
       const nameMatch = !searchTerm || item.name.toLowerCase().includes(searchTerm.toLowerCase())
       const idMatch = !idSearchTerm || (item.menuId && item.menuId.toLowerCase() === idSearchTerm.toLowerCase())
@@ -493,6 +496,23 @@ export default function CashierPOSPage() {
                     </button>
                   )}
                 </div>
+              </div>
+
+              {/* Main Category Filter (Food/Drinks) */}
+              <div className="px-4 md:px-0 mb-4 flex gap-2">
+                {(['Food', 'Drinks'] as const).map(tab => (
+                  <button
+                    key={tab}
+                    onClick={() => { setMainCategoryFilter(tab); setCategoryFilter('all') }}
+                    className={`flex items-center gap-2 px-6 py-2.5 rounded-full font-black text-sm transition-all ${mainCategoryFilter === tab
+                      ? 'bg-[#2d5a41] text-white shadow-md'
+                      : 'bg-white text-gray-500 hover:bg-gray-100 border border-gray-200'
+                      }`}
+                  >
+                    {tab === 'Food' ? '🍽️' : '🥤'} {tab}
+                    <span className="text-[10px] opacity-70">({menuItems.filter(i => (i.mainCategory || 'Food') === tab).length})</span>
+                  </button>
+                ))}
               </div>
 
               {/* Category Filter - Robust Horizontal Slider */}
