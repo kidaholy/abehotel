@@ -69,9 +69,19 @@ interface MenuManagementSectionProps {
   confirm: (options: any) => Promise<boolean>
   notify: (options: any) => void
   showTitle?: boolean
+  apiBaseUrl?: string
+  categoryType?: string
+  title?: string
 }
 
-export function MenuManagementSection({ confirm, notify, showTitle = true }: MenuManagementSectionProps) {
+export function MenuManagementSection({ 
+  confirm, 
+  notify, 
+  showTitle = true,
+  apiBaseUrl = "/api/admin/menu",
+  categoryType = "menu",
+  title
+}: MenuManagementSectionProps) {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([])
   const [stockItems, setStockItems] = useState<any[]>([])
   const [filteredItems, setFilteredItems] = useState<MenuItem[]>([])
@@ -142,7 +152,7 @@ export function MenuManagementSection({ confirm, notify, showTitle = true }: Men
   const fetchCategories = async () => {
     if (!token) return
     try {
-      const response = await fetch("/api/categories?type=menu", {
+      const response = await fetch(`/api/categories?type=${categoryType}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (response.ok) {
@@ -165,7 +175,7 @@ export function MenuManagementSection({ confirm, notify, showTitle = true }: Men
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ name: newCategoryName, type: "menu" }),
+        body: JSON.stringify({ name: newCategoryName, type: categoryType }),
       })
       if (response.ok) {
         setNewCategoryName("")
@@ -230,7 +240,7 @@ export function MenuManagementSection({ confirm, notify, showTitle = true }: Men
   const fetchMenuItems = async () => {
     try {
       setLoading(true)
-      const response = await fetch(`/api/admin/menu?t=${Date.now()}`, {
+      const response = await fetch(`${apiBaseUrl}?t=${Date.now()}`, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Cache-Control': 'no-cache',
@@ -289,7 +299,7 @@ export function MenuManagementSection({ confirm, notify, showTitle = true }: Men
     }
 
     try {
-      const response = await fetch("/api/admin/menu/swap", {
+      const response = await fetch(`${apiBaseUrl}/swap`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -325,7 +335,7 @@ export function MenuManagementSection({ confirm, notify, showTitle = true }: Men
 
     try {
       setLoading(true)
-      const response = await fetch("/api/admin/menu/normalize", {
+      const response = await fetch(`${apiBaseUrl}/normalize`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` }
       })
@@ -360,8 +370,8 @@ export function MenuManagementSection({ confirm, notify, showTitle = true }: Men
     setCreateLoading(true)
     try {
       const url = editingItem
-        ? `/api/admin/menu/${editingItem._id}`
-        : "/api/admin/menu"
+        ? `${apiBaseUrl}/${editingItem._id}`
+        : apiBaseUrl
 
       const method = editingItem ? "PUT" : "POST"
 
@@ -465,7 +475,7 @@ export function MenuManagementSection({ confirm, notify, showTitle = true }: Men
     if (!confirmed) return
 
     try {
-      const response = await fetch(`/api/admin/menu/${item._id}`, {
+      const response = await fetch(`${apiBaseUrl}/${item._id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       })
@@ -697,7 +707,7 @@ export function MenuManagementSection({ confirm, notify, showTitle = true }: Men
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                 <div>
                   <h1 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight flex items-center gap-3">
-                    {t("adminMenu.title")}
+                    {title || t("adminMenu.title")}
                     {loading && <RefreshCw size={24} className="animate-spin text-[#8B4513]" />}
                   </h1>
                   <p className="text-gray-400 text-xs md:text-sm font-bold uppercase tracking-widest">{t("adminMenu.subtitle")}</p>

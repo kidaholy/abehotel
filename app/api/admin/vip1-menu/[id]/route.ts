@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server"
 import { connectDB } from "@/lib/db"
-import VipMenuItem from "@/lib/models/vip-menu-item"
+import Vip1MenuItem from "@/lib/models/vip1-menu-item"
 import { validateSession } from "@/lib/auth"
 
-// Update VIP menu item
+// Update VIP 1 menu item
 export async function PUT(request: Request, { params }: { params: { id: string } }) {
   try {
     const decoded = await validateSession(request)
@@ -14,7 +14,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     await connectDB()
     const data = await request.json()
     
-    const updated = await (VipMenuItem as any).findByIdAndUpdate(
+    const updated = await (Vip1MenuItem as any).findByIdAndUpdate(
       params.id,
       {
         $set: {
@@ -30,8 +30,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
           recipe: data.recipe,
           reportUnit: data.reportUnit,
           reportQuantity: data.reportQuantity !== undefined ? Number(data.reportQuantity) : undefined,
-          distributions: data.distributions,
-          vipLevel: data.vipLevel
+          distributions: data.distributions
         }
       },
       { new: true }
@@ -42,16 +41,16 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     }
 
     return NextResponse.json({
-      message: "VIP Menu item updated successfully",
+      message: "VIP 1 Menu item updated successfully",
       item: updated
     })
   } catch (error: any) {
-    console.error("❌ Update VIP menu item error:", error)
+    console.error("❌ Update VIP 1 menu item error:", error)
     return NextResponse.json({ message: error.message || "Failed to update item" }, { status: 500 })
   }
 }
 
-// Delete VIP menu item
+// Delete VIP 1 menu item
 export async function DELETE(request: Request, { params }: { params: { id: string } }) {
   try {
     const decoded = await validateSession(request)
@@ -60,15 +59,15 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
     }
 
     await connectDB()
-    const deleted = await (VipMenuItem as any).findByIdAndDelete(params.id)
+    const deleted = await (Vip1MenuItem as any).findByIdAndDelete(params.id)
 
     if (!deleted) {
       return NextResponse.json({ message: "Item not found" }, { status: 404 })
     }
 
-    return NextResponse.json({ message: "VIP Menu item deleted successfully" })
+    return NextResponse.json({ message: "VIP 1 Menu item deleted successfully" })
   } catch (error: any) {
-    console.error("❌ Delete VIP menu item error:", error)
+    console.error("❌ Delete VIP 1 menu item error:", error)
     return NextResponse.json({ message: error.message || "Failed to delete item" }, { status: 500 })
   }
 }

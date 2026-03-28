@@ -145,7 +145,6 @@ export default function StorePage() {
     const [dismissQuantity, setDismissQuantity] = useState("")
     const [dismissValue, setDismissValue] = useState("")
     const [expandedAsset, setExpandedAsset] = useState<string | null>(null)
-    const [vipFilter, setVipFilter] = useState<'all' | '1' | '2'>('all')
 
     // Transfer requests state
     const [transferRequests, setTransferRequests] = useState<TransferRequest[]>([])
@@ -185,9 +184,7 @@ export default function StorePage() {
         unitCost: "",
         trackQuantity: true,
         showStatus: true,
-        sellUnitEquivalent: "1",
-        isVIP: false,
-        vipLevel: 1 as 1 | 2
+        sellUnitEquivalent: "1"
     })
 
     const { t } = useLanguage()
@@ -866,9 +863,7 @@ export default function StorePage() {
             unitCost: item.unitCost?.toString() || "",
             trackQuantity: item.trackQuantity,
             showStatus: item.showStatus,
-            sellUnitEquivalent: item.sellUnitEquivalent?.toString() || "1",
-            isVIP: item.isVIP || false,
-            vipLevel: item.vipLevel || 1
+            sellUnitEquivalent: item.sellUnitEquivalent?.toString() || "1"
         })
         setShowStockForm(true)
     }
@@ -886,9 +881,7 @@ export default function StorePage() {
             unitCost: "",
             trackQuantity: true,
             showStatus: true,
-            sellUnitEquivalent: "1",
-            isVIP: false,
-            vipLevel: 1
+            sellUnitEquivalent: "1"
         })
         setEditingStock(null)
         setShowStockForm(false)
@@ -909,10 +902,7 @@ export default function StorePage() {
     const filteredStock = stockItems.filter(item => {
         const inSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                         item.category.toLowerCase().includes(searchTerm.toLowerCase())
-        if (!inSearch) return false
-        if (vipFilter === '1' && (!item.isVIP || item.vipLevel !== 1)) return false
-        if (vipFilter === '2' && (!item.isVIP || item.vipLevel !== 2)) return false
-        return true
+        return inSearch
     })
 
 
@@ -1178,28 +1168,6 @@ export default function StorePage() {
                                                 className="w-full pl-10 pr-4 py-3 bg-gray-50 rounded-2xl outline-none font-bold text-sm"
                                             />
                                         </div>
-                                        {activeTab === 'inventory' && (
-                                            <div className="flex bg-gray-100 p-1 rounded-2xl gap-1">
-                                                <button 
-                                                    onClick={() => setVipFilter('all')}
-                                                    className={`px-4 py-2 rounded-xl font-bold text-xs transition-all ${vipFilter === 'all' ? 'bg-white text-slate-800 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
-                                                >
-                                                    All
-                                                </button>
-                                                <button 
-                                                    onClick={() => setVipFilter('1')}
-                                                    className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-xs transition-all ${vipFilter === '1' ? 'bg-[#8B4513] text-white shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
-                                                >
-                                                    <Wine size={14} /> VIP 1
-                                                </button>
-                                                <button 
-                                                    onClick={() => setVipFilter('2')}
-                                                    className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-xs transition-all ${vipFilter === '2' ? 'bg-[#8B4513] text-white shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
-                                                >
-                                                    <Wine size={14} /> VIP 2
-                                                </button>
-                                            </div>
-                                        )}
                                     </div>
                                     <div className="flex gap-2">
                                         {activeTab === 'inventory' && (
@@ -1722,39 +1690,6 @@ export default function StorePage() {
                                         </div>
                                     </div>
 
-                                    <div className="bg-gray-50 p-6 rounded-2xl space-y-4">
-                                        <div className="flex items-center justify-between">
-                                            <div>
-                                                <p className="font-bold text-sm text-gray-700">VIP Store Item</p>
-                                                <p className="text-[10px] text-gray-400 uppercase font-black tracking-widest">Mark as VIP exclusive stock</p>
-                                            </div>
-                                            <button 
-                                                type="button"
-                                                onClick={() => setStockFormData({ ...stockFormData, isVIP: !stockFormData.isVIP })}
-                                                className={`w-12 h-6 rounded-full transition-all relative ${stockFormData.isVIP ? 'bg-[#8B4513]' : 'bg-gray-200'}`}
-                                            >
-                                                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${stockFormData.isVIP ? 'right-1' : 'left-1'}`} />
-                                            </button>
-                                        </div>
-
-                                        {stockFormData.isVIP && (
-                                            <div className="pt-2 border-t border-gray-200/50">
-                                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Target VIP Level</p>
-                                                <div className="flex gap-2">
-                                                    {[1, 2].map(level => (
-                                                        <button
-                                                            key={level}
-                                                            type="button"
-                                                            onClick={() => setStockFormData({ ...stockFormData, vipLevel: level as 1 | 2 })}
-                                                            className={`flex-1 py-3 rounded-xl font-bold text-xs transition-all border ${stockFormData.vipLevel === level ? 'bg-[#8B4513] text-white border-[#8B4513]' : 'bg-white text-gray-400 border-gray-100 hover:bg-gray-100'}`}
-                                                        >
-                                                            VIP {level}
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
                                     <div className="flex gap-4 pt-4">
                                         <button type="button" onClick={resetStockForm} className="flex-1 py-4 font-bold text-gray-400">Cancel</button>
                                         <button type="submit" className="flex-[2] py-4 bg-[#8B4513] text-white rounded-xl font-bold">Save Item</button>

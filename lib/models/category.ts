@@ -2,7 +2,7 @@ import mongoose, { Schema, Document } from "mongoose"
 
 export interface ICategory extends Document {
     name: string
-    type: 'menu' | 'stock' | 'fixed-asset' | 'expense' | 'room' | 'service'
+    type: 'menu' | 'stock' | 'fixed-asset' | 'expense' | 'room' | 'service' | 'vip1-menu' | 'vip2-menu'
     description?: string
     createdAt: Date
     updatedAt: Date
@@ -11,7 +11,7 @@ export interface ICategory extends Document {
 const categorySchema = new Schema<ICategory>(
     {
         name: { type: String, required: true, trim: true },
-        type: { type: String, enum: ['menu', 'stock', 'fixed-asset', 'expense', 'room', 'service'], required: true },
+        type: { type: String, enum: ['menu', 'stock', 'fixed-asset', 'expense', 'room', 'service', 'vip1-menu', 'vip2-menu'], required: true },
         description: { type: String },
     },
     { timestamps: true }

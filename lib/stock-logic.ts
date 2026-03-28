@@ -1,5 +1,6 @@
 import MenuItem from "./models/menu-item"
-import VipMenuItem from "./models/vip-menu-item"
+import Vip1MenuItem from "./models/vip1-menu-item"
+import Vip2MenuItem from "./models/vip2-menu-item"
 import Stock from "./models/stock"
 import mongoose from "mongoose"
 
@@ -11,13 +12,14 @@ export async function calculateStockConsumption(items: any[]) {
     const stockConsumptionMap = new Map<string, number>()
     const menuItemIds = items.map(i => i.menuItemId)
     
-    // Fetch from both collections
-    const [standardItems, vipItems] = await Promise.all([
+    // Fetch from all collections
+    const [standardItems, vip1Items, vip2Items] = await Promise.all([
         MenuItem.find({ _id: { $in: menuItemIds } }).populate('stockItemId').lean(),
-        (mongoose.model('VipMenuItem') as any).find({ _id: { $in: menuItemIds } }).lean()
+        (Vip1MenuItem as any).find({ _id: { $in: menuItemIds } }).lean(),
+        (Vip2MenuItem as any).find({ _id: { $in: menuItemIds } }).lean()
     ])
 
-    const linkedMenuItems = [...standardItems, ...vipItems]
+    const linkedMenuItems = [...standardItems, ...vip1Items, ...vip2Items]
 
     for (const orderItem of items) {
         const menuData = linkedMenuItems.find(m => m._id.toString() === orderItem.menuItemId)
@@ -28,7 +30,7 @@ export async function calculateStockConsumption(items: any[]) {
             for (const ingredient of menuData.recipe) {
                 if (ingredient.stockItemId) {
                     const stockId = ingredient.stockItemId.toString()
-                    const consumptionAmount = (ingredient.quantityRequired || 0) * orderItem.quantity
+                    const consumptionAmount = (ingredient.quantity || 0) * orderItem.quantity
                     stockConsumptionMap.set(stockId, (stockConsumptionMap.get(stockId) || 0) + consumptionAmount)
                 }
             }

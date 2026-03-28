@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server"
 import { connectDB } from "@/lib/db"
 import MenuItem from "@/lib/models/menu-item"
+import Vip1MenuItem from "@/lib/models/vip1-menu-item"
+import Vip2MenuItem from "@/lib/models/vip2-menu-item"
 import Stock from "@/lib/models/stock"
 import { validateSession } from "@/lib/auth"
+import mongoose from "mongoose"
 
 export async function GET(request: Request) {
   try {
@@ -23,15 +26,17 @@ export async function GET(request: Request) {
       .populate('recipe.stockItemId')
       .lean()
 
-    // Also fetch VIP menu items if not already included (they are in a separate collection now)
-    const vipMenuItems = await (mongoose.model('VipMenuItem') as any).find(query)
-      .populate('recipe.stockItemId')
-      .lean()
+    // Fetch VIP menu items from independent collections
+    const [vip1Items, vip2Items] = await Promise.all([
+      (Vip1MenuItem as any).find(query).populate('recipe.stockItemId').lean(),
+      (Vip2MenuItem as any).find(query).populate('recipe.stockItemId').lean()
+    ])
 
-    // Add a flag to distinguish them if needed, though they should be compatible
+    // Combine all items into a single flat list
     const allItems = [
-      ...menuItems.map(item => ({ ...item, isStandardMenu: true })),
-      ...vipMenuItems.map(item => ({ ...item, isVipMenu: true }))
+      ...menuItems,
+      ...vip1Items,
+      ...vip2Items
     ]
 
     // Filter out items where linked stock or any recipe ingredient is out of stock (unless fetchAll is true)
@@ -53,8 +58,8 @@ export async function GET(request: Request) {
           const stock = ingredient.stockItemId
           if (stock) {
             const status = stock.status
-            const qty = stock.quantity || 0
-            const required = ingredient.quantityRequired || 0
+            const qty = (stock.quantity || 0)
+            const required = (ingredient.quantity || ingredient.quantityRequired || 0)
             
             if (status === 'finished' || status === 'out_of_stock' || qty < required) {
               return false
