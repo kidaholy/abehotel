@@ -64,20 +64,25 @@ export default function CashierPOSPage() {
   useEffect(() => {
     let mounted = true
 
-    // 🚀 HYDRATION CACHE: Load from localStorage immediately
-    const cachedMenu = localStorage.getItem("pos_menu_cache")
+    // Clear old stale cache that doesn't have menuType field
+    localStorage.removeItem("pos_menu_cache")
+
+    // 🚀 HYDRATION CACHE: Load from localStorage (v2 has menuType fields)
+    const cachedMenu = localStorage.getItem("pos_menu_cache_v2")
     if (cachedMenu) {
       try {
         const parsed = JSON.parse(cachedMenu)
-        // De-duplicate by _id
-        const seen = new Set<string>()
-        const deduped = parsed.filter((item: any) => {
-          if (seen.has(item._id)) return false
-          seen.add(item._id)
-          return true
-        })
-        setMenuItems(deduped)
-        setMenuLoading(false)
+        // Only use cache if items have the menuType field (otherwise it's stale)
+        if (parsed.length > 0 && parsed[0].menuType !== undefined) {
+          const seen = new Set<string>()
+          const deduped = parsed.filter((item: any) => {
+            if (seen.has(item._id)) return false
+            seen.add(item._id)
+            return true
+          })
+          setMenuItems(deduped)
+          setMenuLoading(false)
+        }
       } catch (err) {
         console.error("Failed to parse menu cache")
       }
@@ -87,7 +92,7 @@ export default function CashierPOSPage() {
       if (!token) return
 
       try {
-        if (retryCount === 0 && !localStorage.getItem("pos_menu_cache")) setMenuLoading(true)
+        if (retryCount === 0 && !localStorage.getItem("pos_menu_cache_v2")) setMenuLoading(true)
         setError(null)
 
         const response = await fetch("/api/menu", {
@@ -109,8 +114,8 @@ export default function CashierPOSPage() {
             return true
           })
 
-          // Update Cache
-          localStorage.setItem("pos_menu_cache", JSON.stringify(deduped))
+          // Update Cache (v2 key has menuType fields)
+          localStorage.setItem("pos_menu_cache_v2", JSON.stringify(deduped))
 
           setMenuItems(deduped)
           setMenuLoading(false)

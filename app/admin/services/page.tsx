@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { useRouter } from "next/navigation"
 import { ProtectedRoute } from "@/components/protected-route"
 import { BentoNavbar } from "@/components/bento-navbar"
 import { useAuth } from "@/context/auth-context"
@@ -16,10 +17,13 @@ import {
   RefreshCw,
   Wine,
   Bed,
-  Utensils
+  Utensils,
+  Crown,
+  ArrowRight,
+  ChefHat
 } from "lucide-react"
 
-type Tab = "menu-standard" | "menu1" | "menu2" | "rooms"
+type Tab = "menu-standard" | "vip" | "rooms"
 
 interface TabButtonProps {
   active: boolean
@@ -161,17 +165,19 @@ export default function AdminServicesPage() {
     setShowForm(false)
   }
 
+  const router = useRouter()
+
   return (
     <ProtectedRoute requiredRoles={["admin"]}>
       <div className="min-h-screen bg-gray-50 p-6">
         <div className="max-w-7xl mx-auto space-y-6">
           <BentoNavbar />
 
+          {/* Tab Bar — 3 tabs only */}
           <div className="flex bg-white p-2 rounded-2xl shadow-sm border border-gray-200 overflow-x-auto gap-2">
             <TabButton active={activeTab === "rooms"} onClick={() => setActiveTab("rooms")} icon={<Building size={18} />} label="Room Management" />
             <TabButton active={activeTab === "menu-standard"} onClick={() => setActiveTab("menu-standard")} icon={<Utensils size={18} />} label="Standard Menu" />
-            <TabButton active={activeTab === "menu1"} onClick={() => setActiveTab("menu1")} icon={<Wine size={18} />} label="VIP 1 Menu" />
-            <TabButton active={activeTab === "menu2"} onClick={() => setActiveTab("menu2")} icon={<Wine size={18} />} label="VIP 2 Menu" />
+            <TabButton active={activeTab === "vip"} onClick={() => setActiveTab("vip")} icon={<Crown size={18} />} label="VIP Menus" />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
@@ -206,18 +212,64 @@ export default function AdminServicesPage() {
                   </div>
                 ) : (
                   <>
-                    {(activeTab === "menu1" || activeTab === "menu2" || activeTab === "menu-standard") && (
-                      <MenuManagementSection 
+                    {activeTab === "menu-standard" && (
+                      <MenuManagementSection
                         confirm={confirm}
                         notify={notify}
                         showTitle={true}
-                        title={activeTab === "menu-standard" ? "Standard Menu Management" : 
-                               activeTab === "menu1" ? "VIP 1 Menu Management" : "VIP 2 Menu Management"}
-                        apiBaseUrl={activeTab === "menu-standard" ? "/api/admin/menu" : 
-                                    activeTab === "menu1" ? "/api/admin/vip1-menu" : "/api/admin/vip2-menu"}
-                        categoryType={activeTab === "menu-standard" ? "menu" : 
-                                      activeTab === "menu1" ? "vip1-menu" : "vip2-menu"}
+                        title="Standard Menu Management"
+                        apiBaseUrl="/api/admin/menu"
+                        categoryType="menu"
                       />
+                    )}
+
+                    {/* VIP Landing Page */}
+                    {activeTab === "vip" && (
+                      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-8">
+                        <div className="text-center">
+                          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-purple-100 mb-4">
+                            <Crown size={40} className="text-purple-600" />
+                          </div>
+                          <h2 className="text-3xl font-black text-gray-900 mb-2">VIP Menu Management</h2>
+                          <p className="text-gray-400 font-medium text-sm">Select a VIP tier to manage its menu items independently</p>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-2xl">
+                          {/* VIP 1 Card */}
+                          <button
+                            onClick={() => router.push("/admin/vip1-menu")}
+                            className="group bg-gradient-to-br from-purple-600 to-purple-800 text-white rounded-3xl p-8 shadow-xl shadow-purple-500/20 hover:shadow-2xl hover:shadow-purple-500/30 hover:-translate-y-1 transition-all flex flex-col items-center gap-4 text-left"
+                          >
+                            <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                              <Wine size={32} className="text-white" />
+                            </div>
+                            <div className="text-center">
+                              <h3 className="text-2xl font-black mb-1">VIP 1 Menu</h3>
+                              <p className="text-purple-200 text-xs font-bold uppercase tracking-widest">Manage vip1menuitems</p>
+                            </div>
+                            <div className="flex items-center gap-2 text-purple-200 text-sm font-bold mt-2 group-hover:gap-3 transition-all">
+                              Open Manager <ArrowRight size={16} />
+                            </div>
+                          </button>
+
+                          {/* VIP 2 Card */}
+                          <button
+                            onClick={() => router.push("/admin/vip2-menu")}
+                            className="group bg-gradient-to-br from-amber-600 to-amber-800 text-white rounded-3xl p-8 shadow-xl shadow-amber-500/20 hover:shadow-2xl hover:shadow-amber-500/30 hover:-translate-y-1 transition-all flex flex-col items-center gap-4 text-left"
+                          >
+                            <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                              <ChefHat size={32} className="text-white" />
+                            </div>
+                            <div className="text-center">
+                              <h3 className="text-2xl font-black mb-1">VIP 2 Menu</h3>
+                              <p className="text-amber-200 text-xs font-bold uppercase tracking-widest">Manage vip2menuitems</p>
+                            </div>
+                            <div className="flex items-center gap-2 text-amber-200 text-sm font-bold mt-2 group-hover:gap-3 transition-all">
+                              Open Manager <ArrowRight size={16} />
+                            </div>
+                          </button>
+                        </div>
+                      </div>
                     )}
 
                     {activeTab === "rooms" && (
