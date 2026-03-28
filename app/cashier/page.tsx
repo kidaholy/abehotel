@@ -10,7 +10,7 @@ import { useAuth } from "@/context/auth-context"
 import { useLanguage } from "@/context/language-context"
 import { ConfirmationCard, NotificationCard } from "@/components/confirmation-card"
 import { useConfirmation } from "@/hooks/use-confirmation"
-import { ShoppingCart, RefreshCw, X, Search, Hash, Utensils, Coffee } from 'lucide-react'
+import { ShoppingCart, RefreshCw, X, Search, Hash, Utensils, Coffee, Crown, Wine } from 'lucide-react'
 import { motion, AnimatePresence } from "framer-motion"
 import { useMemo, useRef } from "react"
 import { useSettings } from "@/context/settings-context"
@@ -51,6 +51,7 @@ export default function CashierPOSPage() {
   const [idSearchTerm, setIdSearchTerm] = useState("")
   const [selectedFloorId, setSelectedFloorId] = useState<string>("")
   const [variantModal, setVariantModal] = useState<{ item: MenuItem } | null>(null)
+  const [menuTier, setMenuTier] = useState<'standard' | 'vip1' | 'vip2'>('standard')
   const { token, user, logout } = useAuth()
   const { t } = useLanguage()
   const { settings } = useSettings()
@@ -68,7 +69,14 @@ export default function CashierPOSPage() {
     if (cachedMenu) {
       try {
         const parsed = JSON.parse(cachedMenu)
-        setMenuItems(parsed)
+        // De-duplicate by _id
+        const seen = new Set<string>()
+        const deduped = parsed.filter((item: any) => {
+          if (seen.has(item._id)) return false
+          seen.add(item._id)
+          return true
+        })
+        setMenuItems(deduped)
         setMenuLoading(false)
       } catch (err) {
         console.error("Failed to parse menu cache")
@@ -93,10 +101,18 @@ export default function CashierPOSPage() {
         if (response.ok) {
           const data = await response.json()
 
-          // Update Cache
-          localStorage.setItem("pos_menu_cache", JSON.stringify(data))
+          // De-duplicate by _id in case old migrations left duplicate entries in the DB
+          const seen = new Set<string>()
+          const deduped = data.filter((item: any) => {
+            if (seen.has(item._id)) return false
+            seen.add(item._id)
+            return true
+          })
 
-          setMenuItems(data)
+          // Update Cache
+          localStorage.setItem("pos_menu_cache", JSON.stringify(deduped))
+
+          setMenuItems(deduped)
           setMenuLoading(false)
         } else {
           // If 5xx error or network error, retry
@@ -402,8 +418,16 @@ export default function CashierPOSPage() {
     }
   }
 
-  const categories = ["all", ...new Set(menuItems.filter(i => (i.mainCategory || 'Food') === mainCategoryFilter).map((item) => item.category))]
-  const filteredItems = (categoryFilter === "all" ? menuItems : menuItems.filter((item) => item.category === categoryFilter))
+  // Items belonging to the selected menu tier
+  const tierItems = menuItems.filter((item: any) => {
+    if (menuTier === 'standard') return !item.menuType || item.menuType === 'standard'
+    if (menuTier === 'vip1') return item.menuType === 'vip1'
+    if (menuTier === 'vip2') return item.menuType === 'vip2'
+    return true
+  })
+
+  const categories = ["all", ...new Set(tierItems.filter(i => (i.mainCategory || 'Food') === mainCategoryFilter).map((item) => item.category))]
+  const filteredItems = (categoryFilter === "all" ? tierItems : tierItems.filter((item) => item.category === categoryFilter))
     .filter((item) => (item.mainCategory || 'Food') === mainCategoryFilter)
     .filter((item) => {
       const nameMatch = !searchTerm || item.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -498,6 +522,28 @@ export default function CashierPOSPage() {
                 </div>
               </div>
 
+              {/* Menu Tier Tabs — Standard / VIP 1 / VIP 2 */}
+              <div className="px-4 md:px-0 mb-3 flex gap-2 flex-wrap">
+                {([
+                  { key: 'standard', label: 'Standard Menu', icon: <Utensils size={14} />, count: menuItems.filter((i: any) => !i.menuType || i.menuType === 'standard').length },
+                  { key: 'vip1',     label: 'VIP 1 Menu',   icon: <Crown size={14} />,   count: menuItems.filter((i: any) => i.menuType === 'vip1').length },
+                  { key: 'vip2',     label: 'VIP 2 Menu',   icon: <Wine size={14} />,    count: menuItems.filter((i: any) => i.menuType === 'vip2').length },
+                ] as const).map(tier => (
+                  <button
+                    key={tier.key}
+                    onClick={() => { setMenuTier(tier.key); setCategoryFilter('all') }}
+                    className={`flex items-center gap-2 px-5 py-2 rounded-full font-black text-xs transition-all ${
+                      menuTier === tier.key
+                        ? 'bg-[#7c3aed] text-white shadow-md'
+                        : 'bg-white text-gray-500 hover:bg-gray-100 border border-gray-200'
+                    }`}
+                  >
+                    {tier.icon} {tier.label}
+                    <span className="text-[10px] opacity-70">({tier.count})</span>
+                  </button>
+                ))}
+              </div>
+
               {/* Main Category Filter (Food/Drinks) */}
               <div className="px-4 md:px-0 mb-4 flex gap-2">
                 {(['Food', 'Drinks'] as const).map(tab => (
@@ -510,7 +556,7 @@ export default function CashierPOSPage() {
                         }`}
                     >
                       {tab === 'Food' ? <Utensils size={16} /> : <Coffee size={16} />} {tab}
-                      <span className="text-[10px] opacity-70">({menuItems.filter(i => (i.mainCategory || 'Food') === tab).length})</span>
+                      <span className="text-[10px] opacity-70">({tierItems.filter(i => (i.mainCategory || 'Food') === tab).length})</span>
                     </button>
                 ))}
               </div>

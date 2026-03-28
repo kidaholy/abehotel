@@ -681,6 +681,46 @@ export function MenuManagementSection({
                   >
                     <RefreshCw size={14} /> Fix Collection Mismatch
                   </button>
+
+                  {/* Clear All button — only visible for VIP tiers */}
+                  {(categoryType === 'vip1-menu' || categoryType === 'vip2-menu') && (
+                    <button
+                      onClick={async () => {
+                        const target = categoryType === 'vip1-menu' ? 'vip1' : 'vip2'
+                        const tierName = categoryType === 'vip1-menu' ? 'VIP 1' : 'VIP 2'
+                        const confirmed = await confirm({
+                          title: `Clear All ${tierName} Items?`,
+                          message: `This will permanently delete ALL items from the ${tierName} collection (vip${target === 'vip1' ? '1' : '2'}menuitems). This cannot be undone. Use this to start fresh with an empty ${tierName} menu.`,
+                          type: "warning",
+                          confirmText: `Delete All ${tierName} Items`,
+                          cancelText: "Cancel"
+                        })
+                        if (confirmed) {
+                          try {
+                            setLoading(true)
+                            const res = await fetch(`/api/admin/menu/diagnostics?target=${target}`, {
+                              method: 'DELETE',
+                              headers: { Authorization: `Bearer ${token}` }
+                            })
+                            const result = await res.json()
+                            if (res.ok) {
+                              notify({ title: "Collection Cleared", message: result.message, type: "success" })
+                              fetchMenuItems()
+                            } else {
+                              notify({ title: "Clear Failed", message: result.message, type: "error" })
+                            }
+                          } catch (e) {
+                            notify({ title: "Error", message: "Network error while clearing", type: "error" })
+                          } finally {
+                            setLoading(false)
+                          }
+                        }
+                      }}
+                      className="w-full mt-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 font-black py-2.5 rounded-xl transition-all text-[9px] uppercase tracking-widest flex items-center justify-center gap-2"
+                    >
+                      <Trash2 size={14} /> Clear All Items From DB
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
