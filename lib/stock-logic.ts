@@ -1,5 +1,7 @@
 import MenuItem from "./models/menu-item"
+import VipMenuItem from "./models/vip-menu-item"
 import Stock from "./models/stock"
+import mongoose from "mongoose"
 
 /**
  * Calculates the total stock consumption for a list of order items.
@@ -8,7 +10,14 @@ import Stock from "./models/stock"
 export async function calculateStockConsumption(items: any[]) {
     const stockConsumptionMap = new Map<string, number>()
     const menuItemIds = items.map(i => i.menuItemId)
-    const linkedMenuItems = await MenuItem.find({ _id: { $in: menuItemIds } }).populate('stockItemId')
+    
+    // Fetch from both collections
+    const [standardItems, vipItems] = await Promise.all([
+        MenuItem.find({ _id: { $in: menuItemIds } }).populate('stockItemId').lean(),
+        (mongoose.model('VipMenuItem') as any).find({ _id: { $in: menuItemIds } }).lean()
+    ])
+
+    const linkedMenuItems = [...standardItems, ...vipItems]
 
     for (const orderItem of items) {
         const menuData = linkedMenuItems.find(m => m._id.toString() === orderItem.menuItemId)

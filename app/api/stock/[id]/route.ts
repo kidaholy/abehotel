@@ -14,7 +14,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
         await connectDB()
 
         const { id } = await params
-        const stockItem = await Stock.findById(id).populate('restockHistory.restockedBy', 'name email').lean()
+        const stockItem = await (Stock as any).findById(id).populate('restockHistory.restockedBy', 'name email').lean()
 
         if (!stockItem) {
             return NextResponse.json({ message: "Stock item not found" }, { status: 404 })
@@ -58,8 +58,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 
         const body = await request.json()
         const { id } = await params
-
-        const stockItem = await Stock.findById(id)
+        const stockItem = await (Stock as any).findById(id)
         if (!stockItem) {
             return NextResponse.json({ message: "Stock item not found" }, { status: 404 })
         }
@@ -80,7 +79,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 
             // Create Store Log for better tracking
             const StoreLog = (await import("@/lib/models/store-log")).default
-            await StoreLog.create({
+            await (StoreLog as any).create({
                 stockId: stockItem._id,
                 type: 'PURCHASE',
                 quantity: Number(body.quantityAdded),
@@ -110,7 +109,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
         }
 
         // Regular update operation
-        const allowedUpdates = ['name', 'category', 'unit', 'unitType', 'minLimit', 'storeMinLimit', 'trackQuantity', 'showStatus', 'status', 'storeQuantity', 'totalInvestment', 'sellUnitEquivalent']
+        const allowedUpdates = ['name', 'category', 'unit', 'unitType', 'minLimit', 'storeMinLimit', 'trackQuantity', 'showStatus', 'status', 'storeQuantity', 'totalInvestment', 'sellUnitEquivalent', 'isVIP', 'vipLevel']
         const updateData: any = {}
 
         console.log('🔍 API received body:', body)
@@ -201,7 +200,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
         const { searchParams } = new URL(request.url)
         const source = searchParams.get("source") // 'stock' or 'store'
         
-        const stockItem = await Stock.findById(id)
+        const stockItem = await (Stock as any).findById(id)
 
         if (!stockItem) {
             return NextResponse.json({ message: "Stock item not found" }, { status: 404 })

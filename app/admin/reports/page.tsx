@@ -141,8 +141,6 @@ export default function ReportsPage() {
     const totalRevenue = salesSummary.totalRevenue || 0
     const periodInvestment = (salesSummary.periodStockInvestment || 0) + (salesSummary.totalOtherExpenses || 0)
     const periodProfit = salesSummary.periodNetProfit || 0
-    const lifetimeInvestment = salesSummary.lifetimeTotalInvestment || 0
-    const lifetimeNetWorth = salesSummary.lifetimeNetWorth || 0
     const totalOperationalExpenses = salesSummary.totalOperationalExpenses || 0
     const filteredOrders = [...orders].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
 
@@ -158,7 +156,7 @@ export default function ReportsPage() {
             .filter((i: any) => i.mainCategory === 'Drinks')
             .reduce((s: number, it: any) => s + ((it.price || 0) * (it.quantity || 0)), 0), 0)
 
-    const menuItemSales: any[] = Object.values(filteredOrders.reduce((acc, order) => {
+    const menuItemSalesMap = filteredOrders.reduce((acc, order) => {
         if (order.status === 'cancelled' || order.isDeleted) return acc;
         order.items.forEach((item: any) => {
             const name = item.name;
@@ -169,7 +167,9 @@ export default function ReportsPage() {
             acc[name].revenue += (item.quantity || 0) * (item.price || 0);
         });
         return acc;
-    }, {} as Record<string, any>)).sort((a, b) => (b.quantity || 0) - (a.quantity || 0));
+    }, {} as Record<string, any>);
+
+    const menuItemSales: any[] = Object.values(menuItemSalesMap).sort((a: any, b: any) => (b.quantity || 0) - (a.quantity || 0));
 
     // Export functions
     const exportFinancialReport = () => {
@@ -178,8 +178,6 @@ export default function ReportsPage() {
             { Metric: "Period Investment (Stock)", Type: "EXPENSE", Amount: `${periodInvestment.toLocaleString()} ETB`, Description: "Inventory restocks and historical bulk purchases" },
             { Metric: "Operational Expenses", Type: "EXPENSE", Amount: `${totalOperationalExpenses.toLocaleString()} ETB`, Description: "Running costs (Rent, Utilities, etc.)" },
             { Metric: "Period Net Profit", Type: "RESULT", Amount: `${periodProfit.toLocaleString()} ETB`, Description: "Revenue - Total Investment for this period" },
-            { Metric: "Lifetime Investment", Type: "EXPENSE", Amount: `${lifetimeInvestment.toLocaleString()} ETB`, Description: "Total investment since launch" },
-            { Metric: "LIFETIME NET WORTH", Type: "RESULT", Amount: `${lifetimeNetWorth.toLocaleString()} ETB`, Description: "Global business standing" }
         ]
         ReportExporter.exportToWord({ title: "Financial Summary Report", period: timeRange, headers: ["Metric", "Type", "Amount", "Description"], data, metadata: { companyName: settings.app_name || "Prime Addis" } })
     }
@@ -542,18 +540,6 @@ export default function ReportsPage() {
                                                         <td className={`p-4 text-right text-lg font-black ${periodProfit >= 0 ? "text-blue-600" : "text-red-600"}`}>{periodProfit.toLocaleString()} ETB</td>
                                                         <td className="p-4 text-gray-400 text-xs font-medium">Revenue - Total Expenses (Stock + OpEx)</td>
                                                     </tr>
-                                                    <tr className="hover:bg-gray-50/50 transition-colors">
-                                                        <td className="p-4 text-lg text-slate-800">Lifetime Investment</td>
-                                                        <td className="p-4 text-center"><span className="bg-red-50 text-red-600 py-1 px-3 rounded-lg text-[9px] font-black uppercase tracking-widest">GLOBAL</span></td>
-                                                        <td className="p-4 text-right text-lg font-black text-red-600">-{lifetimeInvestment.toLocaleString()} ETB</td>
-                                                        <td className="p-4 text-gray-400 text-xs font-medium">Total investment from day one</td>
-                                                    </tr>
-                                                    <tr className="bg-slate-900 text-white">
-                                                        <td className="p-6 text-xl font-black">LIFETIME NET WORTH (Profit)</td>
-                                                        <td className="p-6 text-center"><span className="bg-white/20 text-white py-1 px-3 rounded-lg text-[9px] font-black uppercase tracking-widest">GLOBAL</span></td>
-                                                        <td className={`p-6 text-right text-3xl font-black ${lifetimeNetWorth >= 0 ? "text-emerald-400" : "text-red-400"}`}>{lifetimeNetWorth.toLocaleString()} <span className="text-sm">ETB</span></td>
-                                                        <td className="p-6 text-white/50 text-sm font-medium italic">All time balance sheet</td>
-                                                    </tr>
                                                 </tbody>
                                             </table>
                                         </div>
@@ -592,21 +578,7 @@ export default function ReportsPage() {
                                                 </div>
                                                 <p className={`text-2xl font-black ${periodProfit >= 0 ? "text-blue-700" : "text-red-700"}`}>{periodProfit.toLocaleString()} <span className="text-xs">ETB</span></p>
                                             </div>
-                                            <div className="p-4 rounded-2xl bg-orange-50 border border-orange-100">
-                                                <div className="flex justify-between items-center mb-1">
-                                                    <span className="text-[10px] font-black text-orange-600 uppercase tracking-widest">Global Expense</span>
-                                                    <span className="text-[10px] font-bold text-orange-600/60 uppercase">Lifetime Investment</span>
-                                                </div>
-                                                <p className="text-2xl font-black text-orange-700">-{lifetimeInvestment.toLocaleString()} <span className="text-xs">ETB</span></p>
-                                            </div>
-                                            <div className="p-6 rounded-2xl bg-slate-900 text-white shadow-xl">
-                                                <div className="flex justify-between items-center mb-2">
-                                                    <span className="text-[10px] font-black text-white/50 uppercase tracking-widest">Lifetime Balance</span>
-                                                    <span className="bg-white/20 px-2 py-0.5 rounded text-[9px] font-black uppercase">Net Worth</span>
-                                                </div>
-                                                <p className={`text-4xl font-black ${lifetimeNetWorth >= 0 ? "text-emerald-400" : "text-red-400"}`}>{lifetimeNetWorth.toLocaleString()} <span className="text-lg">ETB</span></p>
-                                                <p className="text-white/40 text-[10px] mt-4 font-medium italic">Cumulative revenue minus all physical investment costs.</p>
-                                            </div>
+                                            {/* Removed Lifetime Investment card */}
                                         </div>
                                     </div>
                                 )}

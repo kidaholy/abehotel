@@ -3,6 +3,7 @@ import mongoose from "mongoose"
 import { connectDB } from "@/lib/db"
 import Order from "@/lib/models/order"
 import MenuItem from "@/lib/models/menu-item"
+import VipMenuItem from "@/lib/models/vip-menu-item"
 import User from "@/lib/models/user"
 import Stock from "@/lib/models/stock"
 import { addNotification } from "@/lib/notifications"
@@ -188,14 +189,17 @@ export async function POST(request: Request) {
     const stockIds = Array.from(stockConsumptionMap.keys())
 
     // FETCH DATA IN PARALLEL
-    const [linkedMenuItems, stockItems, recentOrders, tableData] = await Promise.all([
-      MenuItem.find({ _id: { $in: menuItemIds } }).populate('stockItemId'),
+    const [standardMenuItems, vipMenuItems, stockItems, recentOrders, tableData] = await Promise.all([
+      MenuItem.find({ _id: { $in: menuItemIds } }).populate('stockItemId').lean(),
+      (VipMenuItem as any).find({ _id: { $in: menuItemIds } }).lean(),
       Stock.find({ _id: { $in: stockIds } }),
       // Fetch the last 50 numeric orders to find the true numeric maximum
       Order.find({ orderNumber: /^\d+$/ }, { orderNumber: 1 }).sort({ createdAt: -1 }).limit(50).lean(),
       tableId ? Table.findById(tableId) :
         (tableNumber && tableNumber !== "Buy&Go" ? Table.findOne({ tableNumber }) : null)
     ])
+
+    const linkedMenuItems = [...(standardMenuItems as any[]), ...(vipMenuItems as any[])]
 
     // Validate sufficient stock quantities
     for (const [stockId, requiredAmount] of stockConsumptionMap) {

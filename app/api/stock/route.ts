@@ -10,6 +10,8 @@ export async function GET(request: Request) {
         const includeHistory = searchParams.get("includeHistory") === "true"
         const availableOnly = searchParams.get("availableOnly") === "true"
         const category = searchParams.get("category")
+        const vipLevel = searchParams.get("vipLevel")
+        const isVIP = searchParams.get("isVIP") === "true"
 
         const decoded = await validateSession(request)
         console.log("📦 Admin fetching stock items:", decoded.email || decoded.id)
@@ -30,8 +32,14 @@ export async function GET(request: Request) {
         if (category) {
             query.category = category
         }
+        if (searchParams.has('isVIP')) {
+            query.isVIP = isVIP
+        }
+        if (vipLevel) {
+            query.vipLevel = Number(vipLevel)
+        }
 
-        let stockQuery = Stock.find(query).sort({ name: 1 })
+        let stockQuery = (Stock as any).find(query).sort({ name: 1 })
 
         // Conditionally include restock history
         if (!includeHistory) {
@@ -110,7 +118,9 @@ export async function POST(request: Request) {
             totalPurchased: body.quantity || 0,
             totalConsumed: 0,
             totalInvestment: body.totalPurchaseCost || 0,
-            sellUnitEquivalent: body.sellUnitEquivalent === undefined || body.sellUnitEquivalent === "" ? 1 : Number(body.sellUnitEquivalent.toString().replace(',', '.')) || 1
+            sellUnitEquivalent: body.sellUnitEquivalent === undefined || body.sellUnitEquivalent === "" ? 1 : Number(body.sellUnitEquivalent.toString().replace(',', '.')) || 1,
+            isVIP: body.isVIP || false,
+            vipLevel: body.vipLevel || 1
         }
 
         const newStock = new Stock(stockData)
@@ -118,7 +128,7 @@ export async function POST(request: Request) {
         // If initial quantity > 0, log it in StoreLog
         if (stockData.storeQuantity > 0) {
             const StoreLog = (await import("@/lib/models/store-log")).default
-            await StoreLog.create({
+            await (StoreLog as any).create({
                 stockId: newStock._id,
                 type: 'PURCHASE',
                 quantity: stockData.storeQuantity,

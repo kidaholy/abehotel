@@ -14,16 +14,24 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     await connectDB()
     const data = await request.json()
     
-    const updated = await VipMenuItem.findByIdAndUpdate(
+    const updated = await (VipMenuItem as any).findByIdAndUpdate(
       params.id,
       {
         $set: {
+          menuId: data.menuId?.toString().trim(),
           name: data.name?.trim(),
+          mainCategory: data.mainCategory,
           category: data.category?.trim(),
           price: data.price ? Number(data.price) : undefined,
           description: data.description?.trim(),
           image: data.image,
+          preparationTime: data.preparationTime ? Number(data.preparationTime) : undefined,
           available: data.available,
+          recipe: data.recipe,
+          reportUnit: data.reportUnit,
+          reportQuantity: data.reportQuantity !== undefined ? Number(data.reportQuantity) : undefined,
+          distributions: data.distributions,
+          vipLevel: data.vipLevel
         }
       },
       { new: true }
@@ -52,7 +60,7 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
     }
 
     await connectDB()
-    const deleted = await VipMenuItem.findByIdAndDelete(params.id)
+    const deleted = await (VipMenuItem as any).findByIdAndDelete(params.id)
 
     if (!deleted) {
       return NextResponse.json({ message: "Item not found" }, { status: 404 })

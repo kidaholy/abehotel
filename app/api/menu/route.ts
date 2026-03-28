@@ -23,8 +23,19 @@ export async function GET(request: Request) {
       .populate('recipe.stockItemId')
       .lean()
 
+    // Also fetch VIP menu items if not already included (they are in a separate collection now)
+    const vipMenuItems = await (mongoose.model('VipMenuItem') as any).find(query)
+      .populate('recipe.stockItemId')
+      .lean()
+
+    // Add a flag to distinguish them if needed, though they should be compatible
+    const allItems = [
+      ...menuItems.map(item => ({ ...item, isStandardMenu: true })),
+      ...vipMenuItems.map(item => ({ ...item, isVipMenu: true }))
+    ]
+
     // Filter out items where linked stock or any recipe ingredient is out of stock (unless fetchAll is true)
-    const filteredItems = menuItems.filter((item: any) => {
+    const filteredItems = allItems.filter((item: any) => {
       if (fetchAll) return true
 
       // 1. Check Legacy Stock Item

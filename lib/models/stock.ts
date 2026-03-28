@@ -29,6 +29,8 @@ export interface IStock extends Document {
     totalConsumed: number // Lifetime total consumed via sales
     totalInvestment: number // Total money invested in purchasing this item
     sellUnitEquivalent: number // How much of the base unit is consumed per portion/sale
+    isVIP: boolean // Whether this item belongs to the VIP store
+    vipLevel: number // 1 or 2
     createdAt: Date
     updatedAt: Date
 }
@@ -71,6 +73,8 @@ const StockSchema = new Schema<IStock>(
         totalConsumed: { type: Number, default: 0, min: 0 },
         totalInvestment: { type: Number, default: 0, min: 0 },
         sellUnitEquivalent: { type: Number, default: 1, min: 0 },
+        isVIP: { type: Boolean, default: false },
+        vipLevel: { type: Number, enum: [1, 2], default: 1 },
     },
     {
         timestamps: true,
