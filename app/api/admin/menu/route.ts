@@ -17,8 +17,15 @@ export async function GET(request: Request) {
     await connectDB()
     console.log("📊 Database connected for menu retrieval")
 
-    const menuItems = await (MenuItem as any).find({}).populate("stockItemId", "name unit status").lean()
-    console.log(`🍽️ Found ${menuItems.length} menu items in database`)
+    // STRICT SEPARATION: Only fetch items that are NOT VIP
+    const menuItems = await (MenuItem as any).find({
+        $and: [
+            { category: { $not: /VIP/i } },
+            { name: { $not: /VIP/i } },
+            { isVIP: { $ne: true } }
+        ]
+    }).populate("stockItemId", "name unit status").lean()
+    console.log(`🍽️ Found ${menuItems.length} standard menu items`)
 
     // Convert ObjectId to string for frontend compatibility
     const serializedItems = menuItems.map((item: any) => ({
@@ -110,6 +117,11 @@ export async function POST(request: Request) {
           { $set: { menuId: (originalNumericId + 1).toString() } }
         )
       }
+    }
+
+    // STRICT SEPARATION: Ensure new standard items don't have VIP flags
+    if (category?.toUpperCase().includes("VIP") || name?.toUpperCase().includes("VIP") || isVIP) {
+        return NextResponse.json({ message: "Cannot create VIP items in Standard Menu. Please use the VIP tabs." }, { status: 400 })
     }
 
     // Create menu item

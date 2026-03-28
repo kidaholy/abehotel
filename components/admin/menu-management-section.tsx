@@ -647,6 +647,40 @@ export function MenuManagementSection({
                       {qrGenerating ? <Loader2 size={14} className="animate-spin" /> : <QrCode size={14} />} QR Menu
                     </button>
                   </div>
+                  
+                  <button
+                    onClick={async () => {
+                      const confirmed = await confirm({
+                        title: "Fix Collection Mismatch?",
+                        message: "This will attempt to find items that are currently in the wrong database collection and move them to this tier. Use this if you get 'Item not found' when updating items.",
+                        type: "warning",
+                        confirmText: "Attempt Fix",
+                        cancelText: "Cancel"
+                      })
+                      if (confirmed) {
+                        try {
+                          setLoading(true)
+                          const res = await fetch(`${apiBaseUrl}/fix-mismatch`, { 
+                            method: 'POST', 
+                            headers: { Authorization: `Bearer ${token}` } 
+                          })
+                          if (res.ok) {
+                            notify({ title: "Fix Applied", message: "Any mismatched items found have been migrated.", type: "success" })
+                            fetchMenuItems()
+                          } else {
+                            notify({ title: "Fix Failed", message: "Failed to apply fix logic.", type: "error" })
+                          }
+                        } catch (e) {
+                          notify({ title: "Error", message: "Network error during fix", type: "error" })
+                        } finally {
+                          setLoading(false)
+                        }
+                      }
+                    }}
+                    className="w-full mt-2 bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-500 border border-yellow-500/20 font-black py-2.5 rounded-xl transition-all text-[9px] uppercase tracking-widest flex items-center justify-center gap-2"
+                  >
+                    <RefreshCw size={14} /> Fix Collection Mismatch
+                  </button>
                 </div>
               </div>
             </div>

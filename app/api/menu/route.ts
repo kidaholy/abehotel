@@ -5,63 +5,63 @@ import Vip1MenuItem from "@/lib/models/vip1-menu-item"
 import Vip2MenuItem from "@/lib/models/vip2-menu-item"
 import Stock from "@/lib/models/stock"
 import { validateSession } from "@/lib/auth"
-import mongoose from "mongoose"
 
+// Public menu API - fetches from each collection independently
 export async function GET(request: Request) {
   try {
     const decoded = await validateSession(request)
 
     const { searchParams } = new URL(request.url)
     const fetchAll = searchParams.get('all') === 'true'
+    const menuType = searchParams.get('type') || 'all' // 'standard', 'vip1', 'vip2', 'all'
 
     await connectDB()
-    // Force Stock model registration by using it
-    console.log("Database connected for menu retrieval", Stock.modelName)
+    // Ensure Stock model is registered
+    void Stock.modelName
 
-    // Prepare query based on 'all' flag
-    const query = fetchAll ? {} : { available: true }
+    const availabilityQuery = fetchAll ? {} : { available: true }
 
-    const menuItems = await MenuItem.find(query)
-      .populate('stockItemId')
-      .populate('recipe.stockItemId')
-      .lean()
+    let allItems: any[] = []
 
-    // Fetch VIP menu items from independent collections
-    const [vip1Items, vip2Items] = await Promise.all([
-      (Vip1MenuItem as any).find(query).populate('recipe.stockItemId').lean(),
-      (Vip2MenuItem as any).find(query).populate('recipe.stockItemId').lean()
-    ])
+    // Fetch ONLY from the requested collection(s)
+    if (menuType === 'standard' || menuType === 'all') {
+      const standardItems = await (MenuItem as any).find(availabilityQuery)
+        .populate('stockItemId')
+        .populate('recipe.stockItemId')
+        .lean()
+      allItems = [...allItems, ...standardItems.map((i: any) => ({ ...i, menuType: 'standard' }))]
+    }
 
-    // Combine all items into a single flat list
-    const allItems = [
-      ...menuItems,
-      ...vip1Items,
-      ...vip2Items
-    ]
+    if (menuType === 'vip1' || menuType === 'all') {
+      const vip1Items = await (Vip1MenuItem as any).find(availabilityQuery)
+        .populate('recipe.stockItemId')
+        .lean()
+      allItems = [...allItems, ...vip1Items.map((i: any) => ({ ...i, menuType: 'vip1' }))]
+    }
 
-    // Filter out items where linked stock or any recipe ingredient is out of stock (unless fetchAll is true)
+    if (menuType === 'vip2' || menuType === 'all') {
+      const vip2Items = await (Vip2MenuItem as any).find(availabilityQuery)
+        .populate('recipe.stockItemId')
+        .lean()
+      allItems = [...allItems, ...vip2Items.map((i: any) => ({ ...i, menuType: 'vip2' }))]
+    }
+
+    // Filter out items where stock is depleted
     const filteredItems = allItems.filter((item: any) => {
       if (fetchAll) return true
 
-      // 1. Check Legacy Stock Item
-      if (item.stockItemId) {
+      if (item.stockItemId && typeof item.stockItemId === 'object') {
         const status = item.stockItemId.status
         const qty = item.stockItemId.quantity || 0
-        if (status === 'finished' || status === 'out_of_stock' || qty <= 0) {
-          return false
-        }
+        if (status === 'finished' || status === 'out_of_stock' || qty <= 0) return false
       }
 
-      // 2. Check Recipe Ingredients
       if (item.recipe && item.recipe.length > 0) {
         for (const ingredient of item.recipe) {
           const stock = ingredient.stockItemId
-          if (stock) {
-            const status = stock.status
-            const qty = (stock.quantity || 0)
-            const required = (ingredient.quantity || ingredient.quantityRequired || 0)
-            
-            if (status === 'finished' || status === 'out_of_stock' || qty < required) {
+          if (stock && typeof stock === 'object') {
+            const required = ingredient.quantity || ingredient.quantityRequired || 0
+            if (stock.status === 'finished' || stock.status === 'out_of_stock' || (stock.quantity || 0) < required) {
               return false
             }
           }
@@ -71,7 +71,6 @@ export async function GET(request: Request) {
       return true
     })
 
-    // Convert ObjectId to string for frontend compatibility
     const serializedItems = filteredItems.map((item: any) => ({
       ...item,
       _id: item._id.toString(),

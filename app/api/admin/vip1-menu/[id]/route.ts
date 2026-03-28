@@ -2,8 +2,12 @@ import { NextResponse } from "next/server"
 import { connectDB } from "@/lib/db"
 import Vip1MenuItem from "@/lib/models/vip1-menu-item"
 import { validateSession } from "@/lib/auth"
+import mongoose from "mongoose"
 
-// Update VIP 1 menu item
+// =============================================================================
+// VIP 1 MENU ITEM — Update & Delete ONLY from `vip1menuitems`
+// =============================================================================
+
 export async function PUT(request: Request, { params }: { params: { id: string } }) {
   try {
     const decoded = await validateSession(request)
@@ -13,44 +17,52 @@ export async function PUT(request: Request, { params }: { params: { id: string }
 
     await connectDB()
     const data = await request.json()
-    
+
+    console.log(`[VIP1] PUT request for _id: ${params.id} in vip1menuitems`)
+
+    if (!mongoose.Types.ObjectId.isValid(params.id)) {
+      return NextResponse.json({ message: "Invalid ID format" }, { status: 400 })
+    }
+
+    const updatePayload = {
+      name: data.name?.trim(),
+      mainCategory: data.mainCategory,
+      category: data.category?.trim(),
+      price: data.price !== undefined ? Number(data.price) : undefined,
+      description: data.description?.trim(),
+      image: data.image,
+      preparationTime: data.preparationTime ? Number(data.preparationTime) : undefined,
+      available: data.available,
+      recipe: data.recipe,
+      reportUnit: data.reportUnit,
+      reportQuantity: data.reportQuantity !== undefined ? Number(data.reportQuantity) : undefined,
+      distributions: data.distributions,
+      // Convert empty stockItemId to null to avoid BSON casting errors
+      stockItemId: data.stockItemId === "" ? null : data.stockItemId
+    }
+
+    // Remove undefined fields so we don't overwrite with undefined
+    Object.keys(updatePayload).forEach(k => (updatePayload as any)[k] === undefined && delete (updatePayload as any)[k])
+
     const updated = await (Vip1MenuItem as any).findByIdAndUpdate(
       params.id,
-      {
-        $set: {
-          menuId: data.menuId?.toString().trim(),
-          name: data.name?.trim(),
-          mainCategory: data.mainCategory,
-          category: data.category?.trim(),
-          price: data.price ? Number(data.price) : undefined,
-          description: data.description?.trim(),
-          image: data.image,
-          preparationTime: data.preparationTime ? Number(data.preparationTime) : undefined,
-          available: data.available,
-          recipe: data.recipe,
-          reportUnit: data.reportUnit,
-          reportQuantity: data.reportQuantity !== undefined ? Number(data.reportQuantity) : undefined,
-          distributions: data.distributions
-        }
-      },
-      { new: true }
+      { $set: updatePayload },
+      { new: true, runValidators: true }
     )
 
     if (!updated) {
-      return NextResponse.json({ message: "Item not found" }, { status: 404 })
+      console.error(`[VIP1] _id ${params.id} NOT found in vip1menuitems`)
+      return NextResponse.json({ message: "Item not found in VIP 1 collection" }, { status: 404 })
     }
 
-    return NextResponse.json({
-      message: "VIP 1 Menu item updated successfully",
-      item: updated
-    })
+    console.log(`[VIP1] Successfully updated _id: ${params.id} in vip1menuitems`)
+    return NextResponse.json({ message: "VIP 1 Menu item updated successfully", item: updated })
   } catch (error: any) {
-    console.error("❌ Update VIP 1 menu item error:", error)
-    return NextResponse.json({ message: error.message || "Failed to update item" }, { status: 500 })
+    console.error("[VIP1] PUT error:", error)
+    return NextResponse.json({ message: error.message || "Failed to update VIP 1 item" }, { status: 500 })
   }
 }
 
-// Delete VIP 1 menu item
 export async function DELETE(request: Request, { params }: { params: { id: string } }) {
   try {
     const decoded = await validateSession(request)
@@ -59,15 +71,18 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
     }
 
     await connectDB()
+    console.log(`[VIP1] DELETE request for _id: ${params.id} in vip1menuitems`)
+
     const deleted = await (Vip1MenuItem as any).findByIdAndDelete(params.id)
 
     if (!deleted) {
-      return NextResponse.json({ message: "Item not found" }, { status: 404 })
+      return NextResponse.json({ message: "Item not found in VIP 1 collection" }, { status: 404 })
     }
 
+    console.log(`[VIP1] Successfully deleted _id: ${params.id} from vip1menuitems`)
     return NextResponse.json({ message: "VIP 1 Menu item deleted successfully" })
   } catch (error: any) {
-    console.error("❌ Delete VIP 1 menu item error:", error)
-    return NextResponse.json({ message: error.message || "Failed to delete item" }, { status: 500 })
+    console.error("[VIP1] DELETE error:", error)
+    return NextResponse.json({ message: error.message || "Failed to delete VIP 1 item" }, { status: 500 })
   }
 }
