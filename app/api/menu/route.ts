@@ -29,7 +29,16 @@ export async function GET(request: Request) {
         .populate('stockItemId')
         .populate('recipe.stockItemId')
         .lean()
-      allItems = [...allItems, ...standardItems.map((i: any) => ({ ...i, menuType: 'standard' }))]
+
+      // STRICT SEPARATION: Filter out VIP items from the standard collection
+      const filteredStandard = standardItems.filter((item: any) => {
+        const isVipCat = item.category && item.category.toLowerCase().includes('vip');
+        const isVipName = item.name && item.name.toLowerCase().includes('vip');
+        // If it's a VIP item, don't serve it in the standard list
+        return !isVipCat && !isVipName && item.isVIP !== true;
+      });
+
+      allItems = [...allItems, ...filteredStandard.map((i: any) => ({ ...i, menuType: 'standard' }))]
     }
 
     if (menuType === 'vip1' || menuType === 'all') {

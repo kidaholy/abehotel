@@ -34,6 +34,8 @@ export async function connectDB() {
         import("./models/floor"),
         import("./models/order"),
         import("./models/menu-item"),
+        import("./models/vip1-menu-item"),
+        import("./models/vip2-menu-item"),
         import("./models/stock"),
         import("./models/category"),
         import("./models/reception-request"),

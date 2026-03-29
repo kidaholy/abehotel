@@ -15,6 +15,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { useMemo, useRef } from "react"
 import { useSettings } from "@/context/settings-context"
 import { getReceiptHTML } from "@/components/receipt-template"
+import { useMenu } from "@/context/menu-context"
 
 interface MenuItem {
   _id: string
@@ -46,12 +47,10 @@ interface POSPageProps {
 
 export function POSPage({ fixedTier }: POSPageProps) {
   const config = TIER_CONFIG[fixedTier]
-  const [menuItems, setMenuItems] = useState<MenuItem[]>([])
+  const { menuItems, menuLoading, menuError } = useMenu()
   const [cartItems, setCartItems] = useState<CartItem[]>([])
   const [categoryFilter, setCategoryFilter] = useState("all")
   const [mainCategoryFilter, setMainCategoryFilter] = useState<'Food' | 'Drinks'>('Food')
-  const [menuLoading, setMenuLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [orderNumber, setOrderNumber] = useState("")
   const [showOrderAnimation, setShowOrderAnimation] = useState(false)
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false)
@@ -70,93 +69,7 @@ export function POSPage({ fixedTier }: POSPageProps) {
   const { confirmationState, confirm, closeConfirmation, notificationState, notify, closeNotification } = useConfirmation()
   const receiptRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    let mounted = true
-    localStorage.removeItem("pos_menu_cache")
-
-    const cachedMenu = localStorage.getItem("pos_menu_cache_v2")
-    if (cachedMenu) {
-      try {
-        const parsed = JSON.parse(cachedMenu)
-        if (parsed.length > 0 && parsed[0].menuType !== undefined) {
-          const seen = new Set<string>()
-          const deduped = parsed.filter((item: any) => {
-            if (seen.has(item._id)) return false
-            seen.add(item._id)
-            return true
-          })
-          setMenuItems(deduped)
-          setMenuLoading(false)
-        }
-      } catch (err) {
-        console.error("Failed to parse menu cache")
-      }
-    }
-
-    const fetchMenuItems = async (retryCount = 0) => {
-      if (!token) return
-      try {
-        if (retryCount === 0 && !localStorage.getItem("pos_menu_cache_v2")) setMenuLoading(true)
-        setError(null)
-        const response = await fetch("/api/menu?all=true", {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-        if (!mounted) return
-        if (response.ok) {
-          const data = await response.json()
-          const seen = new Set<string>()
-          const deduped = data.filter((item: any) => {
-            if (item.available === false) return false
-            if (seen.has(item._id)) return false
-            seen.add(item._id)
-            return true
-          })
-          localStorage.setItem("pos_menu_cache_v2", JSON.stringify(deduped))
-          setMenuItems(deduped)
-          setMenuLoading(false)
-        } else {
-          if (response.status >= 500 && retryCount < 3) {
-            setTimeout(() => fetchMenuItems(retryCount + 1), 1000 * (retryCount + 1))
-          } else {
-            setError("Failed to load menu items")
-            setMenuLoading(false)
-          }
-        }
-      } catch (err) {
-        if (!mounted) return
-        if (retryCount < 3) {
-          setTimeout(() => fetchMenuItems(retryCount + 1), 1000 * (retryCount + 1))
-        } else {
-          setError("Failed to load menu items. Please check your connection.")
-          setMenuLoading(false)
-        }
-      }
-    }
-
-    fetchMenuItems()
-    return () => { mounted = false }
-  }, [token])
-
-  useEffect(() => {
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'menuUpdated') {
-        const refreshMenu = async () => {
-          if (!token) return
-          try {
-            const response = await fetch("/api/menu?all=true", { headers: { Authorization: `Bearer ${token}` } })
-            if (response.ok) {
-              const data = await response.json()
-              setMenuItems(data.filter((item: any) => item.available !== false))
-            }
-          } catch (err) { console.error("Failed to refresh menu") }
-        }
-        refreshMenu()
-      }
-    }
-    window.addEventListener('storage', handleStorageChange)
-    return () => window.removeEventListener('storage', handleStorageChange)
-  }, [token])
-
+  // Floor sync on mount
   useEffect(() => {
     const refreshUserProfile = async () => {
       if (!token) return
@@ -440,11 +353,11 @@ export function POSPage({ fixedTier }: POSPageProps) {
                     <RefreshCw className="h-12 w-12 animate-spin text-gray-400 mb-4" />
                     <p className="text-gray-600">Loading menu...</p>
                   </div>
-                ) : error ? (
+                ) : menuError ? (
                   <div className="text-center py-20">
                     <div className="text-6xl mb-4">⚠️</div>
                     <h2 className="text-xl font-bold text-red-600 mb-2">Failed to Load Menu</h2>
-                    <p className="text-gray-600 mb-6">{error}</p>
+                    <p className="text-gray-600 mb-6">{menuError}</p>
                     <button onClick={() => window.location.reload()} className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">Retry</button>
                   </div>
                 ) : filteredItems.length === 0 ? (

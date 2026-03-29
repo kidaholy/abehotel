@@ -53,9 +53,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "Name and price are required" }, { status: 400 })
     }
 
-    // Auto-generate menuId from the vip2menuitems collection ONLY
+    // Auto-generate or sanitize menuId
     let finalMenuId = data.menuId ? data.menuId.toString().trim() : ""
-    if (!finalMenuId) {
+    
+    // Always fallback to next numeric ID if empty or non-numeric (to avoid TEMP_ IDs)
+    if (!finalMenuId || isNaN(parseInt(finalMenuId, 10))) {
       const allItems = await (Vip2MenuItem as any).find({}, { menuId: 1 }).lean()
       let maxId = 0
       allItems.forEach((item: any) => {
@@ -63,6 +65,33 @@ export async function POST(request: Request) {
         if (!isNaN(num) && num > maxId) maxId = num
       })
       finalMenuId = (maxId + 1).toString()
+    }
+
+    // Shifting logic (same as standard menu)
+    const numericId = parseInt(finalMenuId, 10)
+    if (!isNaN(numericId)) {
+      const allItems = await (Vip2MenuItem as any).find({}).lean()
+      const itemsToShift = allItems.filter((item: any) => {
+        const itemNumericId = parseInt(item.menuId, 10)
+        return !isNaN(itemNumericId) && itemNumericId >= numericId
+      }).sort((a: any, b: any) => parseInt(b.menuId, 10) - parseInt(a.menuId, 10))
+
+      // Step 1: Shift to unique temporary IDs
+      for (const item of itemsToShift) {
+        await (Vip2MenuItem as any).updateOne(
+          { _id: item._id },
+          { $set: { menuId: `TEMP_SHIFT_${item._id}_${Date.now()}` } }
+        )
+      }
+
+      // Step 2: Assign new numeric IDs (original + 1)
+      for (const item of itemsToShift) {
+        const originalNumericId = parseInt(item.menuId, 10)
+        await (Vip2MenuItem as any).updateOne(
+          { _id: item._id },
+          { $set: { menuId: (originalNumericId + 1).toString() } }
+        )
+      }
     }
 
     console.log(`[VIP2] Creating item in vip2menuitems: ${data.name}`)

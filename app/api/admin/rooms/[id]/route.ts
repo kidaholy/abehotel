@@ -3,8 +3,9 @@ import { connectDB } from "@/lib/db"
 import Room from "@/lib/models/room"
 import { validateSession } from "@/lib/auth"
 
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
+export async function PUT(req: Request, context: { params: Promise<{ id: string }> }) {
     try {
+        const { id } = await context.params
         const decoded = await validateSession(req)
         if (decoded.role !== "admin" && decoded.role !== "super-admin") {
             return NextResponse.json({ message: "Forbidden" }, { status: 403 })
@@ -12,7 +13,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
 
         await connectDB()
         const body = await req.json()
-        const room = await (Room as any).findByIdAndUpdate(params.id, body, { new: true })
+        const room = await (Room as any).findByIdAndUpdate(id, body, { new: true })
         
         if (!room) {
             return NextResponse.json({ message: "Room not found" }, { status: 404 })
@@ -24,8 +25,9 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     }
 }
 
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(req: Request, context: { params: Promise<{ id: string }> }) {
     try {
+        const { id } = await context.params
         const decoded = await validateSession(req)
         if (decoded.role !== "admin" && decoded.role !== "super-admin") {
             return NextResponse.json({ message: "Forbidden" }, { status: 403 })
@@ -33,7 +35,7 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
 
         await connectDB()
         // Soft delete
-        const room = await (Room as any).findByIdAndUpdate(params.id, { isActive: false }, { new: true })
+        const room = await (Room as any).findByIdAndUpdate(id, { isActive: false }, { new: true })
         
         if (!room) {
             return NextResponse.json({ message: "Room not found" }, { status: 404 })
