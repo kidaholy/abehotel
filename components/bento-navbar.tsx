@@ -38,7 +38,9 @@ export function BentoNavbar() {
     ]
 
     const cashierLinks = [
-        { label: t("nav.pos"), href: "/cashier" },
+        { label: "Standard POS", href: "/cashier" },
+        { label: "VIP 1 POS", href: "/cashier/vip1" },
+        { label: "VIP 2 POS", href: "/cashier/vip2" },
         { label: t("nav.recentOrders"), href: "/cashier/orders" },
         { label: "Reception Requests", href: "/cashier/reception-requests" }
     ]

@@ -34,6 +34,7 @@ export async function GET(request: Request) {
 
     if (menuType === 'vip1' || menuType === 'all') {
       const vip1Items = await (Vip1MenuItem as any).find(availabilityQuery)
+        .populate('stockItemId')
         .populate('recipe.stockItemId')
         .lean()
       allItems = [...allItems, ...vip1Items.map((i: any) => ({ ...i, menuType: 'vip1' }))]
@@ -41,6 +42,7 @@ export async function GET(request: Request) {
 
     if (menuType === 'vip2' || menuType === 'all') {
       const vip2Items = await (Vip2MenuItem as any).find(availabilityQuery)
+        .populate('stockItemId')
         .populate('recipe.stockItemId')
         .lean()
       allItems = [...allItems, ...vip2Items.map((i: any) => ({ ...i, menuType: 'vip2' }))]
