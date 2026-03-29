@@ -9,23 +9,20 @@ import { validateSession } from "@/lib/auth"
 // Public menu API - fetches from each collection independently
 export async function GET(request: Request) {
   try {
-    const decoded = await validateSession(request)
+    await validateSession(request)
 
     const { searchParams } = new URL(request.url)
-    const fetchAll = searchParams.get('all') === 'true'
     const menuType = searchParams.get('type') || 'all' // 'standard', 'vip1', 'vip2', 'all'
 
     await connectDB()
     // Ensure Stock model is registered
     void Stock.modelName
 
-    const availabilityQuery = fetchAll ? {} : { available: true }
-
     let allItems: any[] = []
 
-    // Fetch ONLY from the requested collection(s)
+    // Fetch all available items from each collection
     if (menuType === 'standard' || menuType === 'all') {
-      const standardItems = await (MenuItem as any).find(availabilityQuery)
+      const standardItems = await (MenuItem as any).find({ available: { $ne: false } })
         .populate('stockItemId')
         .populate('recipe.stockItemId')
         .lean()
@@ -34,7 +31,6 @@ export async function GET(request: Request) {
       const filteredStandard = standardItems.filter((item: any) => {
         const isVipCat = item.category && item.category.toLowerCase().includes('vip');
         const isVipName = item.name && item.name.toLowerCase().includes('vip');
-        // If it's a VIP item, don't serve it in the standard list
         return !isVipCat && !isVipName && item.isVIP !== true;
       });
 
@@ -42,7 +38,7 @@ export async function GET(request: Request) {
     }
 
     if (menuType === 'vip1' || menuType === 'all') {
-      const vip1Items = await (Vip1MenuItem as any).find(availabilityQuery)
+      const vip1Items = await (Vip1MenuItem as any).find({ available: { $ne: false } })
         .populate('stockItemId')
         .populate('recipe.stockItemId')
         .lean()
@@ -50,31 +46,25 @@ export async function GET(request: Request) {
     }
 
     if (menuType === 'vip2' || menuType === 'all') {
-      const vip2Items = await (Vip2MenuItem as any).find(availabilityQuery)
+      const vip2Items = await (Vip2MenuItem as any).find({ available: { $ne: false } })
         .populate('stockItemId')
         .populate('recipe.stockItemId')
         .lean()
       allItems = [...allItems, ...vip2Items.map((i: any) => ({ ...i, menuType: 'vip2' }))]
     }
 
-    // Filter out items where stock is depleted
+    // Filter out items linked to permanently finished stock
     const filteredItems = allItems.filter((item: any) => {
-      if (fetchAll) return true
-
       if (item.stockItemId && typeof item.stockItemId === 'object') {
-        const status = item.stockItemId.status
-        const qty = item.stockItemId.quantity || 0
-        if (status === 'finished' || status === 'out_of_stock' || qty <= 0) return false
+        const stock = item.stockItemId
+        if (stock.trackQuantity !== false && stock.status === 'finished') return false
       }
 
       if (item.recipe && item.recipe.length > 0) {
         for (const ingredient of item.recipe) {
           const stock = ingredient.stockItemId
           if (stock && typeof stock === 'object') {
-            const required = ingredient.quantity || ingredient.quantityRequired || 0
-            if (stock.status === 'finished' || stock.status === 'out_of_stock' || (stock.quantity || 0) < required) {
-              return false
-            }
+            if (stock.trackQuantity !== false && stock.status === 'finished') return false
           }
         }
       }
@@ -96,7 +86,14 @@ export async function GET(request: Request) {
       return idA.localeCompare(idB, undefined, { numeric: true, sensitivity: 'base' })
     })
 
-    return NextResponse.json(serializedItems)
+    return NextResponse.json(serializedItems, {
+      headers: {
+        'X-Menu-Count': serializedItems.length.toString(),
+        'X-VIP1-Count': serializedItems.filter((i: any) => i.menuType === 'vip1').length.toString(),
+        'X-VIP2-Count': serializedItems.filter((i: any) => i.menuType === 'vip2').length.toString(),
+        'X-Standard-Count': serializedItems.filter((i: any) => i.menuType === 'standard').length.toString(),
+      }
+    })
   } catch (error: any) {
     console.error("Get menu error:", error)
     const status = error.message?.includes("Unauthorized") ? 401 : 500
