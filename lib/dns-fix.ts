@@ -11,8 +11,8 @@ import dns from "dns";
  */
 
 const originalLookup = dns.lookup;
-// Include local gateway and common public DNS as fallbacks
-dns.setServers(['192.168.8.1', '192.168.1.1', '1.1.1.1', '8.8.8.8']);
+// Use reliable public DNS to prevent 15 second UDP timeouts on unreachable local networks
+dns.setServers(['8.8.8.8', '1.1.1.1']);
 
 async function recursiveHybridResolve(hostname: string): Promise<{ address: string, family: number }> {
     // 1. Try A record resolution via Google DNS

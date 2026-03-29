@@ -17,14 +17,16 @@ export async function GET(request: Request) {
     await connectDB()
     console.log("📊 Database connected for menu retrieval")
 
-    // STRICT SEPARATION: Only fetch items that are NOT VIP
-    const menuItems = await (MenuItem as any).find({
-        $and: [
-            { category: { $not: /VIP/i } },
-            { name: { $not: /VIP/i } },
-            { isVIP: { $ne: true } }
-        ]
-    }).populate("stockItemId", "name unit status").lean()
+    // Fetch all items without expensive DB-side regex
+    const allItems = await (MenuItem as any).find({}).populate("stockItemId", "name unit status").lean()
+    
+    // STRICT SEPARATION: Filter out VIP items in memory
+    const menuItems = allItems.filter((item: any) => {
+        const isVipCat = item.category && item.category.toLowerCase().includes('vip');
+        const isVipName = item.name && item.name.toLowerCase().includes('vip');
+        return !isVipCat && !isVipName && item.isVIP !== true;
+    });
+
     console.log(`🍽️ Found ${menuItems.length} standard menu items`)
 
     // Convert ObjectId to string for frontend compatibility

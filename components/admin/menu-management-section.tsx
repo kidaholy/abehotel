@@ -25,7 +25,9 @@ import {
   Leaf,
   Printer,
   Package,
-  Pencil
+  Pencil,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react"
 
 interface MenuItem {
@@ -126,6 +128,9 @@ export function MenuManagementSection({
   const [showExportDropdown, setShowExportDropdown] = useState(false)
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 })
   const exportButtonRef = useRef<HTMLButtonElement>(null)
+
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 20
 
   useEffect(() => {
     if (token) {
@@ -284,6 +289,7 @@ export function MenuManagementSection({
     })
 
     setFilteredItems(filtered)
+    setCurrentPage(1)
   }
 
   const handleSwap = async (targetMenuId: string) => {
@@ -595,6 +601,9 @@ export function MenuManagementSection({
     }
   }
 
+  const totalPages = Math.ceil(filteredItems.length / itemsPerPage)
+  const paginatedItems = filteredItems.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
@@ -743,7 +752,7 @@ export function MenuManagementSection({
             )}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-              {filteredItems.map((item) => (
+              {paginatedItems.map((item) => (
                 <div key={item._id} className="bg-gray-50 rounded-2xl overflow-hidden border border-gray-100 hover:shadow-xl transition-all group flex flex-col relative">
                   {/* Item Image */}
                   <div className="h-40 md:h-48 bg-gray-200 relative overflow-hidden">
@@ -791,6 +800,35 @@ export function MenuManagementSection({
                 </div>
               ))}
             </div>
+
+            {totalPages > 1 && (
+              <div className="flex justify-center items-center gap-4 mt-8 p-4">
+                <button
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:hover:bg-white transition-all border border-gray-200 font-bold text-sm"
+                >
+                  <ChevronLeft size={16} /> {t("common.previous") || "Previous"}
+                </button>
+                <div className="hidden lg:flex gap-1 items-center">
+                  <span className="text-sm font-bold text-gray-500 bg-gray-50 px-4 py-2 rounded-xl border border-gray-200">
+                    Page {currentPage} of {totalPages}
+                  </span>
+                </div>
+                <div className="lg:hidden flex gap-1 items-center">
+                  <span className="text-sm font-bold text-gray-500 bg-gray-50 px-4 py-2 rounded-xl border border-gray-200">
+                    {currentPage} / {totalPages}
+                  </span>
+                </div>
+                <button
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:hover:bg-white transition-all border border-gray-200 font-bold text-sm"
+                >
+                  {t("common.next") || "Next"} <ChevronRight size={16} />
+                </button>
+              </div>
+            )}
 
             {!loading && filteredItems.length === 0 && (
               <div className="text-center py-32">
@@ -1266,7 +1304,7 @@ export function MenuManagementSection({
   )
 }
 
-function CategoryManager({ show, onClose, categories, onAdd, onDelete, onUpdate, loading, title, value, onChange, t }: any) {
+export function CategoryManager({ show, onClose, categories, onAdd, onDelete, onUpdate, loading, title, value, onChange, t }: any) {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editValue, setEditValue] = useState("")
 

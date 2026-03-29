@@ -7,7 +7,7 @@ import { BentoNavbar } from "@/components/bento-navbar"
 import { useAuth } from "@/context/auth-context"
 import { ConfirmationCard, NotificationCard } from "@/components/confirmation-card"
 import { useConfirmation } from "@/hooks/use-confirmation"
-import { MenuManagementSection } from "@/components/admin/menu-management-section"
+import { MenuManagementSection, CategoryManager } from "@/components/admin/menu-management-section"
 import { 
   Plus, 
   Trash2, 
@@ -76,6 +76,11 @@ export default function AdminServicesPage() {
   const [floors, setFloors] = useState<Floor[]>([])
   const [showForm, setShowForm] = useState(false)
   
+  const [categories, setCategories] = useState<any[]>([])
+  const [showCategoryManager, setShowCategoryManager] = useState(false)
+  const [categoryLoading, setCategoryLoading] = useState(false)
+  const [newCategoryName, setNewCategoryName] = useState("")
+
   const [roomForm, setRoomForm] = useState({
     roomNumber: "", name: "", floorId: "", type: "standard", category: "Standard", price: "", status: "available"
   })
@@ -86,13 +91,15 @@ export default function AdminServicesPage() {
     if (!token) return
     try {
       setLoading(true)
-      const [roomsRes, floorsRes] = await Promise.all([
+      const [roomsRes, floorsRes, categoriesRes] = await Promise.all([
         fetch("/api/admin/rooms", { headers: { Authorization: `Bearer ${token}` } }),
-        fetch("/api/admin/floors", { headers: { Authorization: `Bearer ${token}` } })
+        fetch("/api/admin/floors", { headers: { Authorization: `Bearer ${token}` } }),
+        fetch("/api/categories?type=room", { headers: { Authorization: `Bearer ${token}` } })
       ])
       
       if (roomsRes.ok) setRooms(await roomsRes.json())
       if (floorsRes.ok) setFloors(await floorsRes.json())
+      if (categoriesRes.ok) setCategories(await categoriesRes.json())
     } catch (error) {
       console.error("Fetch error:", error)
     } finally {
@@ -101,6 +108,47 @@ export default function AdminServicesPage() {
   }, [token])
 
   useEffect(() => { fetchData() }, [fetchData])
+
+  const handleAddCategory = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!newCategoryName.trim()) return
+    setCategoryLoading(true)
+    try {
+      const response = await fetch("/api/categories", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ name: newCategoryName, type: "room" }),
+      })
+      if (response.ok) { setNewCategoryName(""); fetchData() }
+    } catch (error) { console.error("Error adding category:", error) } 
+    finally { setCategoryLoading(false) }
+  }
+
+  const handleDeleteCategory = async (id: string) => {
+    const confirmed = await confirm({
+      title: "Delete Category", message: "Are you sure you want to delete this category?", type: "warning",
+      confirmText: "Delete", cancelText: "Cancel"
+    })
+    if (!confirmed) return
+    try {
+      const response = await fetch(`/api/categories/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } })
+      if (response.ok) fetchData()
+    } catch (error) { console.error("Error deleting category:", error) }
+  }
+
+  const handleUpdateCategory = async (id: string, newName: string) => {
+    if (!newName.trim()) return
+    setCategoryLoading(true)
+    try {
+      const response = await fetch(`/api/categories/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ name: newName }),
+      })
+      if (response.ok) fetchData()
+    } catch (error) { console.error("Error updating category:", error) } 
+    finally { setCategoryLoading(false) }
+  }
 
   const handleRoomSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -194,6 +242,10 @@ export default function AdminServicesPage() {
                     <button onClick={() => { resetRoomForm(); setShowForm(true) }}
                       className="w-full bg-white text-[#8B4513] px-4 py-3.5 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg hover:bg-gray-100 transition-all flex items-center justify-center gap-2">
                       <Plus size={16} /> Add Room
+                    </button>
+                    <button onClick={() => setShowCategoryManager(true)}
+                      className="mt-3 w-full bg-white/20 text-white px-4 py-3.5 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-white/30 transition-all border border-white/20">
+                      Manage Categories
                     </button>
                     <button onClick={fetchData} className="mt-2 w-full bg-white/10 hover:bg-white/20 text-white px-4 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2">
                       <RefreshCw className={`w-3 h-3 ${loading ? "animate-spin" : ""}`} /> Refresh
@@ -335,13 +387,14 @@ export default function AdminServicesPage() {
                         className="w-full bg-gray-50 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-[#8B4513]/20" />
                     </div>
                     <div>
-                      <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Category</label>
+                      <div className="flex justify-between items-center mb-2">
+                        <label className="block text-xs font-black text-gray-400 uppercase tracking-widest">Category</label>
+                        <button type="button" onClick={() => setShowCategoryManager(true)} className="text-[10px] font-black uppercase tracking-widest text-[#8B4513] hover:underline">Manage</button>
+                      </div>
                       <select value={roomForm.category} onChange={e => setRoomForm({ ...roomForm, category: e.target.value })}
                         className="w-full bg-gray-50 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-[#8B4513]/20">
-                        <option value="Standard">Standard</option>
-                        <option value="Deluxe">Deluxe</option>
-                        <option value="Suite">Suite</option>
-                        <option value="VIP">VIP</option>
+                        <option value="">Select Category...</option>
+                        {categories.map((c: any) => <option key={c._id} value={c.name}>{c.name}</option>)}
                       </select>
                     </div>
                   </div>
@@ -353,6 +406,28 @@ export default function AdminServicesPage() {
             </div>
           </div>
         )}
+
+        <CategoryManager
+          show={showCategoryManager}
+          onClose={() => setShowCategoryManager(false)}
+          categories={categories}
+          onAdd={handleAddCategory}
+          onDelete={handleDeleteCategory}
+          onUpdate={handleUpdateCategory}
+          loading={categoryLoading}
+          title="Manage Room Categories"
+          value={newCategoryName}
+          onChange={setNewCategoryName}
+          t={(k: string) => {
+            const map: any = {
+              "adminMenu.newCatPlaceholder": "New category name...",
+              "adminMenu.add": "Add",
+              "adminMenu.noCats": "No categories found.",
+              "adminMenu.close": "Close"
+            }
+            return map[k] || k.split('.').pop()
+          }}
+        />
 
         <ConfirmationCard isOpen={confirmationState.isOpen} onClose={closeConfirmation} onConfirm={confirmationState.onConfirm}
           title={confirmationState.options.title} message={confirmationState.options.message} type={confirmationState.options.type} />

@@ -14,9 +14,14 @@ export async function GET() {
       .populate('stockItemId')
       .lean()
 
-    // Filter out items where linked stock is finished
+    // Filter out items where linked stock is finished and filter out VIP items
     const filteredItems = menuItems.filter((item: any) => {
       if (item.stockItemId && item.stockItemId.status === 'finished') {
+        return false
+      }
+      const isVipCat = item.category && item.category.toLowerCase().includes('vip');
+      const isVipName = item.name && item.name.toLowerCase().includes('vip');
+      if (isVipCat || isVipName || item.isVIP === true) {
         return false
       }
       return true
