@@ -21,10 +21,10 @@ const SettingsContext = createContext<SettingsContextType | undefined>(undefined
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<AppSettings>({
-    logo_url: "",
+    logo_url: "/logo.jpg",
     favicon_url: "",
-    app_name: "Prime Addis",
-    app_tagline: "Coffee Management",
+    app_name: "ABE HOTEL",
+    app_tagline: "Quiet Luxury Redefined",
     vat_rate: "0.08",
     enable_cashier_printing: "true"
   })

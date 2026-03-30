@@ -1,6 +1,6 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Fredoka } from "next/font/google"
+import { Inter, Playfair_Display } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 import { AuthProvider } from "@/context/auth-context"
@@ -8,7 +8,8 @@ import { ThemeProvider } from "@/context/theme-context"
 import { SettingsProvider } from "@/context/settings-context"
 import { NotificationCenter } from "@/components/notification-center"
 
-const fredoka = Fredoka({ subsets: ["latin"] })
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" })
+const playfair = Playfair_Display({ subsets: ["latin"], variable: "--font-playfair" })
 
 export const dynamic = "force-dynamic"
 export const revalidate = 0
@@ -67,7 +68,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${fredoka.className} antialiased bg-white overflow-x-hidden`} suppressHydrationWarning>
+      <body className={`${inter.variable} ${playfair.variable} font-sans antialiased bg-background text-foreground overflow-x-hidden`} suppressHydrationWarning>
         <script
           dangerouslySetInnerHTML={{
             __html: `

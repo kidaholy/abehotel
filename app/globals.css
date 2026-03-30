@@ -3,29 +3,29 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Prime Addis Coffee - Light Theme (Yellow & White) */
-  /* Bright yellow and white coffee shop atmosphere with high contrast text */
+  /* ABE HOTEL - Luxury Dark Theme (Charcoal & Gold) */
+  /* Premium charcoal background with elegant gold accents */
   
-  --primary: #1A1A1A;           /* Very dark text for maximum readability */
-  --primary-foreground: #FFFFFF; /* Pure white text */
-  --primary-light: #333333;     /* Dark gray */
-  --primary-dark: #000000;      /* Pure black */
+  --primary: #c5a059;           /* Gold primary */
+  --primary-foreground: #0f1110; /* Dark text on gold */
+  --primary-light: #d4b075;     /* Lighter gold */
+  --primary-dark: #a6813d;      /* Darker gold */
 
-  --secondary: #FFD700;         /* Bright golden yellow */
-  --secondary-foreground: #1A1A1A; /* Dark text on yellow */
-  --secondary-light: #FFEB3B;   /* Light yellow */
+  --secondary: #1a1d1c;         /* Slightly lighter charcoal */
+  --secondary-foreground: #ffffff; /* White text on charcoal */
+  --secondary-light: #252928;   /* Even lighter charcoal */
 
-  --background: #FFFEF7;        /* Warm white background */
-  --foreground: #1A1A1A;        /* Very dark text for contrast */
-  --card: #FFFFFF;              /* Pure white cards */
-  --card-foreground: #1A1A1A;   /* Dark text on white cards */
-  --muted: #FFF9C4;             /* Very light yellow */
-  --muted-foreground: #424242;  /* Medium dark gray for muted text */
-  --border: #FFE082;            /* Light yellow border */
-  --input: #FFFFFF;             /* White input backgrounds */
+  --background: #0f1110;        /* Deep charcoal background */
+  --foreground: #ffffff;        /* White text for contrast */
+  --card: #151817;              /* Dark card background */
+  --card-foreground: #ffffff;   /* White text on cards */
+  --muted: #1c211f;             /* Muted dark gray */
+  --muted-foreground: #a0a0a0;  /* Medium gray for muted text */
+  --border: #2a2f2d;            /* Dark border */
+  --input: #151817;             /* Dark input backgrounds */
 
-  --accent: #FFC107;            /* Amber/yellow accent */
-  --accent-foreground: #1A1A1A; /* Dark text on yellow accent */
+  --accent: #c5a059;            /* Gold accent */
+  --accent-foreground: #0f1110; /* Dark text on gold accent */
 
   --success: #4CAF50;           /* Green success */
   --warning: #FF9800;           /* Orange warning */
@@ -34,23 +34,25 @@
 
   --destructive: #F44336;
   --destructive-foreground: #FFFFFF;
-  --ring: #FFC107;              /* Yellow focus ring */
+  --ring: #c5a059;              /* Gold focus ring */
   
   /* Sidebar colors */
-  --sidebar: #FFFDE7;           /* Very light yellow sidebar */
-  --sidebar-foreground: #1A1A1A; /* Dark text */
-  --sidebar-primary: #FFC107;   /* Yellow accent */
-  --sidebar-primary-foreground: #1A1A1A; /* Dark text on yellow */
-  --sidebar-accent: #FFF9C4;    /* Light yellow accent */
-  --sidebar-accent-foreground: #1A1A1A; /* Dark text */
-  --sidebar-border: #FFE082;    /* Light yellow border */
-  --sidebar-ring: #FFC107;      /* Yellow ring */
+  --sidebar: #0a0c0b;           /* Very dark sidebar */
+  --sidebar-foreground: #ffffff; /* White text */
+  --sidebar-primary: #c5a059;   /* Gold accent */
+  --sidebar-primary-foreground: #0f1110; /* Dark text on gold */
+  --sidebar-accent: #1a1d1c;    /* Dark accent */
+  --sidebar-accent-foreground: #c5a059; /* Gold text */
+  --sidebar-border: #2a2f2d;    /* Dark border */
+  --sidebar-ring: #c5a059;      /* Gold ring */
+
+  --radius: 0.5rem;
 
   /* High resolution optimizations */
-  --shadow-sm: 0 1px 2px 0 rgba(45, 27, 20, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(45, 27, 20, 0.1), 0 2px 4px -1px rgba(45, 27, 20, 0.06);
-  --shadow-lg: 0 10px 15px -3px rgba(45, 27, 20, 0.1), 0 4px 6px -2px rgba(45, 27, 20, 0.05);
-  --shadow-xl: 0 20px 25px -5px rgba(45, 27, 20, 0.1), 0 10px 10px -5px rgba(45, 27, 20, 0.04);
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.7), 0 2px 4px -1px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.8), 0 4px 6px -2px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.9), 0 10px 10px -5px rgba(0, 0, 0, 0.6);
 }
 
 /* Dark theme removed - application now uses light theme only */
@@ -265,22 +267,22 @@
     font-weight: 500;
   }
 
-  /* Enhanced shadows for yellow/white theme */
+  /* Enhanced shadows for luxury theme */
   .shadow-coffee {
-    box-shadow: 0 4px 20px rgba(255, 193, 7, 0.15), 0 1px 3px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 20px rgba(197, 160, 89, 0.15), 0 1px 3px rgba(0, 0, 0, 0.5);
   }
 
   .shadow-coffee-lg {
-    box-shadow: 0 10px 40px rgba(255, 193, 7, 0.2), 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 10px 40px rgba(197, 160, 89, 0.2), 0 4px 12px rgba(0, 0, 0, 0.6);
   }
 
-  /* Yellow gradient backgrounds */
+  /* Gold gradient backgrounds */
   .bg-coffee-gradient {
-    background: linear-gradient(135deg, #FFC107 0%, #FFD54F 50%, #FFEB3B 100%);
+    background: linear-gradient(135deg, #c5a059 0%, #d4b075 50%, #e3c091 100%);
   }
 
   .bg-gold-gradient {
-    background: linear-gradient(135deg, #FFD700 0%, #FFC107 50%, #FFEB3B 100%);
+    background: linear-gradient(135deg, #a6813d 0%, #c5a059 50%, #d4b075 100%);
   }
 
   /* Sidebar color utilities */
