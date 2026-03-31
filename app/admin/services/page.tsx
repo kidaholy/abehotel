@@ -330,30 +330,61 @@ export default function AdminServicesPage() {
                     )}
 
                     {activeTab === "rooms" && (
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {rooms.map(room => (
-                          <div key={room._id} className="bg-[#0f1110] rounded-3xl p-6 shadow-sm border border-white/5 hover:border-[#d4af37]/30 transition-all group">
-                             <div className="flex justify-between items-start mb-4">
-                               <div className="flex gap-4 items-center">
-                                 <div className="w-14 h-14 bg-[#151716] border border-white/5 rounded-2xl flex items-center justify-center text-[#d4af37] group-hover:scale-110 transition-transform"><Bed size={24} /></div>
-                                 <div>
-                                   <h3 className="text-xl font-black text-white leading-none">Room {room.roomNumber}</h3>
-                                   <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-1">{room.category} • Floor {floors.find(f => f._id === room.floorId)?.floorNumber || '?'}</p>
-                                 </div>
-                               </div>
-                               <span className={`px-2.5 py-1 rounded-md border text-[9px] font-bold uppercase tracking-widest ${room.status === 'available' ? 'bg-[#1a2e20] text-[#4ade80] border-[#4ade80]/30' : room.status === 'occupied' ? 'bg-red-950/30 text-red-500 border-red-500/30' : 'bg-[#b38822]/10 text-[#f3cf7a] border-[#d4af37]/30'}`}>
-                                 {room.status}
-                               </span>
-                             </div>
-                             <div className="flex justify-between items-center mt-6">
-                               <span className="text-lg font-black text-[#f3cf7a]">{room.price} Br</span>
-                               <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                 <button onClick={() => handleEdit(room)} className="p-2 bg-[#151716] rounded-xl text-gray-500 hover:text-[#f3cf7a] hover:bg-[#1a1c1b] border border-transparent hover:border-[#d4af37]/30 transition-all"><Pencil size={14} /></button>
-                                 <button onClick={() => handleRoomDelete(room)} className="p-2 bg-[#151716] rounded-xl text-gray-500 hover:text-red-500 hover:bg-red-950/50 border border-transparent hover:border-red-500/30 transition-all"><Trash2 size={14} /></button>
-                               </div>
-                             </div>
+                      <div className="space-y-8">
+                        {rooms.length === 0 ? (
+                          <div className="flex flex-col items-center justify-center py-32 text-gray-500">
+                            <Bed size={48} className="mb-4 opacity-20" />
+                            <p className="text-sm font-bold uppercase tracking-widest">No rooms added yet</p>
                           </div>
-                        ))}
+                        ) : (
+                          floors
+                            .filter(floor => rooms.some(r => (r.floorId?._id || r.floorId) === floor._id))
+                            .sort((a, b) => a.floorNumber - b.floorNumber)
+                            .map(floor => {
+                              const floorRooms = rooms.filter(r => (r.floorId?._id || r.floorId) === floor._id)
+                              return (
+                                <div key={floor._id}>
+                                  {/* Floor Header */}
+                                  <div className="flex items-center gap-4 mb-4">
+                                    <div className="flex items-center gap-3 bg-[#0f1110] border border-[#d4af37]/30 rounded-2xl px-5 py-3">
+                                      <Building size={20} className="text-[#d4af37]" />
+                                      <span className="text-lg font-black uppercase tracking-wider text-[#f3cf7a]">Floor {floor.floorNumber}</span>
+                                      {floor.isVIP && <span className="text-[9px] font-black uppercase tracking-widest text-[#d4af37] bg-[#d4af37]/10 border border-[#d4af37]/30 px-2 py-1 rounded-md ml-1">VIP</span>}
+                                    </div>
+                                    <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">{floorRooms.length} room{floorRooms.length !== 1 ? "s" : ""}</span>
+                                    <div className="flex-1 h-[1px] bg-white/5" />
+                                  </div>
+
+                                  {/* Rooms Grid */}
+                                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {floorRooms.map(room => (
+                                      <div key={room._id} className="bg-[#0f1110] rounded-3xl p-6 shadow-sm border border-white/5 hover:border-[#d4af37]/30 transition-all group">
+                                        <div className="flex justify-between items-start mb-4">
+                                          <div className="flex gap-4 items-center">
+                                            <div className="w-14 h-14 bg-[#151716] border border-white/5 rounded-2xl flex items-center justify-center text-[#d4af37] group-hover:scale-110 transition-transform"><Bed size={24} /></div>
+                                            <div>
+                                              <h3 className="text-xl font-black text-white leading-none">Room {room.roomNumber}</h3>
+                                              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-1">{room.category}</p>
+                                            </div>
+                                          </div>
+                                          <span className={`px-2.5 py-1 rounded-md border text-[9px] font-bold uppercase tracking-widest ${room.status === 'available' ? 'bg-[#1a2e20] text-[#4ade80] border-[#4ade80]/30' : room.status === 'occupied' ? 'bg-red-950/30 text-red-500 border-red-500/30' : 'bg-[#b38822]/10 text-[#f3cf7a] border-[#d4af37]/30'}`}>
+                                            {room.status}
+                                          </span>
+                                        </div>
+                                        <div className="flex justify-between items-center mt-6">
+                                          <span className="text-lg font-black text-[#f3cf7a]">{room.price} Br</span>
+                                          <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button onClick={() => handleEdit(room)} className="p-2 bg-[#151716] rounded-xl text-gray-500 hover:text-[#f3cf7a] hover:bg-[#1a1c1b] border border-transparent hover:border-[#d4af37]/30 transition-all"><Pencil size={14} /></button>
+                                            <button onClick={() => handleRoomDelete(room)} className="p-2 bg-[#151716] rounded-xl text-gray-500 hover:text-red-500 hover:bg-red-950/50 border border-transparent hover:border-red-500/30 transition-all"><Trash2 size={14} /></button>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )
+                            })
+                        )}
                       </div>
                     )}
                   </>
