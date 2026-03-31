@@ -1,13 +1,13 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { ProtectedRoute } from "@/components/protected-route"
 import { BentoNavbar } from "@/components/bento-navbar"
 import { useAuth } from "@/context/auth-context"
 import { useLanguage } from "@/context/language-context"
 import { ConfirmationCard, NotificationCard } from "@/components/confirmation-card"
 import { useConfirmation } from "@/hooks/use-confirmation"
-import { RefreshCw, Clock, ChefHat } from 'lucide-react'
+import { RefreshCw, Clock, ChefHat, Maximize2, Minimize2 } from 'lucide-react'
 import { Card, CardContent } from "@/components/ui/card"
 
 interface OrderItem {
@@ -38,6 +38,7 @@ export default function KitchenDisplayPage() {
   const [newOrderAlert, setNewOrderAlert] = useState(false)
   const [previousOrderCount, setPreviousOrderCount] = useState(0)
   const [assignedCategories, setAssignedCategories] = useState<string[]>([])
+  const [isKioskMode, setIsKioskMode] = useState(false)
   const { token } = useAuth()
   const { t } = useLanguage()
   const { confirmationState, confirm, closeConfirmation, notificationState, notify, closeNotification } = useConfirmation()
@@ -136,18 +137,16 @@ export default function KitchenDisplayPage() {
 
   const handleStatusChange = async (orderId: string, newStatus: string) => {
     const preservedOrders = orders;
-    try {
-      // Robust Optimistic Update
-      setOrders(prevOrders => {
-        const isComplete = newStatus === 'completed' || newStatus === 'cancelled';
-        if (isComplete) {
-          return prevOrders.filter(o => o._id !== orderId);
-        }
-        return prevOrders.map(order =>
-          order._id === orderId ? { ...order, status: newStatus as any } : order
-        );
-      });
+    // Remove or update immediately — don't wait for the API
+    setOrders(prevOrders => {
+      const isComplete = newStatus === 'completed' || newStatus === 'cancelled';
+      if (isComplete) return prevOrders.filter(o => o._id !== orderId);
+      return prevOrders.map(order =>
+        order._id === orderId ? { ...order, status: newStatus as any } : order
+      );
+    });
 
+    try {
       const response = await fetch(`/api/orders/${orderId}/status`, {
         method: "PUT",
         headers: {
@@ -158,20 +157,82 @@ export default function KitchenDisplayPage() {
       })
 
       if (response.ok) {
-        // For responsiveness, we trust the local update and wait for next poll
         localStorage.setItem('orderUpdated', Date.now().toString())
       } else {
-        // Rollback
+        // Rollback on failure
         setOrders(preservedOrders);
       }
     } catch (err) {
-      // Rollback
       setOrders(preservedOrders);
     }
   }
 
-  const preparingOrders = orders.filter((o) => o.status === "preparing")
-  const readyOrders = orders.filter((o) => o.status === "ready")
+  const readyOrders = orders.filter((o) => o.status === "pending" || o.status === "ready")
+
+  // Exit kiosk on Escape
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setIsKioskMode(false) }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [])
+
+  // Kiosk / fullscreen mode — only the order grid
+  if (isKioskMode) {
+    return (
+      <ProtectedRoute requiredRoles={["chef"]}>
+        <div className="fixed inset-0 bg-black z-50 flex flex-col overflow-hidden">
+          {/* Minimal top bar */}
+          <div className="flex items-center justify-between px-6 py-3 bg-[#0f1110] border-b border-white/5 shrink-0">
+            <div className="flex items-center gap-3">
+              <ChefHat className="h-5 w-5 text-[#d4af37]" />
+              <span className="text-sm font-black uppercase tracking-widest text-[#f3cf7a]">Kitchen Queue</span>
+              <span className="text-xs font-black text-emerald-400 bg-emerald-900/30 border border-emerald-500/20 px-2 py-0.5 rounded-md">{readyOrders.length} orders</span>
+            </div>
+            <div className="flex items-center gap-2">
+              {newOrderAlert && (
+                <span className="text-xs font-black text-orange-400 bg-orange-900/30 border border-orange-500/20 px-3 py-1 rounded-md animate-pulse">🔔 New Order!</span>
+              )}
+              <button onClick={fetchOrders} className="p-2 hover:bg-white/5 rounded-lg transition-colors text-gray-400 hover:text-white">
+                <RefreshCw className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => setIsKioskMode(false)}
+                className="flex items-center gap-2 px-3 py-2 bg-[#1a1c1b] hover:bg-[#222] border border-white/10 rounded-lg text-gray-400 hover:text-white transition-colors text-xs font-black uppercase tracking-widest"
+              >
+                <Minimize2 className="h-4 w-4" /> Exit
+              </button>
+            </div>
+          </div>
+
+          {/* Full-screen order grid */}
+          <div className="flex-1 overflow-y-auto p-4">
+            {loading ? (
+              <div className="flex flex-col items-center justify-center h-full">
+                <RefreshCw className="h-12 w-12 animate-spin text-gray-400 mb-4" />
+              </div>
+            ) : readyOrders.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-gray-600">
+                <ChefHat className="h-16 w-16 mb-4 opacity-20" />
+                <p className="text-sm font-black uppercase tracking-widest">No orders in queue</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+                {readyOrders.map(order => (
+                  <OrderCard
+                    key={order._id}
+                    order={order}
+                    onStatusChange={handleStatusChange}
+                    color="green"
+                    t={t}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </ProtectedRoute>
+    )
+  }
 
   return (
     <ProtectedRoute requiredRoles={["chef"]}>
@@ -207,23 +268,28 @@ export default function KitchenDisplayPage() {
                   )}
                 </div>
               </div>
-              <button
-                onClick={fetchOrders}
-                className="p-2 hover:bg-white/5 rounded-lg transition-colors text-gray-400 hover:text-white"
-              >
-                <RefreshCw className="h-5 w-5" />
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setIsKioskMode(true)}
+                  className="flex items-center gap-2 px-3 py-2 bg-[#1a1c1b] hover:bg-[#222] border border-[#d4af37]/20 hover:border-[#d4af37]/50 rounded-lg text-[#d4af37] transition-all text-xs font-black uppercase tracking-widest"
+                  title="Kiosk / Fullscreen mode"
+                >
+                  <Maximize2 className="h-4 w-4" /> Kiosk
+                </button>
+                <button
+                  onClick={fetchOrders}
+                  className="p-2 hover:bg-white/5 rounded-lg transition-colors text-gray-400 hover:text-white"
+                >
+                  <RefreshCw className="h-5 w-5" />
+                </button>
+              </div>
             </div>
 
             {/* Stats Bar */}
-            <div className="grid grid-cols-2 gap-4 mt-6">
-              <div className="text-center p-4 bg-[#1a1c1b] rounded-lg border border-white/5">
-                <div className="text-3xl font-black text-blue-500">{preparingOrders.length}</div>
-                <div className="text-[10px] font-black uppercase tracking-widest text-gray-500 mt-1">Preparing</div>
-              </div>
+            <div className="mt-6">
               <div className="text-center p-4 bg-[#1a1c1b] rounded-lg border border-white/5">
                 <div className="text-3xl font-black text-emerald-500">{readyOrders.length}</div>
-                <div className="text-[10px] font-black uppercase tracking-widest text-gray-500 mt-1">Ready</div>
+                <div className="text-[10px] font-black uppercase tracking-widest text-gray-500 mt-1">Orders in Queue</div>
               </div>
             </div>
           </div>
@@ -235,7 +301,7 @@ export default function KitchenDisplayPage() {
                 <span className="text-2xl">🔔</span>
                 <div>
                   <p className="font-bold">New Order Incoming!</p>
-                  <p className="text-sm opacity-90">Check the preparing queue</p>
+                  <p className="text-sm opacity-90">Check the queue</p>
                 </div>
               </div>
               <button onClick={() => setNewOrderAlert(false)} className="text-xl hover:opacity-75">
@@ -251,24 +317,13 @@ export default function KitchenDisplayPage() {
               <p className="text-gray-600">Loading kitchen orders...</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-              <OrderColumn
-                title="Preparing"
-                color="blue"
-                orders={preparingOrders}
-                onStatusChange={handleStatusChange}
-                nextStatus="ready"
-                t={t}
-              />
-              <OrderColumn
-                title="Ready"
-                color="green"
-                orders={readyOrders}
-                onStatusChange={handleStatusChange}
-                nextStatus="completed"
-                t={t}
-              />
-            </div>
+            <OrderColumn
+              title="Kitchen Queue"
+              color="green"
+              orders={readyOrders}
+              onStatusChange={handleStatusChange}
+              t={t}
+            />
           )}
         </div>
 
@@ -303,14 +358,12 @@ function OrderColumn({
   color,
   orders,
   onStatusChange,
-  nextStatus,
   t
 }: {
   title: string
   color: "orange" | "blue" | "green"
   orders: Order[]
   onStatusChange: (orderId: string, newStatus: string) => void
-  nextStatus: string
   t: (key: string) => string
 }) {
   const colorClasses = {
@@ -322,16 +375,15 @@ function OrderColumn({
   return (
     <div className={`rounded-3xl p-6 border ${colorClasses[color]} min-h-[500px] shadow-2xl`}>
       <h2 className="text-[10px] font-black uppercase tracking-widest text-[#f3cf7a] mb-6">{title}</h2>
-      <div className="grid grid-cols-2 gap-3 max-h-[calc(100vh-300px)] overflow-y-auto font-poppins">
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 max-h-[calc(100vh-300px)] overflow-y-auto font-poppins">
         {orders.length === 0 ? (
-          <p className="col-span-2 text-center text-gray-500 py-8">No orders</p>
+          <p className="col-span-4 text-center text-gray-500 py-8">No orders</p>
         ) : (
           orders.map(order => (
             <OrderCard
               key={order._id}
               order={order}
               onStatusChange={onStatusChange}
-              nextStatus={nextStatus}
               color={color}
               t={t}
             />
@@ -345,13 +397,11 @@ function OrderColumn({
 function OrderCard({
   order,
   onStatusChange,
-  nextStatus,
   color,
   t
 }: {
   order: Order
   onStatusChange: (orderId: string, newStatus: string) => void
-  nextStatus: string
   color: "orange" | "blue" | "green"
   t: (key: string) => string
 }) {
@@ -408,10 +458,7 @@ function OrderCard({
           ))}
         </div>
 
-        <OrderCardActions
-          order={order}
-          onStatusChange={onStatusChange}
-        />
+        <OrderCardActions order={order} onStatusChange={onStatusChange} />
       </CardContent>
     </Card>
   )
@@ -430,48 +477,33 @@ function OrderCardActions({
     if (busy) return
     setBusy(true)
     onStatusChange(order._id, newStatus)
-    // Reset after 3s as safety fallback (card will unmount on success anyway)
     setTimeout(() => setBusy(false), 3000)
   }
 
-  if (order.status === "preparing") {
+  // Pending → mark Ready
+  if (order.status === "pending" || order.status === "preparing") {
     return (
-      <div className="flex gap-2">
-        <button
-          onClick={() => handleClick("ready")}
-          disabled={busy}
-          className="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg font-medium text-sm hover:bg-green-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-        >
-          {busy ? (
-            <>
-              <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-              </svg>
-              Updating...
-            </>
-          ) : "✅ Mark Ready"}
-        </button>
-      </div>
+      <button
+        onClick={() => handleClick("ready")}
+        disabled={busy}
+        className="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-2.5 px-4 rounded-xl font-black text-xs uppercase tracking-widest transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+      >
+        {busy ? (
+          <><svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" /></svg>Updating...</>
+        ) : "✅ Ready"}
+      </button>
     )
   }
 
+  // Ready → mark Served (completed)
   if (order.status === "ready") {
     return (
       <button
         onClick={() => handleClick("completed")}
         disabled={busy}
-        className="w-full bg-gray-800 text-white py-2 px-4 rounded-lg font-medium text-sm hover:bg-gray-900 transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+        className="w-full bg-[#d4af37] hover:bg-[#f3cf7a] text-[#0f1110] py-2.5 px-4 rounded-xl font-black text-xs uppercase tracking-widest transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
       >
-        {busy ? (
-          <>
-            <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-            </svg>
-            Completing...
-          </>
-        ) : "🏁 Complete Order"}
+        🍽️ Served
       </button>
     )
   }
