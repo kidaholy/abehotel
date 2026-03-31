@@ -20,7 +20,7 @@
         "confirm": "አረጋግጥ",
         "areYouSure": "እርግጠኛ ነዎት?",
         "hello": "ሰላም",
-        "currencyBr": "ብር"
+        "currencyBr": "ETB"
     },
     "hero": {
         "tagline": "አዲስ የተቆላ ቡና ቴክኖሎጂ ለካፌዎ።",
@@ -375,7 +375,9 @@
         "all": "ሁሉም",
         "pending": "በክንውን ላይ",
         "completed": "ተጠናቋል",
-        "cancelled": "ተሰርዟል"
+        "cancelled": "ተሰርዟል",
+        "items": "ምርቶች",
+        "item": "ምርት"
     },
     "chef": {
         "kitchenDisplay": "ወጥ ቤት ማሳያ",

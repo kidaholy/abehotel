@@ -91,19 +91,19 @@ export default function CashierOrdersPage() {
 
   return (
     <ProtectedRoute requiredRoles={["cashier"]}>
-      <div className="min-h-screen bg-gray-50 p-6">
+      <div className="min-h-screen bg-[#0f1110] p-6 text-white selection:bg-[#c5a059] selection:text-[#0f1110]">
         <div className="max-w-7xl mx-auto space-y-6">
           <BentoNavbar />
 
           {/* Header */}
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+          <div className="bg-[#151716] rounded-xl p-6 shadow-2xl border border-white/5">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
               <div className="flex items-center gap-4">
                 <div className="p-3 bg-blue-50 rounded-lg">
                   <ShoppingBag className="h-8 w-8 text-blue-600" />
                 </div>
                 <div>
-                  <h1 className="text-3xl font-bold text-gray-900">Recent Orders</h1>
+                  <h1 className="text-3xl font-playfair italic font-bold text-white">Recent Orders</h1>
                   <p className="text-sm text-gray-600 mt-1">
                     Today's sales history
                     {user?.floorNumber && (
@@ -128,12 +128,12 @@ export default function CashierOrdersPage() {
 
 
           {/* Orders List */}
-          <Card className="border border-gray-200">
+          <Card className="bg-[#151716] border border-white/5 shadow-2xl">
             <CardHeader>
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <CardTitle className="text-xl font-bold text-gray-900">Sales History</CardTitle>
+                <CardTitle className="text-xl font-playfair italic font-bold text-[#f3cf7a]">Sales History</CardTitle>
                 <div className="flex flex-wrap gap-2">
-                  <div className="flex bg-gray-100 p-1 rounded-xl mr-4">
+                  <div className="flex bg-[#0f1110] p-1 rounded-xl mr-4 border border-white/5">
                     {["all", "Food", "Drinks"].map((c) => (
                       <button
                         key={c}
@@ -147,14 +147,14 @@ export default function CashierOrdersPage() {
                       </button>
                     ))}
                   </div>
-                  <div className="flex bg-gray-100 p-1 rounded-xl">
+                  <div className="flex bg-[#0f1110] p-1 rounded-xl border border-white/5">
                     {["all", "preparing", "completed"].map((s) => (
                       <button
                         key={s}
                         onClick={() => setFilterStatus(s as any)}
                         className={`px-4 py-1.5 rounded-lg text-xs font-black uppercase transition-all ${filterStatus === s
-                          ? "bg-blue-600 text-white shadow-sm"
-                          : "text-gray-500 hover:text-gray-900"
+                          ? "bg-gradient-to-r from-[#d4af37] to-[#f3cf7a] text-[#0f1110] shadow-md"
+                          : "text-gray-500 hover:text-white"
                           }`}
                       >
                         {s}
@@ -179,7 +179,7 @@ export default function CashierOrdersPage() {
                 <div className="overflow-x-auto -mx-6 md:mx-0">
                   <table className="w-full min-w-[600px] md:min-w-0">
                     <thead>
-                      <tr className="border-b border-gray-200 bg-gray-50/50">
+                      <tr className="border-b border-white/5 bg-[#0f1110]/50">
                         <th className="text-left py-4 px-6 text-[10px] font-black uppercase tracking-widest text-gray-500">Order</th>
                         <th className="text-left py-4 px-6 text-[10px] font-black uppercase tracking-widest text-gray-500">Context</th>
                         <th className="text-left py-4 px-6 text-[10px] font-black uppercase tracking-widest text-gray-500">Items</th>
@@ -189,10 +189,10 @@ export default function CashierOrdersPage() {
                     </thead>
                     <tbody>
                       {filteredOrders.map((order) => (
-                        <tr key={order._id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                        <tr key={order._id} className="border-b border-white/5 hover:bg-[#1a1c1b] transition-colors">
                           <td className="py-4 px-6">
                             <div className="flex flex-col">
-                              <span className="text-sm font-black text-gray-900">#{order.orderNumber}</span>
+                              <span className="text-sm font-black text-white">#{order.orderNumber}</span>
                               <span className="text-[10px] text-gray-400 font-bold">
                                 {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                               </span>
@@ -221,7 +221,7 @@ export default function CashierOrdersPage() {
                             </div>
                           </td>
                           <td className="py-4 px-6 text-right">
-                            <span className="text-sm font-black text-[#2d5a41]">{order.totalAmount.toFixed(0)} ETB</span>
+                            <span className="text-sm font-black text-[#f3cf7a]">{order.totalAmount.toFixed(0)} ETB</span>
                           </td>
                           <td className="py-4 px-6 text-center">
                             <span className={`inline-block px-3 py-1 rounded-full text-[10px] font-black uppercase ${getStatusColor(order.status)}`}>

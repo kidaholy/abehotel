@@ -241,23 +241,23 @@ export function POSPage({ fixedTier }: POSPageProps) {
 
   return (
     <ProtectedRoute requiredRoles={["cashier"]}>
-      <div className="min-h-screen bg-gray-50 p-1 md:p-6 overflow-x-hidden">
+      <div className="min-h-screen bg-[#0f1110] p-1 md:p-6 overflow-x-hidden text-white selection:bg-[#c5a059] selection:text-[#0f1110]">
         <div className="max-w-[1900px] mx-auto md:space-y-6 w-full overflow-hidden">
           <div className="mb-4 md:mb-0">
             <BentoNavbar />
           </div>
 
           {/* Desktop Header */}
-          <div className="hidden md:block bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+          <div className="hidden md:block bg-[#151716] rounded-xl p-6 shadow-2xl border border-white/5">
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-4">
                 <div className="p-3 rounded-lg" style={{ backgroundColor: accentColor + '15' }}>
                   <ShoppingCart className="h-8 w-8" style={{ color: accentColor }} />
                 </div>
                 <div>
-                  <h1 className="text-3xl font-bold text-gray-900 leading-tight flex items-center gap-3">
+                  <h1 className="text-3xl font-playfair italic font-bold text-white leading-tight flex items-center gap-3">
                     {config.icon}
-                    <span style={{ color: accentColor }}>{config.label}</span>
+                    <span className="text-[#f3cf7a]">{config.label}</span>
                   </h1>
                   <div className="flex items-center gap-2 mt-1">
                     <p className="text-sm text-gray-600">Welcome, {user?.name}</p>
@@ -270,7 +270,7 @@ export function POSPage({ fixedTier }: POSPageProps) {
               </div>
               <div className="text-right">
                 <div className="text-xs text-gray-500 font-bold uppercase tracking-wider">Available Items</div>
-                <div className="text-2xl font-black" style={{ color: accentColor }}>{tierItems.length}</div>
+                <div className="text-2xl font-black text-[#f3cf7a]">{tierItems.length}</div>
               </div>
             </div>
           </div>
@@ -288,7 +288,7 @@ export function POSPage({ fixedTier }: POSPageProps) {
                     placeholder="Search by item name..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="block w-full pl-11 pr-10 py-3.5 bg-white border-2 border-gray-100 rounded-2xl text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-medium shadow-sm"
+                    className="block w-full pl-11 pr-10 py-3.5 bg-[#151716] border border-white/5 rounded-2xl text-white placeholder:text-gray-600 focus:outline-none focus:ring-1 focus:ring-[#d4af37]/50 focus:border-[#d4af37]/50 transition-all font-bold text-sm shadow-sm"
                   />
                   {searchTerm && (
                     <button onClick={() => setSearchTerm("")} className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors">
@@ -305,7 +305,7 @@ export function POSPage({ fixedTier }: POSPageProps) {
                     placeholder="Item ID"
                     value={idSearchTerm}
                     onChange={(e) => setIdSearchTerm(e.target.value)}
-                    className="block w-full pl-11 pr-10 py-3.5 bg-white border-2 border-gray-100 rounded-2xl text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all font-medium shadow-sm"
+                    className="block w-full pl-11 pr-10 py-3.5 bg-[#151716] border border-white/5 rounded-2xl text-white placeholder:text-gray-600 focus:outline-none focus:ring-1 focus:ring-[#d4af37]/50 focus:border-[#d4af37]/50 transition-all font-bold text-sm shadow-sm"
                   />
                   {idSearchTerm && (
                     <button onClick={() => setIdSearchTerm("")} className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors">
@@ -321,8 +321,7 @@ export function POSPage({ fixedTier }: POSPageProps) {
                   <button
                     key={tab}
                     onClick={() => { setMainCategoryFilter(tab); setCategoryFilter('all') }}
-                    className={`flex items-center gap-2 px-6 py-2.5 rounded-full font-black text-sm transition-all ${mainCategoryFilter === tab ? 'text-white shadow-md' : 'bg-white text-gray-500 hover:bg-gray-100 border border-gray-200'}`}
-                    style={mainCategoryFilter === tab ? { backgroundColor: accentColor } : {}}
+                    className={`flex items-center gap-2 px-6 py-2.5 rounded-full font-black text-sm transition-all ${mainCategoryFilter === tab ? 'bg-gradient-to-r from-[#d4af37] to-[#f3cf7a] text-[#0f1110] shadow-lg' : 'bg-[#151716] text-gray-500 hover:text-white border border-white/5'}`}
                   >
                     {tab === 'Food' ? <Utensils size={16} /> : <Coffee size={16} />} {tab}
                     <span className="text-[10px] opacity-70">({tierItems.filter(i => (i.mainCategory || 'Food') === tab).length})</span>
@@ -337,8 +336,7 @@ export function POSPage({ fixedTier }: POSPageProps) {
                     <button
                       key={cat}
                       onClick={() => setCategoryFilter(cat)}
-                      className={`px-5 py-2.5 rounded-full font-black text-[14px] md:text-sm whitespace-nowrap transition-all flex-shrink-0 active:scale-90 shadow-sm ${categoryFilter === cat ? 'text-white ring-2 scale-105' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}`}
-                      style={categoryFilter === cat ? { backgroundColor: accentColor } : {}}
+                      className={`px-5 py-2.5 rounded-full font-black text-[14px] md:text-sm whitespace-nowrap transition-all flex-shrink-0 active:scale-90 shadow-sm ${categoryFilter === cat ? 'bg-[#f3cf7a] text-[#0f1110] ring-2 ring-[#d4af37]/50 scale-105' : 'bg-[#151716] text-gray-500 hover:text-white border border-white/5'}`}
                     >
                       {cat === "all" ? "ALL ITEMS" : cat.toUpperCase()}
                     </button>
@@ -347,7 +345,7 @@ export function POSPage({ fixedTier }: POSPageProps) {
               </div>
 
               {/* Menu Grid */}
-              <div className="md:bg-white md:rounded-xl md:p-6 pt-2 md:shadow-sm md:border border-gray-200 min-h-[600px]">
+              <div className="md:bg-[#151716] md:rounded-xl md:p-6 pt-2 md:shadow-2xl md:border border-white/5 min-h-[600px]">
                 {menuLoading ? (
                   <div className="flex flex-col items-center justify-center py-20">
                     <RefreshCw className="h-12 w-12 animate-spin text-gray-400 mb-4" />
@@ -366,7 +364,7 @@ export function POSPage({ fixedTier }: POSPageProps) {
                     <h2 className="text-xl font-medium text-gray-400">No items found</h2>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-0 md:gap-4 bg-white md:bg-transparent rounded-2xl md:rounded-none overflow-hidden shadow-sm md:shadow-none border border-gray-100 md:border-none w-full">
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-0 md:gap-4 bg-[#151716] md:bg-transparent rounded-2xl md:rounded-none overflow-hidden shadow-sm md:shadow-none border border-white/5 md:border-none w-full">
                     {filteredItems.map((item, idx) => (
                       <div key={item._id} className="transform transition-transform md:hover:scale-[1.02]">
                         <MenuItemCard
@@ -382,7 +380,7 @@ export function POSPage({ fixedTier }: POSPageProps) {
             </div>
 
             {/* Desktop Cart Sidebar */}
-            <div className="hidden lg:block w-[400px] sticky top-6 bg-white rounded-[32px] shadow-xl border border-gray-200 overflow-hidden h-[calc(100vh-120px)]">
+            <div className="hidden lg:block w-[400px] sticky top-6 bg-[#151716] rounded-[32px] shadow-2xl border border-white/5 overflow-hidden h-[calc(100vh-120px)]">
               <CartSidebar {...cartSidebarProps} onClose={undefined} />
             </div>
           </div>
@@ -392,7 +390,7 @@ export function POSPage({ fixedTier }: POSPageProps) {
             {showCart && (
               <>
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowCart(false)} className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100]" />
-                <motion.div initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }} transition={{ type: "spring", damping: 25, stiffness: 200 }} className="fixed inset-y-0 right-0 w-full md:w-[450px] bg-white z-[101] shadow-2xl flex flex-col">
+                <motion.div initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }} transition={{ type: "spring", damping: 25, stiffness: 200 }} className="fixed inset-y-0 right-0 w-full md:w-[450px] bg-[#151716] z-[101] shadow-2xl flex flex-col border-l border-white/5">
                   <div className="flex-1 overflow-hidden">
                     <CartSidebar {...cartSidebarProps} onClose={() => setShowCart(false)} />
                   </div>
@@ -403,8 +401,8 @@ export function POSPage({ fixedTier }: POSPageProps) {
 
           {/* Order Animation */}
           {showOrderAnimation && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-              <div className="bg-white rounded-2xl p-10 shadow-2xl max-w-md w-full">
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
+              <div className="bg-[#151716] rounded-2xl p-10 shadow-2xl max-w-md w-full border border-white/5">
                 <OrderAnimation orderNumber={orderNumber} totalItems={cartItems.length} isVisible={showOrderAnimation} />
               </div>
             </div>
@@ -412,13 +410,13 @@ export function POSPage({ fixedTier }: POSPageProps) {
 
           {/* Variant Modal */}
           {variantModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-              <div className="bg-white rounded-3xl p-8 shadow-2xl max-w-sm w-full">
-                <h3 className="text-xl font-black text-gray-900 mb-2 text-center">{variantModal.item.name}</h3>
-                <p className="text-sm text-gray-500 text-center mb-6">Select a distribution</p>
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
+              <div className="bg-[#151716] rounded-3xl p-8 shadow-2xl max-w-sm w-full border border-white/10">
+                <h3 className="text-xl font-playfair italic font-bold text-white mb-2 text-center">{variantModal.item.name}</h3>
+                <p className="text-xs text-gray-500 font-bold uppercase tracking-widest text-center mb-6">Select a distribution</p>
                 <div className="space-y-3">
                   {variantModal.item.distributions?.map((dist) => (
-                    <button key={dist} onClick={() => handleSelectVariant(variantModal.item, dist)} className="w-full py-4 bg-blue-50 hover:bg-blue-100 border-2 border-blue-200 rounded-2xl font-bold text-blue-700 transition-all hover:scale-[1.02] active:scale-95">{dist}</button>
+                    <button key={dist} onClick={() => handleSelectVariant(variantModal.item, dist)} className="w-full py-4 bg-[#0f1110] hover:bg-[#1a1c1b] border border-white/5 hover:border-[#d4af37]/30 rounded-2xl font-bold text-[#f3cf7a] transition-all hover:scale-[1.02] active:scale-95">{dist}</button>
                   ))}
                 </div>
                 <button onClick={() => setVariantModal(null)} className="w-full mt-4 py-3 text-gray-500 font-bold hover:text-gray-700 transition-colors">Cancel</button>

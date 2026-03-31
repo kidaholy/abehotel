@@ -2,20 +2,20 @@
 
 import Image from "next/image"
 import { useLanguage } from "@/context/language-context"
-import { 
-  Coffee, 
-  IceCream, 
-  Soup, 
-  Flame, 
-  CupSoda, 
-  GlassWater, 
-  Martini, 
-  Egg, 
-  Leaf, 
-  Beef, 
-  Sandwich as SandwichIcon, 
-  Utensils, 
-  UtensilsCrossed, 
+import {
+  Coffee,
+  IceCream,
+  Soup,
+  Flame,
+  CupSoda,
+  GlassWater,
+  Martini,
+  Egg,
+  Leaf,
+  Beef,
+  Sandwich as SandwichIcon,
+  Utensils,
+  UtensilsCrossed,
   ShoppingCart,
   Pizza
 } from 'lucide-react'
@@ -71,16 +71,23 @@ export function MenuItemCard({
   return (
     <div
       onClick={onAddToCart}
-      className={`group transition-all duration-200 cursor-pointer animate-slide-in-up overflow-hidden
-        flex flex-row md:flex-col md:card-base md:p-6 p-3 gap-3 md:gap-0
-        border-b border-gray-100 md:border-2 md:border-border
-        w-full min-w-0 max-w-full
-        ${isSelected ? "bg-accent/5 md:bg-white md:border-accent shadow-sm md:shadow-lg md:shadow-accent/50" : "bg-white hover:bg-gray-50 md:hover:bg-white"}
+      className={`group transition-all duration-500 cursor-pointer animate-slide-in-up overflow-hidden
+        flex flex-row md:flex-col p-3 md:p-6 gap-3 md:gap-4
+        relative
+        ${isSelected
+          ? "bg-[#1a1c1b] ring-1 ring-[#d4af37]/50 shadow-[0_0_30px_rgba(212,175,55,0.1)] scale-[1.02]"
+          : "bg-[#151716] md:hover:bg-[#1a1c1b] md:hover:scale-[1.01]"
+        }
+        rounded-xl
       `}
       style={{ animationDelay: `${index * 50}ms` }}
     >
-      {/* Item Image - Ultra compact on mobile */}
-      <div className="relative w-16 h-16 md:w-full md:h-28 bg-gradient-to-br from-accent/20 to-primary/20 rounded-lg overflow-hidden flex-shrink-0 shadow-sm md:shadow-none border border-gray-100 md:border-none">
+      {/* Decorative Border Layer */}
+      <div className="absolute inset-2 border border-[#d4af37]/20 rounded-lg pointer-events-none z-0" />
+      <div className="absolute inset-[10px] border border-[#d4af37]/5 rounded-md pointer-events-none z-0" />
+
+      {/* Item Image */}
+      <div className="relative w-20 h-20 md:w-full md:h-40 bg-[#0f1110] rounded-lg overflow-hidden flex-shrink-0 z-10">
         {image ? (
           <Image
             src={image}
@@ -90,35 +97,32 @@ export function MenuItemCard({
             sizes="(max-width: 768px) 64px, (max-width: 1200px) 33vw, 20vw"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gray-50/50 md:bg-transparent">
-            <div className="text-gray-400 group-hover:text-accent transition-colors duration-300">
+          <div className="w-full h-full flex items-center justify-center bg-[#0f1110]">
+            <div className="text-gray-600 group-hover:text-[#f3cf7a] transition-colors duration-300">
               {getCategoryIcon(category)}
             </div>
           </div>
         )}
       </div>
 
-      <div className="flex-1 min-w-0 flex flex-row items-center justify-between md:flex-col md:items-stretch gap-2">
-        <div className="min-w-0 flex-1 md:mt-3 flex flex-col justify-center">
-          <h3 className="text-[13px] md:text-base font-bold text-gray-900 truncate leading-tight">
+      <div className="flex-1 min-w-0 flex flex-col items-center md:items-center text-center z-10">
+        <div className="min-w-0 flex-1 md:mt-2 flex flex-col items-center">
+          <h3 className="text-[15px] md:text-xl font-playfair italic font-bold text-white leading-tight mb-1">
             {name}
           </h3>
-          <div className="flex items-center gap-1.5 mt-0.5 whitespace-nowrap">
-            {menuId && <span className="text-[10px] md:text-xs text-gray-400 font-mono">#{menuId}</span>}
-            {menuId && <span className="text-gray-300 md:hidden">•</span>}
-            <span className="text-[11px] font-black text-accent md:hidden">
-              {price} {t("common.currencyBr")}
-            </span>
+          <div className="flex items-center gap-1.5 whitespace-nowrap">
+            {description ? (
+              <p className="text-[10px] md:text-xs text-gray-400 font-medium line-clamp-1">{description}</p>
+            ) : (
+              <p className="text-[10px] md:text-xs text-gray-500 font-bold uppercase tracking-widest">{category}</p>
+            )}
           </div>
-          {/* Show 1-line description on mobile list view */}
-          {description && (
-            <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5 line-clamp-1 leading-snug">{description}</p>
-          )}
         </div>
 
-        <div className="flex items-center gap-3 md:mt-3 flex-shrink-0">
-          <div className="hidden md:block text-base font-black text-accent">
-            {price} <span className="text-sm font-medium">{t("common.currencyBr")}</span>
+        <div className="mt-2 md:mt-4 flex flex-col items-center gap-2 w-full">
+          <div className="text-lg md:text-2xl font-playfair font-bold text-white">
+            {price}
+            <span className="text-sm md:text-lg text-[#f3cf7a] ml-1">{t("common.currencyBr")}</span>
           </div>
 
           <button
@@ -126,26 +130,14 @@ export function MenuItemCard({
               e.stopPropagation();
               onAddToCart();
             }}
-            className={`flex items-center justify-center px-3 py-1.5 md:w-full md:py-2.5 rounded-full md:rounded-lg font-bold text-[11px] md:text-sm transition-all shadow-sm active:scale-95
+            className={`w-full py-2.5 md:py-3.5 rounded-lg font-bold text-[11px] md:text-xs transition-all shadow-xl active:scale-95 uppercase tracking-[0.2em]
               ${isSelected
                 ? "bg-green-500 text-white shadow-green-200"
                 : "bg-accent text-white hover:bg-accent/90 shadow-accent/20"
               }
             `}
           >
-            {isSelected ? (
-              <>
-                <span className="text-xs md:hidden">✓</span>
-                <span className="hidden md:inline">{t("menu.added")}</span>
-              </>
-            ) : (
-              <>
-                <span className="text-xs md:hidden leading-none">+ {t("menu.add")}</span>
-                <span className="hidden md:inline flex items-center justify-center gap-2">
-                  <ShoppingCart size={16} /> {t("menu.add")}
-                </span>
-              </>
-            )}
+            {isSelected ? "Added" : "Add"}
           </button>
         </div>
       </div>

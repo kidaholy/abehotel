@@ -54,3 +54,32 @@ export async function POST(request: Request) {
         return NextResponse.json({ message: error.message || "Failed to create category" }, { status })
     }
 }
+// DELETE category (Admin only)
+export async function DELETE(request: Request) {
+    try {
+        const decoded = await validateSession(request)
+        if (decoded.role !== "admin") {
+            return NextResponse.json({ message: "Forbidden" }, { status: 403 })
+        }
+
+        const { searchParams } = new URL(request.url)
+        const id = searchParams.get("id")
+
+        if (!id) {
+            return NextResponse.json({ message: "ID is required" }, { status: 400 })
+        }
+
+        await connectDB()
+
+        const deletedCategory = await Category.findByIdAndDelete(id)
+        if (!deletedCategory) {
+            return NextResponse.json({ message: "Category not found" }, { status: 404 })
+        }
+
+        return NextResponse.json({ message: "Category deleted" })
+    } catch (error: any) {
+        console.error("❌ Delete category error:", error)
+        const status = error.message?.includes("Unauthorized") ? 401 : 500
+        return NextResponse.json({ message: error.message || "Failed to delete category" }, { status })
+    }
+}

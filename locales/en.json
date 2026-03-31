@@ -20,7 +20,7 @@
         "confirm": "Confirm",
         "areYouSure": "Are you sure?",
         "hello": "Hello",
-        "currencyBr": "Br"
+        "currencyBr": "ETB"
     },
     "hero": {
         "tagline": "Freshly roasted tech for your cafeteria.",
@@ -32,16 +32,16 @@
         "description": "Your complete coffee shop management solution. Streamline operations, manage inventory, and serve excellence."
     },
     "login": {
-        "title": "Welcome Back!",
-        "subtitle": "Please enter your details",
+        "title": "Welcome Back",
+        "subtitle": "Sign in to your account",
         "manage": "Manage",
         "deliciously": "Deliciously.",
-        "description": "The sweetest way to manage your cafeteria inventory, staff, and orders.",
-        "emailLabel": "Email",
+        "description": "Experience an uncompromising standard of service.",
+        "emailLabel": "Email Address",
         "passwordLabel": "Password",
-        "logIn": "Log In",
-        "brewing": "Brewing Access...",
-        "backHome": "Back to Home"
+        "logIn": "Sign In",
+        "brewing": "Authenticating...",
+        "backHome": "Return to Lobby"
     },
     "menu": {
         "title": "Fresh Menu",
@@ -375,7 +375,9 @@
         "all": "All",
         "pending": "Pending",
         "completed": "Completed",
-        "cancelled": "Cancelled"
+        "cancelled": "Cancelled",
+        "items": "items",
+        "item": "item"
     },
     "chef": {
         "kitchenDisplay": "Kitchen Display",

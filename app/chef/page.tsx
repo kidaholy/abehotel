@@ -7,7 +7,7 @@ import { useAuth } from "@/context/auth-context"
 import { useLanguage } from "@/context/language-context"
 import { ConfirmationCard, NotificationCard } from "@/components/confirmation-card"
 import { useConfirmation } from "@/hooks/use-confirmation"
-import { RefreshCw, Clock, ChefHat, Utensils, Bell, ClipboardList, Beef, Search } from 'lucide-react'
+import { RefreshCw, Clock, ChefHat } from 'lucide-react'
 import { Card, CardContent } from "@/components/ui/card"
 
 interface OrderItem {
@@ -109,8 +109,12 @@ export default function KitchenDisplayPage() {
       if (response.ok) {
         const data = await response.json()
         const activeOrders = data.filter((order: Order) =>
-          order.status !== "completed" && order.status !== "cancelled"
-        )
+          order.status !== "completed" && order.status !== "cancelled" &&
+          order.items.some(item => (item as any).mainCategory === "Food")
+        ).map((order: Order) => ({
+          ...order,
+          items: order.items.filter(item => (item as any).mainCategory === "Food")
+        }))
 
         // Update Cache
         localStorage.setItem("chef_orders_cache", JSON.stringify(activeOrders))
@@ -129,8 +133,6 @@ export default function KitchenDisplayPage() {
       setLoading(false)
     }
   }
-
-
 
   const handleStatusChange = async (orderId: string, newStatus: string) => {
     const preservedOrders = orders;
@@ -156,8 +158,6 @@ export default function KitchenDisplayPage() {
       })
 
       if (response.ok) {
-        // Option A: Just keep the local state if the server confirmed it
-        // Option B: Subtle re-fetch to ensure sync without jarring jumps
         // For responsiveness, we trust the local update and wait for next poll
         localStorage.setItem('orderUpdated', Date.now().toString())
       } else {
@@ -174,48 +174,57 @@ export default function KitchenDisplayPage() {
   const readyOrders = orders.filter((o) => o.status === "ready")
 
   return (
-    <>
-      <ProtectedRoute requiredRoles={["chef"]}>
-        <div className="min-h-screen bg-gray-50 p-6">
-          <div className="max-w-7xl mx-auto space-y-6">
-            <BentoNavbar />
+    <ProtectedRoute requiredRoles={["chef"]}>
+      <div className="min-h-screen bg-black p-6 text-white selection:bg-[#d4af37] selection:text-[#0f1110]">
+        <div className="max-w-7xl mx-auto space-y-6">
+          <BentoNavbar />
 
-            {/* Clean Header */}
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-              <div className="flex justify-between items-center">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-orange-50 rounded-lg">
-                    <ChefHat className="h-8 w-8 text-orange-600" />
-                  </div>
-                  <div>
-                    <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Kitchen Display</h1>
-                    <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
-                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                      <span>Kitchen Management</span>
-                    </div>
-                  </div>
+          {/* Clean Header */}
+          <div className="bg-[#151716] rounded-xl p-6 shadow-2xl border border-white/5">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-[#1a1c1b] rounded-lg border border-[#d4af37]/20">
+                  <ChefHat className="h-8 w-8 text-[#d4af37]" />
                 </div>
-                <div className="flex gap-4">
-                  <a href="/chef/food" className="bg-orange-600 text-white px-6 py-2 rounded-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all flex items-center gap-2 text-sm">
-                    <Utensils size={18} /> Food Kitchen
-                  </a>
+                <div>
+                  <h1 className="text-3xl font-playfair italic font-bold text-[#f3cf7a] tracking-tight">Food Kitchen</h1>
+                  {assignedCategories.length > 0 ? (
+                    <div className="flex items-center gap-2 mt-2">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-[#d4af37] bg-white/5 px-2 py-0.5 rounded border border-[#d4af37]/20 italic">Chef Kitchen:</span>
+                      <div className="flex flex-wrap gap-1">
+                        {assignedCategories.map(cat => (
+                          <span key={cat} className="bg-[#d4af37] text-[#0f1110] text-[9px] font-black px-2 py-0.5 rounded-full uppercase shadow-sm">
+                            🍳 {cat}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-500 mt-1">
+                      <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                      <span>System Active</span>
+                    </div>
+                  )}
                 </div>
               </div>
+              <button
+                onClick={fetchOrders}
+                className="p-2 hover:bg-white/5 rounded-lg transition-colors text-gray-400 hover:text-white"
+              >
+                <RefreshCw className="h-5 w-5" />
+              </button>
             </div>
 
-            {/* Selection Dashboard */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-12">
-              <a href="/chef/food" className="group relative overflow-hidden bg-white rounded-3xl p-8 shadow-xl border-2 border-orange-100 hover:border-orange-500 transition-all duration-300 transform hover:-translate-y-2">
-                <div className="absolute top-0 right-0 p-8 text-orange-600/10 group-hover:opacity-20 transition-opacity"><Utensils size={120} /></div>
-                <div className="relative z-10">
-                  <div className="w-16 h-16 bg-orange-100 rounded-2xl flex items-center justify-center text-orange-600 mb-6"><Beef size={32} /></div>
-                  <h3 className="text-3xl font-black text-gray-900 mb-2 uppercase tracking-tight">Food Kitchen</h3>
-                  <p className="text-gray-500 font-medium">Manage food orders, preparation times, and multi-stage workflows.</p>
-                  <div className="mt-8 flex items-center gap-2 text-orange-600 font-bold uppercase tracking-widest text-sm">
-                    Open Station <span>→</span>
-                  </div>
-                </div>
-              </a>
+            {/* Stats Bar */}
+            <div className="grid grid-cols-2 gap-4 mt-6">
+              <div className="text-center p-4 bg-[#1a1c1b] rounded-lg border border-white/5">
+                <div className="text-3xl font-black text-blue-500">{preparingOrders.length}</div>
+                <div className="text-[10px] font-black uppercase tracking-widest text-gray-500 mt-1">Preparing</div>
+              </div>
+              <div className="text-center p-4 bg-[#1a1c1b] rounded-lg border border-white/5">
+                <div className="text-3xl font-black text-emerald-500">{readyOrders.length}</div>
+                <div className="text-[10px] font-black uppercase tracking-widest text-gray-500 mt-1">Ready</div>
+              </div>
             </div>
           </div>
 
@@ -223,7 +232,7 @@ export default function KitchenDisplayPage() {
           {newOrderAlert && (
             <div className="p-4 bg-orange-500 text-white rounded-xl shadow-lg flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <Bell className="h-6 w-6" />
+                <span className="text-2xl">🔔</span>
                 <div>
                   <p className="font-bold">New Order Incoming!</p>
                   <p className="text-sm opacity-90">Check the preparing queue</p>
@@ -235,32 +244,57 @@ export default function KitchenDisplayPage() {
             </div>
           )}
 
-          <div className="hidden" />
+          {/* Orders Grid */}
+          {loading ? (
+            <div className="flex flex-col items-center justify-center min-h-[400px]">
+              <RefreshCw className="h-12 w-12 animate-spin text-gray-400 mb-4" />
+              <p className="text-gray-600">Loading kitchen orders...</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+              <OrderColumn
+                title="Preparing"
+                color="blue"
+                orders={preparingOrders}
+                onStatusChange={handleStatusChange}
+                nextStatus="ready"
+                t={t}
+              />
+              <OrderColumn
+                title="Ready"
+                color="green"
+                orders={readyOrders}
+                onStatusChange={handleStatusChange}
+                nextStatus="completed"
+                t={t}
+              />
+            </div>
+          )}
         </div>
-      </ProtectedRoute>
 
-      <ConfirmationCard
-        isOpen={confirmationState.isOpen}
-        onClose={closeConfirmation}
-        onConfirm={confirmationState.onConfirm}
-        title={confirmationState.options.title}
-        message={confirmationState.options.message}
-        type={confirmationState.options.type}
-        confirmText={confirmationState.options.confirmText}
-        cancelText={confirmationState.options.cancelText}
-        icon={confirmationState.options.icon}
-      />
+        <ConfirmationCard
+          isOpen={confirmationState.isOpen}
+          onClose={closeConfirmation}
+          onConfirm={confirmationState.onConfirm}
+          title={confirmationState.options.title}
+          message={confirmationState.options.message}
+          type={confirmationState.options.type}
+          confirmText={confirmationState.options.confirmText}
+          cancelText={confirmationState.options.cancelText}
+          icon={confirmationState.options.icon}
+        />
 
-      <NotificationCard
-        isOpen={notificationState.isOpen}
-        onClose={closeNotification}
-        title={notificationState.options.title}
-        message={notificationState.options.message}
-        type={notificationState.options.type}
-        autoClose={notificationState.options.autoClose}
-        duration={notificationState.options.duration}
-      />
-    </>
+        <NotificationCard
+          isOpen={notificationState.isOpen}
+          onClose={closeNotification}
+          title={notificationState.options.title}
+          message={notificationState.options.message}
+          type={notificationState.options.type}
+          autoClose={notificationState.options.autoClose}
+          duration={notificationState.options.duration}
+        />
+      </div>
+    </ProtectedRoute>
   )
 }
 
@@ -280,15 +314,15 @@ function OrderColumn({
   t: (key: string) => string
 }) {
   const colorClasses = {
-    orange: "bg-orange-50 border-orange-200",
-    blue: "bg-blue-50 border-blue-200",
-    green: "bg-green-50 border-green-200"
+    orange: "bg-[#1a1c1b] border-[#d4af37]/20",
+    blue: "bg-[#1a1c1b] border-blue-500/20",
+    green: "bg-[#1a1c1b] border-emerald-500/20"
   }
 
   return (
-    <div className={`rounded-xl p-4 border ${colorClasses[color]} min-h-[500px]`}>
-      <h2 className="text-lg font-bold text-gray-900 mb-4">{title}</h2>
-      <div className="grid grid-cols-2 gap-3 max-h-[calc(100vh-300px)] overflow-y-auto">
+    <div className={`rounded-3xl p-6 border ${colorClasses[color]} min-h-[500px] shadow-2xl`}>
+      <h2 className="text-[10px] font-black uppercase tracking-widest text-[#f3cf7a] mb-6">{title}</h2>
+      <div className="grid grid-cols-2 gap-3 max-h-[calc(100vh-300px)] overflow-y-auto font-poppins">
         {orders.length === 0 ? (
           <p className="col-span-2 text-center text-gray-500 py-8">No orders</p>
         ) : (
@@ -325,56 +359,48 @@ function OrderCard({
   const elapsedMinutes = Math.floor((Date.now() - createdTime.getTime()) / 60000)
 
   const borderColors = {
-    orange: "border-l-orange-500",
+    orange: "border-l-[#d4af37]",
     blue: "border-l-blue-500",
-    green: "border-l-green-500"
+    green: "border-l-emerald-500"
   }
 
   return (
-    <Card className={`border-l-4 ${borderColors[color]} hover:shadow-md transition-shadow`}>
-      <CardContent className="p-4">
-        <div className="flex justify-between items-start mb-3">
+    <Card className={`bg-[#0f1110] border-white/5 border-l-4 ${borderColors[color]} hover:shadow-[0_4px_20px_rgba(0,0,0,0.4)] transition-all group overflow-hidden`}>
+      <CardContent className="p-5">
+        <div className="flex justify-between items-start mb-4">
           <div>
-            <h3 className="font-bold text-lg text-gray-900">#{order.orderNumber}</h3>
-            <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+            <h3 className="text-xl font-black text-white">#{order.orderNumber}</h3>
+            <div className="flex items-center gap-2 mt-1.5 flex-wrap">
               {order.floorNumber && (
-                <span className="text-[10px] font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full">
+                <span className="text-[9px] font-black text-blue-400 bg-blue-900/30 px-2 py-0.5 rounded uppercase tracking-tighter border border-blue-500/20">
                   Floor #{order.floorNumber}
                 </span>
               )}
               {order.tableNumber && (
-                <span className="text-[10px] font-bold text-gray-600 bg-gray-100 px-2 py-0.5 rounded-full">
+                <span className="text-[9px] font-black text-gray-400 bg-white/5 px-2 py-0.5 rounded uppercase tracking-tighter border border-white/10">
                   {order.tableNumber}
                 </span>
               )}
-              <p className="text-xs text-gray-500 flex items-center gap-1">
+              <p className="text-[10px] text-gray-500 flex items-center gap-1">
                 <Clock className="h-3 w-3" />
                 {elapsedMinutes > 0 ? `${elapsedMinutes}m ago` : "Just now"}
               </p>
             </div>
           </div>
           {order.notes && (
-            <div title={order.notes}><ClipboardList className="h-5 w-5 text-gray-400" /></div>
+            <span className="text-lg opacity-50 grayscale group-hover:grayscale-0 transition-all" title={order.notes}>📝</span>
           )}
         </div>
 
-        <div className="space-y-2 mb-4 p-3 bg-gray-50 rounded-lg">
+        <div className="space-y-2 mb-6 p-4 bg-white/5 rounded-2xl border border-white/5">
           {order.items.map((item, idx) => (
-            <div key={idx} className="flex justify-between items-center text-sm border-b border-gray-100 last:border-0 py-2">
+            <div key={idx} className="flex justify-between items-center text-sm border-b border-white/5 last:border-0 py-2.5">
               <div className="flex-1">
-                <span className="font-black text-gray-800 tracking-tight">#{item.menuId || item.menuItemId} {item.name}</span>
-                <span className="text-[10px] text-orange-600 font-black uppercase tracking-widest bg-orange-50 w-fit px-1.5 py-0.5 rounded shadow-sm border border-orange-100 mt-0.5">{item.category}</span>
+                <span className="font-bold text-gray-200 tracking-tight">#{item.menuId || item.menuItemId} {item.name}</span>
+                <span className="block text-[9px] text-[#f3cf7a] font-black uppercase tracking-widest mt-0.5 opacity-70">{item.category}</span>
               </div>
-              <div className="flex items-center gap-2">
-                {item.status && item.status !== 'pending' && (
-                  <span className={`text-[10px] px-2.5 py-1 rounded-lg font-black uppercase tracking-tight shadow-sm border ${item.status === 'ready' ? 'bg-green-100 text-green-700 border-green-200' :
-                    item.status === 'preparing' ? 'bg-blue-600 text-white border-blue-700' :
-                      'bg-gray-100 text-gray-600 border-gray-200'
-                    }`}>
-                    {item.status}
-                  </span>
-                )}
-                <span className="font-bold bg-gray-200 text-gray-700 px-2 py-1 rounded-full text-xs">
+              <div className="flex items-center gap-3">
+                <span className="font-black bg-[#151716] text-[#d4af37] px-2.5 py-1 rounded-lg text-[10px] border border-[#d4af37]/20">
                   {item.quantity}
                 </span>
               </div>

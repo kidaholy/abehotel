@@ -360,66 +360,79 @@ export default function AdminSettingsPage() {
 
   return (
     <ProtectedRoute requiredRoles={["admin"]}>
-      <div className="min-h-screen bg-gray-50 p-6">
+      <div className="min-h-screen bg-[#0f1110] p-6 font-sans text-white">
         <div className="max-w-7xl mx-auto space-y-6">
           <BentoNavbar />
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             {/* Left Sidebar - Preview */}
             <div className="lg:col-span-4 space-y-4 lg:sticky lg:top-4 order-2 lg:order-1">
-              <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-                <h2 className="text-lg font-bold text-gray-900 mb-4">{t("adminSettings.logoPreview")}</h2>
+              <div className="bg-[#151716] rounded-2xl p-6 shadow-2xl border border-white/5 relative overflow-hidden">
+                {/* Decorative background elements */}
+                <div className="absolute top-0 right-0 w-32 h-32 bg-[#d4af37]/5 rounded-full blur-3xl" />
+                <div className="absolute bottom-0 left-0 w-32 h-32 bg-[#f3cf7a]/5 rounded-full blur-3xl" />
 
-                <div className="space-y-6">
-                  <div className="text-center">
-                    <h3 className="text-sm font-bold text-gray-500 mb-3">{t("adminSettings.currentLogo")}</h3>
+                <h2 className="text-xl font-playfair italic font-bold text-white mb-6 relative z-10 flex items-center gap-2">
+                  <span className="w-8 h-[1px] bg-[#d4af37]/50 block"></span>
+                  {t("adminSettings.logoPreview")}
+                </h2>
+
+                <div className="space-y-8 relative z-10">
+                  <div className="text-center bg-[#0f1110] p-6 rounded-2xl border border-white/5 shadow-inner">
+                    <h3 className="text-[10px] font-bold text-[#d4af37] tracking-widest uppercase mb-4">{t("adminSettings.currentLogo")}</h3>
                     <div className="flex justify-center">
                       <Logo size="lg" showText={true} overrideUrl={formData.logo_url} />
                     </div>
                   </div>
 
-                  <div className="border-t pt-6">
-                    <h3 className="text-sm font-bold text-gray-500 mb-3">{t("adminSettings.previewInNavigation")}</h3>
-                    <div className="bg-gray-50 rounded-2xl p-4">
+                  <div className="border-t border-white/5 pt-6">
+                    <h3 className="text-[10px] font-bold text-[#d4af37] tracking-widest uppercase mb-4">{t("adminSettings.previewInNavigation")}</h3>
+                    <div className="bg-[#0f1110] rounded-2xl p-4 border border-white/5 shadow-inner">
                       <div className="flex items-center justify-between">
                         <Logo size="md" showText={true} overrideUrl={formData.logo_url} />
-                        <div className="text-xs text-gray-400">{t("adminSettings.navigationBar")}</div>
+                        <div className="text-[10px] text-gray-500 font-bold tracking-widest uppercase">{t("adminSettings.navigationBar")}</div>
                       </div>
                     </div>
                   </div>
 
-                  <div className="border-t pt-6 text-center">
-                    <h3 className="text-sm font-bold text-gray-500 mb-4 uppercase tracking-widest">{t("adminSettings.browserTabPreview")}</h3>
-                    <div className="bg-gray-100 rounded-xl p-3 flex items-center gap-3 border border-gray-200">
-                      <div className="w-6 h-6 rounded bg-white p-0.5 shadow-sm overflow-hidden">
+                  <div className="border-t border-white/5 pt-6 text-center">
+                    <h3 className="text-[10px] font-bold text-[#d4af37] tracking-widest uppercase mb-4">{t("adminSettings.browserTabPreview")}</h3>
+                    <div className="bg-[#0f1110] rounded-xl p-3 flex items-center gap-3 border border-white/5 shadow-inner relative overflow-hidden group">
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                      
+                      <div className="w-6 h-6 rounded bg-[#151716] p-0.5 shadow-sm border border-white/10 overflow-hidden shrink-0">
                         {formData.logo_url ? (
                           <img src={formData.logo_url} className="w-full h-full object-contain" alt={t("adminSettings.favicon")} />
                         ) : (
-                          <div className="w-full h-full bg-[#f4a261] flex items-center justify-center text-[10px] text-white font-black">
+                          <div className="w-full h-full bg-[#d4af37]/20 flex items-center justify-center text-[10px] text-[#f3cf7a] font-playfair font-bold">
                             {formData.app_name?.charAt(0)}
                           </div>
                         )}
                       </div>
-                      <div className="flex-1 text-left">
-                        <div className="text-[10px] font-bold text-slate-700 truncate w-32">
+                      <div className="flex-1 text-left min-w-0">
+                        <div className="text-[10px] font-bold text-white truncate">
                           {formData.app_name} - {t("adminSettings.managementSystem")}
                         </div>
-                        <div className="text-[8px] text-gray-400 -mt-1">prime-addis.vercel.app</div>
+                        <div className="text-[8px] text-gray-500 truncate">prime-addis.vercel.app</div>
                       </div>
-                      <div className="text-gray-300">✕</div>
+                      <div className="text-gray-500 hover:text-white transition-colors cursor-pointer text-xs shrink-0">✕</div>
                     </div>
-                    <p className="text-[10px] text-gray-400 mt-2 italic">{t("adminSettings.livePreviewBrowserTab")}</p>
+                    <p className="text-[10px] text-gray-500 mt-3 italic">{t("adminSettings.livePreviewBrowserTab")}</p>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-[#D2691E] rounded-xl p-6 shadow-sm overflow-hidden relative">
+              <div className="bg-gradient-to-br from-[#1a1c1b] to-[#0f1110] rounded-2xl p-6 shadow-2xl border border-[#d4af37]/20 relative overflow-hidden group">
+                <div className="absolute -right-10 -top-10 w-32 h-32 bg-[#d4af37]/5 rounded-full blur-2xl group-hover:bg-[#d4af37]/10 transition-colors duration-500" />
+                
                 <div className="relative z-10">
-                  <h3 className="text-xl font-bold text-[#1a1a1a] mb-4 flex items-center gap-2">
-                    <Info className="w-5 h-5" />
+                  <h3 className="text-lg font-playfair italic font-bold text-[#f3cf7a] mb-5 flex items-center gap-3">
+                    <span className="p-1.5 rounded-lg bg-[#d4af37]/10 border border-[#d4af37]/20">
+                      <Info className="w-4 h-4 text-[#d4af37]" />
+                    </span>
                     {t("adminSettings.logoTips.title")}
                   </h3>
-                  <ul className="space-y-3">
+                  <ul className="space-y-4">
                     {[
                       t("adminSettings.logoTips.tip1"),
                       t("adminSettings.logoTips.tip2"),
@@ -428,58 +441,61 @@ export default function AdminSettingsPage() {
                       t("adminSettings.logoTips.tip5"),
                       t("adminSettings.logoTips.tip6")
                     ].map((tip, i) => (
-                      <li key={i} className="flex items-start gap-3 group">
-                        <CheckCircle2 className="w-4 h-4 text-[#2d5a41] mt-0.5 flex-shrink-0" />
-                        <p className="text-sm font-medium text-[#1a1a1a]/70 group-hover:text-[#1a1a1a] transition-colors">
+                      <li key={i} className="flex items-start gap-3 group/item">
+                        <CheckCircle2 className="w-4 h-4 text-[#d4af37] mt-0.5 shrink-0 opacity-70 group-hover/item:opacity-100 transition-opacity" />
+                        <p className="text-xs font-medium text-gray-400 group-hover/item:text-white transition-colors leading-relaxed">
                           {tip}
                         </p>
                       </li>
                     ))}
                   </ul>
                 </div>
-                <div className="absolute -bottom-6 -right-6 text-8xl opacity-20 transform group-hover:rotate-12 transition-transform duration-500">🎨</div>
+                <div className="absolute -bottom-6 -right-6 text-8xl opacity-5 transform group-hover:rotate-12 transition-transform duration-700 pointer-events-none">🎨</div>
               </div>
             </div>
 
             <div className="lg:col-span-8 order-1 lg:order-2">
-              <div className="bg-white rounded-xl p-4 md:p-6 shadow-sm border border-gray-200">
+              <div className="bg-[#151716] rounded-2xl p-4 md:p-8 shadow-2xl border border-white/5 relative overflow-hidden">
+                
+                {/* Decorative gradients */}
+                <div className="absolute top-0 right-0 w-64 h-64 bg-[#d4af37]/5 rounded-full blur-3xl pointer-events-none" />
 
-                <div className="flex gap-4 mb-8 border-b border-gray-100 pb-2 overflow-x-auto scrollbar-hide">
+                <div className="flex gap-6 mb-10 border-b border-white/10 pb-0 overflow-x-auto custom-scrollbar relative z-10">
                   <button
                     onClick={() => setActiveTab("branding")}
-                    className={`pb-2 text-xs md:text-sm font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === "branding" ? "text-[#8B4513] border-b-2 border-[#8B4513]" : "text-gray-400 hover:text-gray-600"}`}
+                    className={`pb-4 text-xs md:text-sm font-bold tracking-widest uppercase transition-all whitespace-nowrap px-2 ${activeTab === "branding" ? "text-[#f3cf7a] border-b-2 border-[#d4af37]" : "text-gray-500 hover:text-gray-300"}`}
                   >
                     Branding
                   </button>
                   <button
                     onClick={() => setActiveTab("categories")}
-                    className={`pb-2 text-xs md:text-sm font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === "categories" ? "text-[#8B4513] border-b-2 border-[#8B4513]" : "text-gray-400 hover:text-gray-600"}`}
+                    className={`pb-4 text-xs md:text-sm font-bold tracking-widest uppercase transition-all whitespace-nowrap px-2 ${activeTab === "categories" ? "text-[#f3cf7a] border-b-2 border-[#d4af37]" : "text-gray-500 hover:text-gray-300"}`}
                   >
                     Categories
                   </button>
                   <button
                     onClick={() => setActiveTab("tables")}
-                    className={`pb-2 text-xs md:text-sm font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === "tables" ? "text-[#8B4513] border-b-2 border-[#8B4513]" : "text-gray-400 hover:text-gray-600"}`}
+                    className={`pb-4 text-xs md:text-sm font-bold tracking-widest uppercase transition-all whitespace-nowrap px-2 ${activeTab === "tables" ? "text-[#f3cf7a] border-b-2 border-[#d4af37]" : "text-gray-500 hover:text-gray-300"}`}
                   >
                     Tables
                   </button>
                 </div>
 
                 {activeTab === "branding" && (
-                  <form onSubmit={handleSubmit} className="space-y-8">
-                    <div className="space-y-4">
-                      <label className="block text-sm font-bold text-gray-700">
+                  <form onSubmit={handleSubmit} className="space-y-10 relative z-10">
+                    <div className="space-y-6">
+                      <label className="block text-xl font-playfair italic font-bold text-white mb-2">
                         {t("adminSettings.logoUpload")}
                       </label>
 
                       {/* Upload Method Toggle */}
-                      <div className="flex gap-2 mb-4 bg-gray-50 p-1 rounded-2xl w-fit">
+                      <div className="flex gap-2 mb-6 bg-[#0f1110] border border-white/5 p-1 rounded-2xl w-fit">
                         <button
                           type="button"
                           onClick={() => setUploadMethod("url")}
-                          className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${uploadMethod === "url"
-                            ? "bg-white text-[#8B4513] shadow-sm"
-                            : "text-gray-400 hover:text-gray-600"
+                          className={`px-6 py-2.5 rounded-xl text-sm font-bold tracking-wider uppercase transition-all ${uploadMethod === "url"
+                            ? "bg-[#b38822]/20 text-[#f3cf7a] shadow-sm border border-[#d4af37]/30"
+                            : "text-gray-500 hover:text-gray-300"
                             }`}
                         >
                           🔗 {t("adminSettings.url")}
@@ -487,9 +503,9 @@ export default function AdminSettingsPage() {
                         <button
                           type="button"
                           onClick={() => setUploadMethod("file")}
-                          className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${uploadMethod === "file"
-                            ? "bg-white text-[#8B4513] shadow-sm"
-                            : "text-gray-400 hover:text-gray-600"
+                          className={`px-6 py-2.5 rounded-xl text-sm font-bold tracking-wider uppercase transition-all ${uploadMethod === "file"
+                            ? "bg-[#b38822]/20 text-[#f3cf7a] shadow-sm border border-[#d4af37]/30"
+                            : "text-gray-500 hover:text-gray-300"
                             }`}
                         >
                           📁 {t("adminSettings.uploadFile")}
@@ -503,10 +519,10 @@ export default function AdminSettingsPage() {
                             type="url"
                             value={formData.logo_url.startsWith('data:') ? '' : formData.logo_url}
                             onChange={(e) => setFormData(prev => ({ ...prev, logo_url: e.target.value }))}
-                            className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-6 py-4 text-sm focus:outline-none focus:ring-4 focus:ring-[#8B4513]/10 focus:border-[#8B4513]/20 transition-all font-medium"
+                            className="w-full bg-[#0f1110] border border-white/10 rounded-2xl px-6 py-4 text-sm focus:outline-none focus:ring-1 focus:ring-[#d4af37] focus:border-[#d4af37] transition-all font-medium text-white placeholder-gray-600"
                             placeholder={t("adminSettings.logoUrlPlaceholder")}
                           />
-                          <p className="text-xs text-[#8B4513] font-bold flex items-center gap-2 ml-2">
+                          <p className="text-xs text-[#d4af37] font-bold flex items-center gap-2 ml-2">
                             <Info className="w-3 h-3" />
                             {t("adminSettings.urlFaviconHint")}
                           </p>
@@ -522,45 +538,45 @@ export default function AdminSettingsPage() {
                               disabled={uploading}
                               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
                             />
-                            <div className="bg-gray-50 border-4 border-dashed border-gray-100 rounded-[2.5rem] px-6 py-12 transition-all group-hover:bg-[#8B4513]/5 group-hover:border-[#8B4513]/20 flex flex-col items-center gap-4 relative overflow-hidden">
+                            <div className="bg-[#0f1110] border-2 border-dashed border-white/10 rounded-[2.5rem] px-6 py-12 transition-all group-hover:bg-[#1a1c1b] group-hover:border-[#d4af37]/30 flex flex-col items-center gap-4 relative overflow-hidden shadow-inner">
                               {formData.logo_url ? (
                                 <div className="relative z-10 flex flex-col items-center gap-4">
-                                  <div className="w-32 h-32 rounded-3xl overflow-hidden border-4 border-white shadow-2xl relative bg-white">
+                                  <div className="w-32 h-32 rounded-3xl overflow-hidden border-2 border-[#d4af37]/30 shadow-2xl relative bg-[#151716] p-2">
                                     <img
                                       src={formData.logo_url}
                                       className="w-full h-full object-contain"
                                       alt="Logo Preview"
                                     />
                                     {uploading && (
-                                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                                        <span className="animate-spin text-2xl text-white">⏳</span>
+                                      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center">
+                                        <span className="animate-spin text-2xl text-[#d4af37]">⏳</span>
                                       </div>
                                     )}
                                   </div>
-                                  <div className="bg-white/90 backdrop-blur px-4 py-2 rounded-full border border-gray-100 shadow-sm">
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-[#8B4513]">Click or drag to change logo</p>
+                                  <div className="bg-[#151716] px-4 py-2 rounded-full border border-white/10 shadow-sm">
+                                    <p className="text-[10px] font-bold uppercase tracking-widest text-[#d4af37]">Click or drag to change logo</p>
                                   </div>
                                 </div>
                               ) : (
                                 <>
-                                  <div className="p-5 bg-white rounded-full shadow-lg">
-                                    <Upload className="w-8 h-8 text-[#8B4513]" />
+                                  <div className="p-5 bg-[#151716] border border-white/5 rounded-full shadow-lg">
+                                    <Upload className="w-8 h-8 text-[#d4af37]" />
                                   </div>
                                   <div className="text-center">
-                                    <p className="text-sm font-black text-slate-800 uppercase tracking-tight mb-1">{t("adminSettings.uploadFile")}</p>
-                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">JPG, PNG OR WEBP • MAX 5MB</p>
+                                    <p className="text-sm font-black text-white uppercase tracking-widest mb-1">{t("adminSettings.uploadFile")}</p>
+                                    <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">JPG, PNG OR WEBP • MAX 5MB</p>
                                   </div>
                                 </>
                               )}
 
                               {uploading && !formData.logo_url && (
-                                <div className="absolute inset-0 bg-white/60 backdrop-blur-sm flex items-center justify-center z-10">
+                                <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-10">
                                   <span className="animate-spin text-3xl">⏳</span>
                                 </div>
                               )}
                             </div>
                           </div>
-                          <p className="text-xs text-[#8B4513] font-bold flex items-center gap-2 ml-2">
+                          <p className="text-xs text-[#d4af37] font-bold flex items-center gap-2 ml-2">
                             <Info className="w-3 h-3" />
                             {t("adminSettings.fileFaviconHint")}
                           </p>
@@ -569,19 +585,19 @@ export default function AdminSettingsPage() {
 
                       {/* Current Logo Display */}
                       {formData.logo_url && (
-                        <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl border border-gray-100">
-                          <div className="w-16 h-16 relative overflow-hidden rounded-xl border border-gray-200 bg-white p-1">
+                        <div className="flex items-center gap-5 p-5 bg-[#0f1110] rounded-2xl border border-white/5 shadow-inner">
+                          <div className="w-16 h-16 relative overflow-hidden rounded-xl border border-white/10 bg-[#151716] p-1 shadow-md">
                             <img
                               src={formData.logo_url}
                               alt={t("adminSettings.currentLogoAlt")}
                               className="w-full h-full object-contain"
                             />
                           </div>
-                          <div className="flex-1">
-                            <p className="text-sm font-bold text-slate-800">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-bold text-white tracking-wide">
                               {formData.logo_url.startsWith('data:') ? t("adminSettings.uploadedImage") : t("adminSettings.urlImage")}
                             </p>
-                            <p className="text-xs text-gray-400 font-medium truncate max-w-[200px]">
+                            <p className="text-xs text-gray-500 font-medium truncate mt-0.5">
                               {formData.logo_url.startsWith('data:')
                                 ? t("adminSettings.compressed")
                                 : formData.logo_url}
@@ -590,7 +606,7 @@ export default function AdminSettingsPage() {
                           <button
                             type="button"
                             onClick={handleRemoveLogo}
-                            className="bg-red-50 text-red-500 hover:bg-red-100 p-2.5 rounded-xl transition-colors"
+                            className="bg-red-950/30 text-red-500 border border-red-500/20 hover:bg-red-900/50 p-3 rounded-xl transition-colors shrink-0"
                             title={t("adminSettings.removeLogo")}
                           >
                             🗑️
@@ -599,8 +615,8 @@ export default function AdminSettingsPage() {
                       )}
 
                       {/* Favicon Upload Section */}
-                      <div className="space-y-4 pt-6 border-t border-gray-100">
-                        <label className="block text-sm font-bold text-gray-700">
+                      <div className="space-y-4 pt-8 mt-8 border-t border-white/5">
+                        <label className="block text-sm font-bold text-gray-300 uppercase tracking-widest">
                           Browser Tab Icon (Favicon)
                         </label>
                         <div className="flex flex-col md:flex-row gap-4">
@@ -609,7 +625,7 @@ export default function AdminSettingsPage() {
                               type="url"
                               value={formData.favicon_url.startsWith('data:') ? '' : formData.favicon_url}
                               onChange={(e) => setFormData(prev => ({ ...prev, favicon_url: e.target.value }))}
-                              className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-6 py-4 text-sm focus:outline-none focus:ring-4 focus:ring-[#8B4513]/10 focus:border-[#8B4513]/20 transition-all font-medium"
+                              className="w-full bg-[#0f1110] border border-white/10 rounded-2xl px-6 py-4 text-sm focus:outline-none focus:ring-1 focus:ring-[#d4af37] focus:border-[#d4af37] transition-all font-medium text-white placeholder-gray-600"
                               placeholder="Favicon URL (e.g. https://.../favicon.png)"
                             />
                             <div className="relative group overflow-hidden rounded-2xl">
@@ -637,48 +653,48 @@ export default function AdminSettingsPage() {
                                 disabled={uploading}
                                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                               />
-                              <div className="bg-gray-50 border-2 border-dashed border-gray-100 px-6 py-4 flex items-center justify-center gap-2 group-hover:bg-gray-100/50 transition-all">
-                                <Upload className="w-4 h-4 text-[#8B4513]" />
-                                <span className="text-xs font-bold text-slate-600">Upload Favicon (64x64 PNG recommended)</span>
+                              <div className="bg-[#0f1110] border border-dashed border-white/10 px-6 py-4 flex items-center justify-center gap-3 group-hover:bg-[#1a1c1b] transition-all h-full rounded-2xl shadow-inner">
+                                <Upload className="w-5 h-5 text-[#d4af37]" />
+                                <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Upload Favicon (64x64 PNG)</span>
                               </div>
                             </div>
                           </div>
 
                           {formData.favicon_url && (
-                            <div className="w-full md:w-32 h-24 bg-gray-50 rounded-2xl border border-gray-100 flex items-center justify-center relative group">
-                              <div className="w-10 h-10 bg-white rounded-lg shadow-sm border border-gray-200 p-1 overflow-hidden transition-transform group-hover:scale-110">
+                            <div className="w-full md:w-32 md:h-[116px] bg-[#0f1110] rounded-2xl border border-white/10 flex items-center justify-center relative group p-4 shrink-0 shadow-inner">
+                              <div className="w-12 h-12 bg-[#151716] rounded-xl shadow-md border border-white/5 p-2 overflow-hidden transition-transform group-hover:scale-110">
                                 <img src={formData.favicon_url} className="w-full h-full object-contain" alt="Favicon Preview" />
                               </div>
                               <button
                                 type="button"
                                 onClick={() => setFormData(prev => ({ ...prev, favicon_url: "" }))}
-                                className="absolute -top-2 -right-2 bg-red-100 text-red-500 rounded-full w-6 h-6 flex items-center justify-center text-xs shadow-sm hover:bg-red-200"
+                                className="absolute -top-2 -right-2 bg-red-950/80 text-red-500 rounded-full w-7 h-7 flex items-center justify-center text-xs shadow-md hover:bg-red-900 border border-red-500/30 transition-colors"
                               >
                                 ✕
                               </button>
                             </div>
                           )}
                         </div>
-                        <p className="text-[10px] text-gray-400 italic">
+                        <p className="text-[10px] text-gray-500 italic mt-2 ml-2">
                           This is the small icon shown in the browser tab. If empty, it will use the hotel logo.
                         </p>
                       </div>
                     </div>
 
                     {/* App Name */}
-                    <div className="space-y-3">
-                      <label className="block text-sm font-bold text-gray-700">
+                    <div className="space-y-3 pt-6 border-t border-white/5">
+                      <label className="block text-sm font-bold text-gray-300 uppercase tracking-widest mb-2">
                         {t("adminSettings.appName")}
                       </label>
                       <input
                         type="text"
                         value={formData.app_name}
                         onChange={(e) => setFormData(prev => ({ ...prev, app_name: e.target.value }))}
-                        className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-6 py-4 text-sm focus:outline-none focus:ring-4 focus:ring-[#8B4513]/10 focus:border-[#8B4513]/20 transition-all font-bold"
+                        className="w-full bg-[#0f1110] border border-white/10 rounded-2xl px-6 py-4 text-sm focus:outline-none focus:ring-1 focus:ring-[#d4af37] focus:border-[#d4af37] transition-all font-bold text-white placeholder-gray-600"
                         placeholder={t("adminSettings.appNamePlaceholder")}
                         required
                       />
-                      <p className="text-xs text-[#8B4513] font-bold flex items-center gap-2 ml-2">
+                      <p className="text-[10px] text-[#d4af37] font-bold flex items-center gap-2 ml-2 tracking-wide uppercase">
                         <Info className="w-3 h-3" />
                         {t("adminSettings.appNameHint")}
                       </p>
@@ -686,25 +702,25 @@ export default function AdminSettingsPage() {
 
                     {/* App Tagline */}
                     <div className="space-y-3">
-                      <label className="block text-sm font-bold text-gray-700">
+                      <label className="block text-sm font-bold text-gray-300 uppercase tracking-widest mb-2">
                         {t("adminSettings.appTagline")}
                       </label>
                       <input
                         type="text"
                         value={formData.app_tagline}
                         onChange={(e) => setFormData(prev => ({ ...prev, app_tagline: e.target.value }))}
-                        className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-6 py-4 text-sm focus:outline-none focus:ring-4 focus:ring-[#8B4513]/10 focus:border-[#8B4513]/20 transition-all font-medium text-slate-600"
+                        className="w-full bg-[#0f1110] border border-white/10 rounded-2xl px-6 py-4 text-sm focus:outline-none focus:ring-1 focus:ring-[#d4af37] focus:border-[#d4af37] transition-all font-medium text-gray-300 placeholder-gray-600"
                         placeholder={t("adminSettings.appTaglinePlaceholder")}
                         required
                       />
-                      <p className="text-xs text-gray-400 font-medium ml-2">
+                      <p className="text-[10px] text-gray-500 font-bold ml-2 tracking-wide uppercase">
                         {t("adminSettings.appTaglineHint")}
                       </p>
                     </div>
 
                     {/* VAT Rate */}
-                    <div className="space-y-3">
-                      <label className="block text-sm font-bold text-gray-700">
+                    <div className="space-y-3 pt-6 border-t border-white/5">
+                      <label className="block text-sm font-bold text-gray-300 uppercase tracking-widest mb-2">
                         {t("adminSettings.vatRate")}
                       </label>
                       <div className="flex items-center gap-4">
@@ -716,57 +732,58 @@ export default function AdminSettingsPage() {
                             max="1"
                             value={formData.vat_rate}
                             onChange={(e) => setFormData(prev => ({ ...prev, vat_rate: e.target.value }))}
-                            className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-6 py-4 text-sm focus:outline-none focus:ring-4 focus:ring-[#8B4513]/10 focus:border-[#8B4513]/20 transition-all font-bold"
+                            className="w-full bg-[#0f1110] border border-white/10 rounded-2xl px-6 py-4 text-sm focus:outline-none focus:ring-1 focus:ring-[#d4af37] focus:border-[#d4af37] transition-all font-bold text-white placeholder-gray-600"
                             placeholder={t("adminSettings.vatRatePlaceholder")}
                             required
                           />
                         </div>
-                        <div className="bg-[#8B4513]/5 px-6 py-4 rounded-2xl border border-[#8B4513]/10">
-                          <span className="text-[#8B4513] font-black">
+                        <div className="bg-[#b38822]/10 px-6 py-4 rounded-2xl border border-[#d4af37]/20 flex items-center justify-center min-w-[100px] shrink-0">
+                          <span className="text-[#f3cf7a] font-black text-lg">
                             {(parseFloat(formData.vat_rate) * 100).toFixed(0)}%
                           </span>
                         </div>
                       </div>
-                      <p className="text-xs text-[#8B4513] font-bold flex items-center gap-2 ml-2">
+                      <p className="text-[10px] text-[#d4af37] font-bold flex items-center gap-2 ml-2 tracking-wide uppercase">
                         <Info className="w-3 h-3" />
                         {t("adminSettings.vatRateHint")}
                       </p>
                     </div>
 
                     {/* Cashier Printing Toggle */}
-                    <div className="space-y-4 p-8 bg-gray-50 rounded-[2.5rem] border-2 border-[#8B4513]/5 shadow-inner">
-                      <div className="flex items-center justify-between gap-6">
-                        <div className="flex-1 space-y-2">
-                          <label className="text-base font-black text-gray-800 uppercase tracking-tight flex items-center gap-2">
-                            🖨️ Cashier Printing
+                    <div className="space-y-4 p-8 bg-[#0f1110] rounded-[2.5rem] border border-white/5 shadow-inner mt-8">
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+                        <div className="flex-1 space-y-3">
+                          <label className="text-lg font-playfair italic font-bold text-white flex items-center gap-3">
+                            <span className="p-2 bg-[#151716] rounded-xl border border-white/10 shadow-sm text-xl">🖨️</span>
+                            Cashier Printing
                             {formData.enable_cashier_printing === "true" ? (
-                              <span className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full border border-green-200 animate-pulse">ENABLED</span>
+                              <span className="text-[9px] bg-[#1a2e20] text-[#4ade80] px-2.5 py-1 rounded-md border border-[#4ade80]/30 animate-pulse uppercase tracking-widest ml-2 font-black">ENABLED</span>
                             ) : (
-                              <span className="text-[10px] bg-gray-200 text-gray-500 px-2 py-0.5 rounded-full border border-gray-300">DISABLED</span>
+                              <span className="text-[9px] bg-[#1a1c1b] text-gray-500 px-2.5 py-1 rounded-md border border-white/10 uppercase tracking-widest ml-2 font-black">DISABLED</span>
                             )}
                           </label>
-                          <p className="text-xs text-gray-500 font-bold leading-relaxed">
+                          <p className="text-xs text-gray-400 font-medium leading-relaxed pl-14 sm:pl-0">
                             {formData.enable_cashier_printing === "true"
                               ? "The system WILL automatically open the print dialog after every checkout."
-                              : "the system will SKIP the print dialog. Orders will be saved but not printed automatically."}
+                              : "The system will SKIP the print dialog. Orders will be saved but not printed automatically."}
                           </p>
                         </div>
-                        <div className="flex flex-col items-center gap-2">
+                        <div className="flex flex-col items-center gap-3 pl-14 sm:pl-0 shrink-0">
                           <button
                             type="button"
                             onClick={() => setFormData({
                               ...formData,
                               enable_cashier_printing: formData.enable_cashier_printing === "true" ? "false" : "true"
                             })}
-                            className={`relative inline-flex h-8 w-16 items-center rounded-full transition-all duration-300 shadow-lg focus:outline-none ${formData.enable_cashier_printing === "true" ? "bg-green-600 ring-4 ring-green-100" : "bg-gray-300 ring-4 ring-gray-100"
+                            className={`relative inline-flex h-8 w-16 items-center rounded-full transition-all duration-500 shadow-inner focus:outline-none ${formData.enable_cashier_printing === "true" ? "bg-[#1a2e20] border border-[#4ade80]/50" : "bg-[#1a1c1b] border border-white/10"
                               }`}
                           >
                             <span
-                              className={`inline-block h-6 w-6 transform rounded-full bg-white shadow-xl transition-transform duration-300 ${formData.enable_cashier_printing === "true" ? "translate-x-9" : "translate-x-1"
+                              className={`inline-block h-6 w-6 transform rounded-full shadow-xl transition-transform duration-500 ${formData.enable_cashier_printing === "true" ? "translate-x-9 bg-[#4ade80]" : "translate-x-1 bg-gray-500"
                                 }`}
                             />
                           </button>
-                          <span className={`text-[10px] font-black uppercase tracking-widest ${formData.enable_cashier_printing === "true" ? "text-green-600" : "text-gray-400"}`}>
+                          <span className={`text-[9px] font-black uppercase tracking-widest ${formData.enable_cashier_printing === "true" ? "text-[#4ade80]" : "text-gray-500"}`}>
                             {formData.enable_cashier_printing === "true" ? "Printing ON" : "Printing OFF"}
                           </span>
                         </div>
@@ -774,11 +791,11 @@ export default function AdminSettingsPage() {
                     </div>
 
                     {/* Save Button */}
-                    <div className="flex justify-end pt-6 border-t border-gray-100">
+                    <div className="flex justify-end pt-8 border-t border-white/5 mt-10">
                       <button
                         type="submit"
                         disabled={saving}
-                        className="bg-[#8B4513] text-white px-10 py-4 rounded-2xl font-bold transition-all shadow-xl hover:shadow-[#8B4513]/20 transform hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:transform-none flex items-center gap-3"
+                        className="bg-gradient-to-r from-[#b38822] to-[#d4af37] text-white px-10 py-4 rounded-2xl font-bold transition-all shadow-lg hover:shadow-[#d4af37]/20 transform hover:-translate-y-1 active:scale-95 disabled:opacity-50 disabled:transform-none flex items-center gap-3 uppercase tracking-widest text-xs"
                       >
                         {saving ? (
                           <>
@@ -797,127 +814,134 @@ export default function AdminSettingsPage() {
                 )}
 
                 {activeTab === "tables" && (
-                  <div className="space-y-8">
+                  <div className="space-y-10 relative z-10">
                     {/* Floor Management Section */}
-                    <div className="bg-gray-50 p-6 rounded-3xl border border-gray-100">
-                      <h3 className="font-black text-xs uppercase tracking-widest text-[#8B4513] mb-4">
+                    <div className="bg-[#0f1110] p-6 lg:p-8 rounded-3xl border border-white/5 shadow-inner">
+                      <h3 className="font-bold text-xs uppercase tracking-widest text-[#d4af37] mb-6 flex items-center gap-2">
+                        <span className="w-5 h-[1px] bg-[#d4af37]/50 block"></span>
                         Manage Floors
                       </h3>
-                      <div className="flex gap-3 mb-4">
+                      <div className="flex flex-col sm:flex-row gap-4 mb-6">
                         <input
                           type="text"
                           placeholder="Floor Number (e.g. #1)"
                           value={newFloor.floorNumber}
                           onChange={(e) => setNewFloor({ ...newFloor, floorNumber: e.target.value })}
-                          className="flex-1 bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-[#8B4513]/5"
+                          className="flex-1 bg-[#151716] border border-white/10 rounded-xl px-5 py-4 text-sm font-bold focus:outline-none focus:ring-1 focus:ring-[#d4af37] focus:border-[#d4af37] transition-all text-white placeholder-gray-600 shadow-inner"
                         />
                         <input
                           type="number"
                           placeholder="Order"
                           value={newFloor.order}
                           onChange={(e) => setNewFloor({ ...newFloor, order: parseInt(e.target.value) || 0 })}
-                          className="w-24 bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-[#8B4513]/5"
+                          className="w-full sm:w-28 bg-[#151716] border border-white/10 rounded-xl px-5 py-4 text-sm font-bold focus:outline-none focus:ring-1 focus:ring-[#d4af37] focus:border-[#d4af37] transition-all text-white placeholder-gray-600 shadow-inner"
                         />
                         <button
                           onClick={handleAddFloor}
                           disabled={!newFloor.floorNumber}
-                          className="bg-[#8B4513] text-white px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest disabled:opacity-50 hover:bg-[#A0522D] transition-all shadow-lg shadow-[#8B4513]/20"
+                          className="bg-gradient-to-r from-[#b38822] to-[#d4af37] text-white px-8 py-4 rounded-xl font-bold text-xs uppercase tracking-widest disabled:opacity-50 hover:shadow-[0_0_15px_rgba(212,175,55,0.2)] transition-all shrink-0 active:scale-95 disabled:scale-100"
                         >
-                          {editingFloor ? "Update" : "Add"}
+                          {editingFloor ? "Update" : "Add Floor"}
                         </button>
                         {editingFloor && (
                           <button
                             onClick={() => { setEditingFloor(null); setNewFloor({ floorNumber: "", order: 0 }) }}
-                            className="bg-gray-200 text-gray-600 px-4 py-3 rounded-xl font-bold"
+                            className="bg-[#1a1c1b] text-gray-400 px-6 py-4 rounded-xl font-bold border border-white/10 hover:text-white transition-colors text-xs uppercase tracking-widest shrink-0"
                           >
                             Cancel
                           </button>
                         )}
                       </div>
 
-                      <div className="flex flex-wrap gap-2">
+                      <div className="flex flex-wrap gap-3">
                         {floors.map(floor => {
                           return (
-                            <div key={floor._id} className="bg-white border border-gray-200 rounded-xl px-3 py-2 flex items-center gap-2 shadow-sm hover:shadow-md transition-all">
-                              <span className="font-bold text-sm text-gray-700">Floor #{floor.floorNumber}</span>
-                              <div className="flex items-center gap-1 ml-1 border-l pl-2 border-gray-100">
-                                <button onClick={() => { setEditingFloor(floor); setNewFloor({ floorNumber: floor.floorNumber, order: floor.order }) }} className="text-gray-400 hover:text-[#8B4513] transition-colors">✏️</button>
-                                <button onClick={() => handleDeleteFloor(floor._id)} className="text-gray-400 hover:text-red-500 transition-colors">🗑️</button>
+                            <div key={floor._id} className="bg-[#151716] border border-white/10 rounded-xl pl-4 pr-2 py-2 flex items-center gap-3 shadow-md hover:border-[#d4af37]/30 transition-all group">
+                              <span className="font-bold text-sm text-gray-300 group-hover:text-white transition-colors">Floor #{floor.floorNumber}</span>
+                              <div className="flex items-center gap-1 ml-2 pl-3 border-l border-white/10">
+                                <button onClick={() => { setEditingFloor(floor); setNewFloor({ floorNumber: floor.floorNumber, order: floor.order }) }} className="text-gray-500 hover:text-[#f3cf7a] transition-colors p-1.5 rounded-lg hover:bg-[#d4af37]/10">✏️</button>
+                                <button onClick={() => handleDeleteFloor(floor._id)} className="text-gray-500 hover:text-red-500 transition-colors p-1.5 rounded-lg hover:bg-red-500/10">🗑️</button>
                               </div>
                             </div>
                           )
                         })}
+                        {floors.length === 0 && (
+                          <div className="w-full text-center py-6 text-gray-500 text-sm italic">
+                            No floors added yet.
+                          </div>
+                        )}
                       </div>
                     </div>
 
                     {/* Table Management Section */}
-                    <div className="bg-gray-50 p-6 rounded-3xl border border-gray-100">
-                      <div className="flex justify-between items-center mb-4">
-                        <h3 className="font-black text-xs uppercase tracking-widest text-[#8B4513]">
+                    <div className="bg-[#0f1110] p-6 lg:p-8 rounded-3xl border border-white/5 shadow-inner">
+                      <div className="flex justify-between items-center mb-6">
+                        <h3 className="font-bold text-xs uppercase tracking-widest text-[#d4af37] flex items-center gap-2">
+                          <span className="w-5 h-[1px] bg-[#d4af37]/50 block"></span>
                           {editingTable ? "Update Table" : "Add New Table"}
                         </h3>
                         {editingTable && (
                           <button
                             onClick={handleCancelEditTable}
-                            className="text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-gray-600 bg-white px-3 py-1.5 rounded-lg border border-gray-200"
+                            className="text-[10px] font-bold uppercase tracking-widest text-gray-500 hover:text-white bg-[#151716] px-3 py-1.5 rounded-lg border border-white/10 transition-colors"
                           >
                             Cancel
                           </button>
                         )}
                       </div>
-                      <div className="flex flex-col sm:flex-row gap-3">
+                      <div className="flex flex-col sm:flex-row gap-4">
                         <div className="flex-1">
                           <input
                             type="text"
                             placeholder="Number (e.g. T-01)"
                             value={newTable.tableNumber}
                             onChange={(e) => setNewTable({ ...newTable, tableNumber: e.target.value })}
-                            className={`w-full bg-white border rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-[#8B4513]/5 ${editingTable ? 'border-[#8B4513]' : 'border-gray-200'}`}
+                            className={`w-full bg-[#151716] border rounded-xl px-5 py-4 text-sm font-bold focus:outline-none focus:ring-1 focus:ring-[#d4af37] transition-all text-white placeholder-gray-600 shadow-inner ${editingTable ? 'border-[#d4af37]' : 'border-white/10'}`}
                           />
                         </div>
-                        <div className="w-24">
+                        <div className="w-full sm:w-32">
                           <input
                             type="text"
                             placeholder="Seats"
                             value={newTable.capacity}
                             onChange={(e) => setNewTable({ ...newTable, capacity: e.target.value })}
-                            className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-[#8B4513]/5"
+                            className="w-full bg-[#151716] border border-white/10 rounded-xl px-5 py-4 text-sm font-bold focus:outline-none focus:ring-1 focus:ring-[#d4af37] focus:border-[#d4af37] transition-all text-white placeholder-gray-600 shadow-inner"
                           />
                         </div>
                         <button
                           onClick={handleAddTable}
                           disabled={!newTable.tableNumber}
-                          className="bg-[#8B4513] text-white px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest disabled:opacity-50 hover:bg-[#A0522D] transition-all shadow-lg shadow-[#8B4513]/20"
+                          className="bg-gradient-to-r from-[#b38822] to-[#d4af37] text-white px-8 py-4 rounded-xl font-bold text-xs uppercase tracking-widest disabled:opacity-50 hover:shadow-[0_0_15px_rgba(212,175,55,0.2)] transition-all shrink-0 active:scale-95 disabled:scale-100"
                         >
-                          {editingTable ? "Update" : "Add"}
+                          {editingTable ? "Update" : "Add Table"}
                         </button>
                       </div>
                     </div>
 
                     {/* Global Tables List */}
-                    <div className="bg-white border border-gray-200 rounded-[2rem] overflow-hidden shadow-sm hover:border-emerald-200 transition-all">
-                      <div className="bg-gray-50/50 px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-                        <h4 className="font-black text-xs uppercase tracking-widest text-gray-500">Universal Tables</h4>
-                        <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
-                          {tables.length} Total Tables
+                    <div className="bg-[#0f1110] border border-white/5 rounded-[2rem] overflow-hidden shadow-2xl relative">
+                      <div className="bg-[#151716] px-6 py-5 border-b border-white/5 flex justify-between items-center relative z-10">
+                        <h4 className="font-bold text-[10px] uppercase tracking-widest text-[#d4af37]">Universal Tables</h4>
+                        <span className="text-[10px] font-black text-[#4ade80] bg-[#1a2e20] px-3 py-1 rounded-md border border-[#4ade80]/30 uppercase tracking-widest">
+                          {tables.length} Total
                         </span>
                       </div>
-                      <div className="p-6">
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="p-6 relative z-10">
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                           {tables.map(table => (
-                            <div key={table._id} className="p-4 bg-white border border-gray-100 rounded-2xl flex justify-between items-center group hover:border-[#8B4513] hover:shadow-md transition-all">
+                            <div key={table._id} className="p-4 bg-[#151716] border border-white/5 rounded-2xl flex justify-between items-center group hover:border-[#d4af37]/50 hover:shadow-[0_0_15px_rgba(212,175,55,0.1)] transition-all">
                               <div>
-                                <div className="font-black text-lg text-gray-800">{table.tableNumber}</div>
-                                {table.capacity && <div className="text-xs text-gray-400 font-bold">{table.capacity} Seats</div>}
+                                <div className="font-playfair font-bold text-lg text-white group-hover:text-[#f3cf7a] transition-colors">{table.tableNumber}</div>
+                                {table.capacity && <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">{table.capacity} Seats</div>}
                               </div>
-                              <div className="flex gap-1">
-                                <button onClick={() => handleEditTable(table)} className="text-gray-300 hover:text-[#8B4513] transition-colors p-2 rounded-lg hover:bg-[#8B4513]/5">✏️</button>
-                                <button onClick={() => handleDeleteTable(table._id)} className="text-gray-300 hover:text-red-500 transition-colors p-2 rounded-lg hover:bg-red-50">🗑️</button>
+                              <div className="flex flex-col gap-1">
+                                <button onClick={() => handleEditTable(table)} className="text-gray-500 hover:text-[#f3cf7a] transition-colors p-1.5 rounded-lg hover:bg-[#d4af37]/10 flex items-center justify-center">✏️</button>
+                                <button onClick={() => handleDeleteTable(table._id)} className="text-gray-500 hover:text-red-500 transition-colors p-1.5 rounded-lg hover:bg-red-500/10 flex items-center justify-center">🗑️</button>
                               </div>
                             </div>
                           ))}
                           {tables.length === 0 && (
-                            <div className="col-span-full text-center py-20 text-gray-300 text-sm italic border-2 border-dashed border-gray-100 rounded-[2rem]">
+                            <div className="col-span-full text-center py-20 text-gray-500 text-sm italic border-2 border-dashed border-white/5 rounded-[2rem]">
                               No tables registered yet. Add your first table above!
                             </div>
                           )}
@@ -928,51 +952,52 @@ export default function AdminSettingsPage() {
                 )}
 
                 {activeTab === "categories" && (
-                  <div className="space-y-8">
-                    <div className="flex gap-2 mb-6 bg-gray-50 p-1 rounded-2xl w-fit">
+                  <div className="space-y-10 relative z-10">
+                    <div className="flex gap-2 mb-8 bg-[#0f1110] border border-white/5 p-1 rounded-2xl w-fit">
                       <button
                         onClick={() => setCategoryType("menu")}
-                        className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${categoryType === "menu"
-                          ? "bg-white text-[#8B4513] shadow-sm"
-                          : "text-gray-400 hover:text-gray-600"
+                        className={`px-8 py-3 rounded-xl text-sm font-bold tracking-wider uppercase transition-all ${categoryType === "menu"
+                          ? "bg-[#b38822]/20 text-[#f3cf7a] shadow-sm border border-[#d4af37]/30"
+                          : "text-gray-500 hover:text-gray-300"
                           }`}
                       >
-                        Menu Categories
+                        🍽️ Menu Categories
                       </button>
                       <button
                         onClick={() => setCategoryType("stock")}
-                        className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${categoryType === "stock"
-                          ? "bg-white text-[#8B4513] shadow-sm"
-                          : "text-gray-400 hover:text-gray-600"
+                        className={`px-8 py-3 rounded-xl text-sm font-bold tracking-wider uppercase transition-all ${categoryType === "stock"
+                          ? "bg-[#b38822]/20 text-[#f3cf7a] shadow-sm border border-[#d4af37]/30"
+                          : "text-gray-500 hover:text-gray-300"
                           }`}
                       >
-                        Stock Categories
+                        📦 Stock Categories
                       </button>
                     </div>
 
-                    <div className="bg-gray-50 p-6 rounded-3xl border border-gray-100">
-                      <h3 className="font-black text-xs uppercase tracking-widest text-[#8B4513] mb-4">
+                    <div className="bg-[#0f1110] p-6 lg:p-8 rounded-3xl border border-white/5 shadow-inner">
+                      <h3 className="font-bold text-xs uppercase tracking-widest text-[#d4af37] mb-6 flex items-center gap-2">
+                        <span className="w-5 h-[1px] bg-[#d4af37]/50 block"></span>
                         {editingCategory ? "Update Category" : `Add New ${categoryType === 'menu' ? 'Menu' : 'Stock'} Category`}
                       </h3>
-                      <div className="flex gap-3">
+                      <div className="flex flex-col sm:flex-row gap-4">
                         <input
                           type="text"
                           placeholder="Category Name"
                           value={newCategory.name}
                           onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })}
-                          className="flex-1 bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-[#8B4513]/5"
+                          className="flex-1 bg-[#151716] border border-white/10 rounded-xl px-5 py-4 text-sm font-bold focus:outline-none focus:ring-1 focus:ring-[#d4af37] focus:border-[#d4af37] transition-all text-white placeholder-gray-600 shadow-inner"
                         />
                         <button
                           onClick={handleSaveCategory}
                           disabled={!newCategory.name}
-                          className="bg-[#8B4513] text-white px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest disabled:opacity-50 hover:bg-[#A0522D] transition-all shadow-lg shadow-[#8B4513]/20"
+                          className="bg-gradient-to-r from-[#b38822] to-[#d4af37] text-white px-8 py-4 rounded-xl font-bold text-xs uppercase tracking-widest disabled:opacity-50 hover:shadow-[0_0_15px_rgba(212,175,55,0.2)] transition-all shrink-0 active:scale-95 disabled:scale-100"
                         >
-                          {editingCategory ? "Update" : "Add"}
+                          {editingCategory ? "Update" : "Add Category"}
                         </button>
                         {editingCategory && (
                           <button
                             onClick={() => { setEditingCategory(null); setNewCategory({ name: "", type: "menu", description: "" }) }}
-                            className="bg-gray-200 text-gray-600 px-4 py-3 rounded-xl font-bold"
+                            className="bg-[#1a1c1b] text-gray-400 px-6 py-4 rounded-xl font-bold border border-white/10 hover:text-white transition-colors text-xs uppercase tracking-widest shrink-0"
                           >
                             Cancel
                           </button>
@@ -982,19 +1007,19 @@ export default function AdminSettingsPage() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {categories.map(cat => (
-                        <div key={cat._id} className="p-4 bg-white border border-gray-100 rounded-2xl flex justify-between items-center group hover:border-[#8B4513] hover:shadow-md transition-all">
+                        <div key={cat._id} className="p-5 bg-[#0f1110] border border-white/5 rounded-2xl flex justify-between items-center group hover:border-[#d4af37]/50 hover:shadow-[0_0_15px_rgba(212,175,55,0.1)] transition-all shadow-md">
                           <div>
-                            <div className="font-black text-lg text-gray-800">{cat.name}</div>
-                            <div className="text-[10px] font-black uppercase text-gray-400 tracking-widest">{cat.type === 'menu' ? 'Menu' : 'Stock'}</div>
+                            <div className="font-playfair font-bold text-lg text-white group-hover:text-[#f3cf7a] transition-colors">{cat.name}</div>
+                            <div className="text-[9px] font-black uppercase text-gray-500 tracking-widest mt-1 border border-white/10 bg-[#151716] rounded-md px-2 py-0.5 inline-block">{cat.type === 'menu' ? 'Menu' : 'Stock'}</div>
                           </div>
-                          <div className="flex gap-1">
-                            <button onClick={() => { setEditingCategory(cat); setNewCategory({ ...newCategory, name: cat.name }) }} className="text-gray-300 hover:text-[#8B4513] transition-colors p-2 rounded-lg hover:bg-[#8B4513]/5">✏️</button>
-                            <button onClick={() => handleDeleteCategory(cat._id)} className="text-gray-300 hover:text-red-500 transition-colors p-2 rounded-lg hover:bg-red-50">🗑️</button>
+                          <div className="flex gap-1 ml-4 border-l border-white/5 pl-3">
+                            <button onClick={() => { setEditingCategory(cat); setNewCategory({ ...newCategory, name: cat.name }) }} className="text-gray-500 hover:text-[#f3cf7a] transition-colors p-2 rounded-xl hover:bg-[#d4af37]/10 flex items-center justify-center">✏️</button>
+                            <button onClick={() => handleDeleteCategory(cat._id)} className="text-gray-500 hover:text-red-500 transition-colors p-2 rounded-xl hover:bg-red-500/10 flex items-center justify-center">🗑️</button>
                           </div>
                         </div>
                       ))}
                       {categories.length === 0 && (
-                        <div className="col-span-full text-center py-20 text-gray-300 text-sm italic border-2 border-dashed border-gray-100 rounded-[2rem]">
+                        <div className="col-span-full text-center py-20 text-gray-500 text-sm italic border-2 border-dashed border-white/5 rounded-[2rem] bg-[#0f1110]">
                           No {categoryType} categories found. Add your first one above!
                         </div>
                       )}

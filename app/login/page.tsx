@@ -47,77 +47,67 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-[#0f1110] flex items-center justify-center p-4 relative overflow-hidden">
+      
+      {/* Background Image & Overlay */}
+      <div className="absolute inset-0 z-0">
+        <Image 
+            src="/bed-plate-bg.png" 
+            alt="Abe Hotel Background" 
+            fill
+            className="object-cover opacity-20 scale-105"
+            priority
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#0f1110]/80 to-[#0f1110]"></div>
+      </div>
 
       {/* Language Switcher - Top Right */}
       <div className="absolute top-6 right-6 z-50">
         <LanguageSwitcher />
       </div>
 
-      {/* Decorative Background Elements */}
-      <div className="absolute top-10 left-10 w-32 h-32 bg-[#D2691E] rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
-      <div className="absolute top-10 right-10 w-32 h-32 bg-[#CD853F] rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
-      <div className="absolute -bottom-8 left-20 w-32 h-32 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl w-full z-10">
-
-        {/* Brand Card */}
-        <div className="bg-[#8B4513] rounded-[50px] p-10 flex flex-col justify-between text-white custom-shadow relative overflow-hidden min-h-[500px] group">
-          <div className="relative z-10">
-            <div className="flex items-center gap-3 mb-6">
-              <Logo size="lg" showText={true} textColor="text-[#e2e7d8]" />
-            </div>
-            <h1 className="text-5xl font-bold mb-4 leading-tight bubbly-text">
-              {t("login.manage")} <br /> <span className="text-[#f5bc6b]">{t("login.deliciously")}</span>
-            </h1>
-            <p className="text-lg opacity-80 max-w-sm">
-              {t("login.description")}
-            </p>
+      {/* Login Card */}
+      <div className="max-w-md w-full z-10 animate-scale-in">
+        <div className="bg-[#0f1110]/60 backdrop-blur-xl rounded-sm border border-white/10 p-10 shadow-2xl relative overflow-hidden">
+          
+          <div className="flex justify-center mb-8">
+            <Logo size="lg" showText={true} textColor="text-white" />
           </div>
-
-
-          {/* Decorative Circle/Image */}
-          <div className="absolute -bottom-20 -right-20 w-80 h-80 bg-[#ffffff] rounded-full opacity-10 group-hover:scale-110 transition-transform duration-500"></div>
-          <Image
-            src="https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?q=80&w=800&auto=format&fit=crop"
-            alt="Coffee Background"
-            fill
-            className="object-cover opacity-20 mix-blend-overlay pointer-events-none"
-          />
-        </div>
-
-        {/* Login Form Card */}
-        <div className="bg-white rounded-[50px] p-10 flex flex-col justify-center custom-shadow relative">
+          
           <div className="mb-8 text-center">
-            <h2 className="text-3xl font-bold text-[#1a1a1a] mb-2 bubbly-text">{t("login.title")}</h2>
-            <p className="text-gray-500 font-medium">{t("login.subtitle")}</p>
+            <div className="flex items-center justify-center gap-4 mb-3">
+                <div className="w-8 h-[1px] bg-gradient-to-r from-transparent to-[#d4af37]"></div>
+                <h2 className="text-3xl text-[#f3cf7a] font-playfair italic">{t("login.title")}</h2>
+                <div className="w-8 h-[1px] bg-gradient-to-l from-transparent to-[#d4af37]"></div>
+            </div>
+            <p className="text-gray-400 font-light text-[10px] tracking-[0.2em] uppercase">{t("login.subtitle")}</p>
           </div>
 
           {error && (
-            <div className="bg-red-50 text-red-500 p-4 rounded-2xl mb-6 text-sm font-bold border-l-4 border-red-500 flex items-center gap-2 animate-bounce-custom">
-              <span>⚠️</span> {error}
+            <div className="bg-red-950/50 text-red-400 p-4 rounded mb-6 text-sm font-light border border-red-900/50 flex items-center justify-center gap-2">
+              <span className="text-[#d4af37]">⚠️</span> {error}
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2 ml-2">{t("login.emailLabel")}</label>
+              <label className="block text-[10px] uppercase tracking-[0.2em] text-gray-400 mb-2">{t("login.emailLabel")}</label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-[#f3f4f6] px-6 py-4 rounded-2xl font-medium focus:outline-none focus:ring-4 focus:ring-white focus:bg-white transition-all text-[#1a1a1a]"
-                placeholder="chef@primeaddis.com"
+                className="w-full bg-white/5 border border-white/10 px-5 py-3 rounded text-white font-light focus:outline-none focus:border-[#d4af37] focus:bg-white/10 transition-all placeholder-gray-600 text-sm"
+                placeholder="admin@abehotel.com"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2 ml-2">{t("login.passwordLabel")}</label>
+              <label className="block text-[10px] uppercase tracking-[0.2em] text-gray-400 mb-2">{t("login.passwordLabel")}</label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-[#f3f4f6] px-6 py-4 rounded-2xl font-medium focus:outline-none focus:ring-4 focus:ring-white focus:bg-white transition-all text-[#1a1a1a]"
+                className="w-full bg-white/5 border border-white/10 px-5 py-3 rounded text-white font-light focus:outline-none focus:border-[#d4af37] focus:bg-white/10 transition-all placeholder-gray-600 text-sm"
                 placeholder="••••••••"
                 required
               />
@@ -126,19 +116,18 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-[#1a1a1a] text-white font-bold text-lg py-4 rounded-2xl hover:bg-[#D2691E] hover:text-[#1a1a1a] hover:scale-[1.02] active:scale-95 transition-all duration-300 shadow-lg bubbly-button"
+              className="w-full bg-gradient-to-b from-[#f3cf7a] to-[#b38822] text-[#2a1708] px-10 py-4 rounded text-[10px] uppercase tracking-[0.3em] font-bold shadow-[0_4px_15px_rgba(212,175,55,0.2)] hover:shadow-[0_4px_25px_rgba(212,175,55,0.4)] transition-all duration-300 border border-[#f5db8b] mt-2 flex justify-center items-center"
             >
-              {loading ? t("login.brewing") : t("login.logIn")}
+              {loading ? t("common.loading") : t("login.logIn")}
             </button>
           </form>
 
-          <div className="mt-8 text-center">
-            <Link href="/" className="text-gray-400 font-bold hover:text-[#2d5a41] transition-colors text-sm">
-              ← {t("login.backHome")}
+          <div className="mt-8 text-center pt-6 border-t border-white/10">
+            <Link href="/" className="text-gray-500 hover:text-[#d4af37] text-[10px] uppercase tracking-[0.2em] transition-colors inline-flex items-center gap-2">
+              <span>←</span> {t("login.backHome")}
             </Link>
           </div>
         </div>
-
       </div>
     </div>
   )

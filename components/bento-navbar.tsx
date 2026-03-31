@@ -17,8 +17,8 @@ export function BentoNavbar() {
     const [isMenuOpen, setIsMenuOpen] = useState(false)
 
     const getLinkClass = (path: string) => {
-        const base = "hover:text-black hover:scale-105 transition-all"
-        return pathname === path ? `${base} text-black font-bold` : `${base} text-[#4a4a4a]`
+        const base = "hover:text-[#f3cf7a] hover:scale-105 transition-all text-[10px] uppercase tracking-widest font-black"
+        return pathname === path ? `${base} text-[#f3cf7a]` : `${base} text-gray-500`
     }
 
     // Role-specific links
@@ -62,12 +62,12 @@ export function BentoNavbar() {
 
     return (
         <>
-            <nav className="flex justify-between items-center mb-4 md:mb-10 px-4 md:px-6 py-2 md:py-3 bg-white/70 backdrop-blur-xl rounded-full custom-shadow border border-white/50 relative z-[100]">
+            <nav className="flex justify-between items-center mb-4 md:mb-10 px-4 md:px-6 py-2 md:py-3 bg-[#151716]/80 backdrop-blur-xl rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.4)] border border-white/5 relative z-[100]">
                 <div className="flex items-center gap-4">
                     {/* Hamburger Button */}
                     <button
                         onClick={() => setIsMenuOpen(!isMenuOpen)}
-                        className="lg:hidden p-2 hover:bg-gray-100 rounded-full transition-colors"
+                        className="lg:hidden p-2 hover:bg-white/5 rounded-full transition-colors text-white"
                     >
                         {isMenuOpen ? <X size={20} /> : <Menu size={20} />}
                     </button>
@@ -87,13 +87,13 @@ export function BentoNavbar() {
                     <LanguageSwitcher />
                     {user ? (
                         <div className="flex items-center gap-4">
-                            <span className="hidden md:block text-sm font-bold text-[#2d5a41]">{t("nav.hi")}, {user.name}! ✨</span>
-                            <button onClick={logout} className="bg-red-50 text-red-500 px-5 py-2.5 rounded-full text-xs font-bold hover:bg-red-500 hover:text-white transition-all transform active:scale-95">
+                            <span className="hidden md:block text-[10px] uppercase tracking-widest font-black text-[#f3cf7a]">{t("nav.hi")}, {user.name}! ✨</span>
+                            <button onClick={logout} className="bg-red-950/30 text-red-500 border border-red-500/20 px-5 py-2.5 rounded-full text-[10px] uppercase font-black tracking-widest hover:bg-red-500 hover:text-white transition-all transform active:scale-95">
                                 {t("nav.logout")}
                             </button>
                         </div>
                     ) : (
-                        <Link href="/login" className="bg-[#2d5a41] text-[#e2e7d8] px-7 py-3 rounded-full flex items-center gap-3 font-bold cursor-pointer hover:bg-black transition-colors bubbly-button">
+                        <Link href="/login" className="bg-[#d4af37] text-[#0f1110] px-7 py-3 rounded-full flex items-center gap-2 text-[10px] uppercase font-black tracking-widest cursor-pointer hover:bg-[#f3cf7a] transition-all shadow-[0_4px_15px_rgba(212,175,55,0.2)]">
                             {t("common.login")}
                         </Link>
                     )}
@@ -107,7 +107,7 @@ export function BentoNavbar() {
                         initial={{ opacity: 0, y: -20 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -20 }}
-                        className="lg:hidden fixed inset-x-6 top-24 bg-white/95 backdrop-blur-2xl rounded-[30px] p-6 custom-shadow border border-white/50 z-[90] flex flex-col gap-4 overflow-hidden"
+                        className="lg:hidden fixed inset-x-6 top-24 bg-[#151716]/95 backdrop-blur-2xl rounded-[30px] p-6 shadow-2xl border border-white/5 z-[90] flex flex-col gap-4 overflow-hidden"
                     >
                         {links.map((link, idx) => (
                             <motion.div
@@ -119,7 +119,7 @@ export function BentoNavbar() {
                                 <Link
                                     href={link.href}
                                     onClick={() => setIsMenuOpen(false)}
-                                    className={`block py-3 px-6 rounded-2xl font-bold text-lg transition-all ${pathname === link.href ? 'bg-[#2d5a41] text-white shadow-lg' : 'hover:bg-gray-100 text-gray-700'
+                                    className={`block py-3 px-6 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all ${pathname === link.href ? 'bg-[#d4af37] text-[#0f1110] shadow-lg' : 'hover:bg-white/5 text-gray-400'
                                         }`}
                                 >
                                     {link.label}

@@ -4,6 +4,7 @@ import Order from "@/lib/models/order"
 import MenuItem from "@/lib/models/menu-item"
 import Stock from "@/lib/models/stock"
 import DailyExpense from "@/lib/models/daily-expense"
+import OperationalExpense from "@/lib/models/operational-expense"
 import { validateSession } from "@/lib/auth"
 
 interface BusinessMetrics {
@@ -91,7 +92,9 @@ export async function GET(request: Request) {
       allMenuItems,
       allStock,
       todayExpenses,
-      monthExpenses
+      monthExpenses,
+      todayOpExpenses,
+      monthOpExpenses
     ] = await Promise.all([
       Order.find({ createdAt: { $gte: todayStart, $lte: todayEnd } }).lean(),
       Order.find({ createdAt: { $gte: yesterdayStart, $lte: yesterdayEnd } }).lean(),
@@ -101,7 +104,9 @@ export async function GET(request: Request) {
       MenuItem.find().populate('stockItemId').lean(),
       Stock.find().lean(),
       DailyExpense.find({ date: { $gte: todayStart, $lte: todayEnd } }).lean(),
-      DailyExpense.find({ date: { $gte: monthStart, $lte: todayEnd } }).lean()
+      DailyExpense.find({ date: { $gte: monthStart, $lte: todayEnd } }).lean(),
+      OperationalExpense.find({ date: { $gte: todayStart, $lte: todayEnd } }).lean(),
+      OperationalExpense.find({ date: { $gte: monthStart, $lte: todayEnd } }).lean()
     ])
 
     // Calculate Real-Time Metrics
@@ -282,8 +287,8 @@ export async function GET(request: Request) {
     }).sort((a, b) => b.orderCount - a.orderCount)
 
     // Financial Overview
-    const todayExpensesTotal = todayExpenses.reduce((sum, exp) => sum + (exp.otherExpenses || 0), 0)
-    const monthExpensesTotal = monthExpenses.reduce((sum, exp) => sum + (exp.otherExpenses || 0), 0)
+    const todayExpensesTotal = todayExpenses.reduce((sum, exp) => sum + (exp.otherExpenses || 0), 0) + todayOpExpenses.reduce((sum, exp) => sum + (exp.amount || 0), 0)
+    const monthExpensesTotal = monthExpenses.reduce((sum, exp) => sum + (exp.otherExpenses || 0), 0) + monthOpExpenses.reduce((sum, exp) => sum + (exp.amount || 0), 0)
     const stockCosts = stockConsumptionArray.reduce((sum, item) => sum + item.cost, 0)
 
     const grossRevenue = todayRevenue
@@ -354,7 +359,7 @@ export async function GET(request: Request) {
         netProfit: Math.round(netProfit * 100) / 100,
         profitMargin: Math.round(profitMargin * 100) / 100,
         costBreakdown: {
-          otherExpenses: todayExpenses.reduce((sum, exp) => sum + (exp.otherExpenses || 0), 0),
+          otherExpenses: (todayExpenses.reduce((sum, exp) => sum + (exp.otherExpenses || 0), 0)) + (todayOpExpenses.reduce((sum, exp) => sum + (exp.amount || 0), 0)),
           stockCosts: Math.round(stockCosts * 100) / 100
         }
       },

@@ -33,13 +33,13 @@ export default function AdminDashboardPage() {
   if (error) {
     return (
       <ProtectedRoute requiredRoles={["admin"]}>
-        <div className="min-h-screen bg-gray-50 p-6 flex items-center justify-center">
-          <Card className="border-red-200 max-w-md">
+        <div className="min-h-screen bg-[#0f1110] p-6 flex items-center justify-center">
+          <Card className="bg-[#151716] border-red-900/50 max-w-md shadow-2xl">
             <CardContent className="p-6 text-center">
               <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-              <h2 className="text-xl font-bold text-red-600 mb-2">Error Loading Data</h2>
-              <p className="text-gray-600 mb-4">{error}</p>
-              <Button onClick={refresh} className="bg-[#8B4513] hover:bg-[#D2691E]">
+              <h2 className="text-xl font-bold text-red-400 mb-2">Error Loading Data</h2>
+              <p className="text-gray-400 mb-4">{error}</p>
+              <Button onClick={refresh} className="bg-gradient-to-b from-[#f3cf7a] to-[#b38822] text-[#2a1708] hover:shadow-[0_4px_15px_rgba(212,175,55,0.4)] border border-[#f5db8b]">
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Try Again
               </Button>
@@ -52,21 +52,21 @@ export default function AdminDashboardPage() {
 
   return (
     <ProtectedRoute requiredRoles={["admin"]}>
-      <div className="min-h-screen bg-gray-50 p-6">
+      <div className="min-h-screen bg-[#0f1110] p-6 text-white selection:bg-[#c5a059] selection:text-[#0f1110]">
         <div className="max-w-7xl mx-auto space-y-6">
           <BentoNavbar />
 
           {/* Simple Header */}
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+          <div className="bg-[#151716] rounded-xl p-6 shadow-2xl border border-white/10">
             <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
               <div>
-                <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1 flex items-center gap-3">
+                <h1 className="text-2xl md:text-3xl text-[#f3cf7a] font-playfair italic mb-1 flex items-center gap-3">
                   Dashboard
-                  {loading && <RefreshCw className="h-5 w-5 animate-spin text-gray-400" />}
+                  {loading && <RefreshCw className="h-5 w-5 animate-spin text-[#d4af37]" />}
                 </h1>
-                <p className="text-sm md:text-base text-gray-600">Welcome back! Here's your business overview for today.</p>
+                <p className="text-sm md:text-xs text-gray-400 font-light tracking-[0.2em] uppercase mt-2">Welcome back! Here's your business overview for today.</p>
                 {lastUpdated && (
-                  <p className="text-sm text-gray-500 mt-2 flex items-center gap-1">
+                  <p className="text-xs text-gray-500 mt-2 flex items-center gap-1 font-light tracking-[0.1em] uppercase">
                     <Clock className="h-3 w-3" />
                     Last updated: {lastUpdated.toLocaleTimeString()}
                   </p>
@@ -76,7 +76,7 @@ export default function AdminDashboardPage() {
                 onClick={refresh}
                 variant="outline"
                 size="sm"
-                className="border-gray-300"
+                className="border-[#d4af37]/30 text-[#f3cf7a] hover:bg-[#d4af37]/10 hover:text-white bg-transparent"
                 disabled={loading}
               >
                 <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin opacity-50' : ''}`} />
@@ -91,20 +91,20 @@ export default function AdminDashboardPage() {
               icon={<DollarSign className="h-6 w-6" />}
               label="Today's Revenue"
               value={metrics ? MetricsUtils.formatCurrency(metrics.realTimeMetrics.todayRevenue) : "---"}
-              color="green"
+              color="gold"
             />
             <MetricCard
               icon={<ShoppingCart className="h-6 w-6" />}
               label="Total Orders"
               value={metrics ? metrics.realTimeMetrics.todayOrders.toString() : "-"}
               subtext={metrics ? `${metrics.operationalMetrics.customerSatisfaction.completedOrders} completed` : "loading..."}
-              color="blue"
+              color="gold"
             />
             <MetricCard
               icon={<TrendingUp className="h-6 w-6" />}
               label="Average Order"
               value={metrics ? MetricsUtils.formatCurrency(metrics.realTimeMetrics.averageOrderValue) : "---"}
-              color="purple"
+              color="gold"
             />
             <MetricCard
               icon={<Package className="h-6 w-6" />}
@@ -116,33 +116,33 @@ export default function AdminDashboardPage() {
           </div>
 
           {/* Quick Actions */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
             <Link href="/admin/reports">
-              <Card className="hover:shadow-md transition-shadow cursor-pointer border-gray-200">
+              <Card className="hover:shadow-[0_4px_20px_rgba(212,175,55,0.15)] transition-all duration-300 cursor-pointer border-white/10 bg-[#151716] group">
                 <CardContent className="p-6 text-center">
-                  <BarChart3 className="h-10 w-10 text-[#8B4513] mx-auto mb-3" />
-                  <h3 className="font-semibold text-lg text-gray-900 mb-1">View Reports</h3>
-                  <p className="text-sm text-gray-600">Sales and analytics</p>
+                  <BarChart3 className="h-10 w-10 text-[#d4af37] mx-auto mb-3 group-hover:scale-110 transition-transform duration-300" />
+                  <h3 className="font-playfair italic text-2xl text-[#f3cf7a] mb-2">View Reports</h3>
+                  <p className="text-[10px] text-gray-400 uppercase tracking-widest font-light">Sales & analytics</p>
                 </CardContent>
               </Card>
             </Link>
 
             <Link href="/admin/stock">
-              <Card className="hover:shadow-md transition-shadow cursor-pointer border-gray-200">
+              <Card className="hover:shadow-[0_4px_20px_rgba(212,175,55,0.15)] transition-all duration-300 cursor-pointer border-white/10 bg-[#151716] group">
                 <CardContent className="p-6 text-center">
-                  <Package className="h-10 w-10 text-[#8B4513] mx-auto mb-3" />
-                  <h3 className="font-semibold text-lg text-gray-900 mb-1">Manage Stock</h3>
-                  <p className="text-sm text-gray-600">Update inventory</p>
+                  <Package className="h-10 w-10 text-[#d4af37] mx-auto mb-3 group-hover:scale-110 transition-transform duration-300" />
+                  <h3 className="font-playfair italic text-2xl text-[#f3cf7a] mb-2">Manage Stock</h3>
+                  <p className="text-[10px] text-gray-400 uppercase tracking-widest font-light">Update inventory</p>
                 </CardContent>
               </Card>
             </Link>
 
             <Link href="/admin/services">
-              <Card className="hover:shadow-md transition-shadow cursor-pointer border-gray-200">
+              <Card className="hover:shadow-[0_4px_20px_rgba(212,175,55,0.15)] transition-all duration-300 cursor-pointer border-white/10 bg-[#151716] group">
                 <CardContent className="p-6 text-center">
-                  <BarChart3 className="h-10 w-10 text-[#8B4513] mx-auto mb-3" />
-                  <h3 className="font-semibold text-lg text-gray-900 mb-1">Services</h3>
-                  <p className="text-sm text-gray-600">Manage Menu, Rooms & Floors</p>
+                  <BarChart3 className="h-10 w-10 text-[#d4af37] mx-auto mb-3 group-hover:scale-110 transition-transform duration-300" />
+                  <h3 className="font-playfair italic text-2xl text-[#f3cf7a] mb-2">Services</h3>
+                  <p className="text-[10px] text-gray-400 uppercase tracking-widest font-light">Menu, Rooms & Floors</p>
                 </CardContent>
               </Card>
             </Link>
@@ -150,9 +150,9 @@ export default function AdminDashboardPage() {
 
           {/* Stock Alerts */}
           {metrics && metrics.inventoryInsights.lowStockAlerts.length > 0 && (
-            <Card className="border-red-200 bg-red-50">
+            <Card className="border-red-900/50 bg-[#1a0f0f] shadow-xl">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-red-800 text-lg">
+                <CardTitle className="flex items-center gap-2 text-red-500 text-lg font-playfair italic">
                   <AlertTriangle className="h-5 w-5" />
                   <span>Stock Alerts ({metrics.inventoryInsights.lowStockAlerts.length})</span>
                 </CardTitle>
@@ -160,18 +160,18 @@ export default function AdminDashboardPage() {
               <CardContent>
                 <div className="space-y-3">
                   {metrics.inventoryInsights.lowStockAlerts.slice(0, 5).map((alert, index) => (
-                    <div key={index} className="flex justify-between items-center p-4 bg-white rounded-lg border border-red-200">
+                    <div key={index} className="flex justify-between items-center p-4 bg-[#0f1110] rounded-lg border border-red-900/30">
                       <div>
-                        <p className="font-medium text-gray-900">{alert.name}</p>
-                        <p className="text-sm text-gray-600">{alert.current} {alert.unit} remaining</p>
+                        <p className="font-medium text-gray-200">{alert.name}</p>
+                        <p className="text-sm text-gray-500 font-light">{alert.current} {alert.unit} remaining</p>
                       </div>
-                      <span className="text-xs bg-red-100 text-red-700 px-3 py-1 rounded-full font-medium">
+                      <span className="text-[10px] tracking-widest uppercase bg-red-950/80 text-red-400 px-3 py-1 rounded-full font-bold border border-red-900/50">
                         {alert.urgency}
                       </span>
                     </div>
                   ))}
                   {metrics.inventoryInsights.lowStockAlerts.length > 5 && (
-                    <Link href="/admin/stock" className="block text-center p-2 text-red-600 hover:underline text-sm">
+                    <Link href="/admin/stock" className="block text-center p-2 text-red-400 hover:text-red-300 hover:underline text-xs tracking-wide uppercase pt-4">
                       View all {metrics.inventoryInsights.lowStockAlerts.length} alerts
                     </Link>
                   )}
@@ -197,27 +197,30 @@ function MetricCard({
   label: string
   value: string
   subtext?: string
-  color?: "green" | "blue" | "purple" | "red" | "gray"
+  color?: "gold" | "red" | "gray" | "green" | "blue" | "purple"
   isAlert?: boolean
 }) {
   const colorClasses = {
-    green: "bg-green-50 text-green-600 border-green-200",
-    blue: "bg-blue-50 text-blue-600 border-blue-200",
-    purple: "bg-purple-50 text-purple-600 border-purple-200",
-    red: "bg-red-50 text-red-600 border-red-200",
-    gray: "bg-gray-50 text-gray-600 border-gray-200"
+    gold: "bg-[#1a1712] text-[#d4af37] border-[#d4af37]/20",
+    red: "bg-[#1a0f0f] text-red-400 border-red-900/50",
+    gray: "bg-[#1a1c1b] text-gray-400 border-white/10",
+    green: "bg-[#1a1c1b] text-gray-400 border-white/10",
+    blue: "bg-[#1a1c1b] text-gray-400 border-white/10",
+    purple: "bg-[#1a1c1b] text-gray-400 border-white/10"
   }
 
+  const selectedColorClass = isAlert ? colorClasses.red : (colorClasses[color as keyof typeof colorClasses] || colorClasses.gray)
+
   return (
-    <Card className={`border ${isAlert ? colorClasses.red : 'border-gray-200'}`}>
+    <Card className={`border bg-[#151716] shadow-xl ${isAlert ? 'border-red-900/50' : 'border-white/10'}`}>
       <CardContent className="p-6">
-        <div className={`inline-flex p-3 rounded-lg ${colorClasses[color]} mb-4`}>
+        <div className={`inline-flex p-3 rounded-lg ${selectedColorClass} mb-4 border`}>
           {icon}
         </div>
         <div className="space-y-1">
-          <p className="text-sm font-medium text-gray-600">{label}</p>
-          <p className="text-2xl font-bold text-gray-900">{value}</p>
-          {subtext && <p className="text-xs text-gray-500">{subtext}</p>}
+          <p className="text-[10px] uppercase font-bold tracking-[0.2em] text-gray-400">{label}</p>
+          <p className="text-3xl font-playfair italic text-[#f3cf7a] leading-tight">{value}</p>
+          {subtext && <p className="text-xs text-gray-500 font-light pt-1">{subtext}</p>}
         </div>
       </CardContent>
     </Card>

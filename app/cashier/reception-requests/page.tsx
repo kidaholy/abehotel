@@ -81,23 +81,23 @@ export default function ReceptionRequestsPage() {
 
   return (
     <ProtectedRoute requiredRoles={["cashier", "admin"]}>
-      <div className="min-h-screen bg-gray-50 p-4 md:p-6 overflow-x-hidden">
+      <div className="min-h-screen bg-[#0f1110] p-4 md:p-6 overflow-x-hidden text-white selection:bg-[#c5a059] selection:text-[#0f1110]">
         <div className="max-w-7xl mx-auto space-y-6 w-full">
           <BentoNavbar />
 
           {/* Header */}
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+          <div className="bg-[#151716] rounded-xl p-6 shadow-2xl border border-white/5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <div className="p-3 bg-yellow-50 rounded-lg border border-yellow-100">
+                <div className="p-3 bg-yellow-500/10 rounded-lg border border-yellow-500/20">
                   <span className="text-2xl">📋</span>
                 </div>
                 <div>
-                  <h1 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight">Reception Requests</h1>
+                  <h1 className="text-2xl md:text-3xl font-playfair italic font-bold text-white tracking-tight">Reception Requests</h1>
                   <p className="text-sm text-gray-500 mt-0.5">Review and manage incoming guest requests from the reception desk.</p>
                 </div>
               </div>
-              <button onClick={fetchRequests} className="text-gray-400 hover:text-gray-600 transition-colors p-2 rounded-lg hover:bg-gray-100">
+              <button onClick={fetchRequests} className="text-gray-400 hover:text-white transition-colors p-2 rounded-lg hover:bg-white/5">
                 <RefreshCw className={`w-5 h-5 ${loading ? "animate-spin" : ""}`} />
               </button>
             </div>
@@ -113,7 +113,7 @@ export default function ReceptionRequestsPage() {
                       : f === "approved" ? "bg-green-600 text-white shadow-md"
                       : f === "denied" ? "bg-red-500 text-white shadow-md"
                       : "bg-gray-800 text-white shadow-md"
-                    : "bg-white text-gray-500 border border-gray-200 hover:bg-gray-50"
+                    : "bg-[#151716] text-gray-500 border border-white/5 hover:text-white"
                 }`}>
                 {f} ({counts[f]})
               </button>
@@ -121,7 +121,7 @@ export default function ReceptionRequestsPage() {
           </div>
 
           {/* Requests Grid */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 min-h-[400px]">
+          <div className="bg-[#151716] rounded-xl shadow-2xl border border-white/5 p-6 min-h-[400px]">
             {loading ? (
               <div className="flex items-center justify-center py-24"><RefreshCw className="w-8 h-8 animate-spin text-gray-300" /></div>
             ) : filtered.length === 0 ? (
@@ -134,14 +134,14 @@ export default function ReceptionRequestsPage() {
                 {filtered.map((req: any) => {
                   const type = INQUIRY_TYPES.find(t => t.value === req.inquiryType)
                   return (
-                    <div key={req._id} className={`rounded-xl p-5 border flex flex-col gap-3 ${req.status === "pending" ? "border-yellow-200 bg-yellow-50/30" : req.status === "approved" ? "border-green-200 bg-green-50/30" : "border-red-200 bg-red-50/30"}`}>
+                    <div key={req._id} className={`rounded-xl p-5 border flex flex-col gap-3 transition-all ${req.status === "pending" ? "border-yellow-500/30 bg-yellow-500/5" : req.status === "approved" ? "border-green-500/30 bg-green-500/5" : "border-red-500/30 bg-red-500/5"}`}>
                       {/* Header */}
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex items-center gap-2">
                           <span className="text-xl">{type?.icon ?? "💬"}</span>
                           <div>
-                            <p className="font-black text-gray-900 text-sm leading-tight">{req.guestName}</p>
-                            <p className="text-[10px] text-gray-400 font-medium">{type?.label ?? req.inquiryType}</p>
+                            <p className="font-playfair italic font-bold text-white text-sm leading-tight">{req.guestName}</p>
+                            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">{type?.label ?? req.inquiryType}</p>
                           </div>
                         </div>
                         <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full uppercase border shrink-0 ${STATUS_STYLES[req.status]}`}>
@@ -158,11 +158,11 @@ export default function ReceptionRequestsPage() {
                       </div>
 
                       {req.notes && (
-                        <p className="text-xs text-gray-500 bg-white rounded-lg p-2 border border-gray-100 italic">"{req.notes}"</p>
+                        <p className="text-xs text-gray-400 bg-[#0f1110] rounded-lg p-3 border border-white/5 italic">"{req.notes}"</p>
                       )}
 
                       {req.reviewNote && (
-                        <p className="text-xs text-blue-600 bg-blue-50 rounded-lg p-2 border border-blue-100">💬 {req.reviewNote}</p>
+                        <p className="text-xs text-[#f3cf7a] bg-blue-900/20 rounded-lg p-3 border border-blue-500/30">💬 {req.reviewNote}</p>
                       )}
 
                       {/* Actions for pending */}
@@ -190,12 +190,12 @@ export default function ReceptionRequestsPage() {
 
         {/* Review Modal */}
         {reviewModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4">
-            <div className="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-8">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
+            <div className="bg-[#151716] rounded-3xl shadow-2xl max-w-sm w-full p-8 border border-white/5">
               <div className={`text-4xl mb-4 text-center ${reviewModal.action === "approved" ? "✅" : "❌"}`}>
                 {reviewModal.action === "approved" ? "✅" : "❌"}
               </div>
-              <h3 className="text-xl font-black text-center text-gray-900 mb-1">
+              <h3 className="text-xl font-playfair italic font-bold text-center text-white mb-1">
                 {reviewModal.action === "approved" ? "Approve" : "Deny"} Request
               </h3>
               <p className="text-sm text-gray-500 text-center mb-6">
@@ -205,10 +205,10 @@ export default function ReceptionRequestsPage() {
                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1.5">Note (optional)</label>
                 <textarea rows={3} value={reviewNote} onChange={e => setReviewNote(e.target.value)}
                   placeholder="Add a note for this decision..."
-                  className="w-full bg-gray-50 rounded-xl px-4 py-3 text-sm font-medium text-gray-900 border-none outline-none focus:ring-4 focus:ring-[#8B4513]/10 resize-none" />
+                  className="w-full bg-[#0f1110] rounded-xl px-4 py-3 text-sm font-medium text-white border border-white/5 outline-none focus:ring-4 focus:ring-[#d4af37]/10 resize-none" />
               </div>
               <div className="flex gap-3">
-                <button onClick={() => setReviewModal(null)} className="flex-1 py-3 text-gray-400 font-bold hover:bg-gray-50 rounded-xl transition-colors">
+                <button onClick={() => setReviewModal(null)} className="flex-1 py-3 text-gray-400 font-bold hover:bg-white/5 rounded-xl transition-colors">
                   Cancel
                 </button>
                 <button onClick={handleReview} disabled={submitting}

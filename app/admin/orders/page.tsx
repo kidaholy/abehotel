@@ -312,17 +312,17 @@ export default function AdminOrdersPage() {
     switch (status) {
       case "preparing":
       case "pending": // legacy DB records
-        return { color: "bg-[#93c5fd]/20 text-blue-700", label: t("adminOrders.cooking"), icon: "🍳" }
+        return { color: "bg-[#1a1c1b] text-[#f3cf7a] border border-[#d4af37]/30", label: t("adminOrders.cooking"), icon: "🍳" }
       case "ready":
-        return { color: "bg-[#2d5a41]/20 text-[#2d5a41]", label: t("adminOrders.ready"), icon: "✅" }
+        return { color: "bg-[#1a2e20] text-[#4ade80] border border-[#4ade80]/30", label: t("adminOrders.ready"), icon: "✅" }
       case "served":
-        return { color: "bg-purple-100 text-purple-700", label: "Served", icon: "🍽️" }
+        return { color: "bg-[#2a1b3d] text-[#c084fc] border border-[#c084fc]/30", label: "Served", icon: "🍽️" }
       case "completed":
-        return { color: "bg-gray-100 text-gray-500", label: t("adminOrders.served"), icon: "💰" }
+        return { color: "bg-white/5 text-gray-400 border border-white/10", label: t("adminOrders.served"), icon: "💰" }
       case "cancelled":
-        return { color: "bg-red-50 text-red-500", label: t("adminOrders.cancelled"), icon: "✕" }
+        return { color: "bg-[#2a0f0f] text-red-500 border border-red-500/30", label: t("adminOrders.cancelled"), icon: "✕" }
       default:
-        return { color: "bg-gray-100 text-gray-500", label: status, icon: "•" }
+        return { color: "bg-white/5 text-gray-400 border border-white/10", label: status, icon: "•" }
     }
   }
 
@@ -418,7 +418,7 @@ export default function AdminOrdersPage() {
 
   return (
     <ProtectedRoute requiredRoles={["admin"]}>
-      <div className="min-h-screen bg-gray-50 p-6">
+      <div className="min-h-screen bg-[#0f1110] p-6 text-white selection:bg-[#c5a059] selection:text-[#0f1110]">
         <div className="max-w-7xl mx-auto space-y-6">
           <BentoNavbar />
 
@@ -427,17 +427,17 @@ export default function AdminOrdersPage() {
             if (o.isDeleted || o.status === 'cancelled' || o.status === 'served' || o.status === 'completed') return false
             return getOrderMetrics(o).delay > 0
           }).length > 0 && (
-              <div className="bg-red-50 border-2 border-red-200 rounded-[30px] p-6 shadow-lg">
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="bg-red-500 text-white p-3 rounded-2xl shadow-md">
+              <div className="bg-[#1a0f0f] border border-red-900/50 rounded-[30px] p-6 shadow-2xl relative overflow-hidden">
+                <div className="flex items-center gap-4 mb-4 relative z-10">
+                  <div className="bg-red-950 border border-red-900 text-red-400 p-3 rounded-2xl shadow-md">
                     <Clock className="h-6 w-6" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-black text-red-700 uppercase tracking-tight">🚨 Action Required: Preparation Delays</h3>
-                    <p className="text-sm font-bold text-red-600/80 italic">The following orders have exceeded their preparation threshold!</p>
+                    <h3 className="text-xl font-playfair italic text-red-500 tracking-wide">🚨 Action Required: Preparation Delays</h3>
+                    <p className="text-[10px] font-bold tracking-widest uppercase text-red-400/80 mt-1">The following orders have exceeded their preparation threshold!</p>
                   </div>
                 </div>
-                <div className="flex flex-wrap gap-3">
+                <div className="flex flex-wrap gap-3 relative z-10">
                   {orders.filter(o => {
                     if (o.isDeleted || o.status === 'cancelled' || o.status === 'served' || o.status === 'completed') return false
                     return getOrderMetrics(o).delay > 0
@@ -445,16 +445,16 @@ export default function AdminOrdersPage() {
                     const { delay, threshold, isCompleted } = getOrderMetrics(o)
 
                     return (
-                      <div key={o._id} className="bg-white border-2 border-red-100 px-5 py-3 rounded-2xl flex items-center gap-3 shadow-sm relative overflow-hidden group">
-                        {isCompleted && <div className="absolute top-0 right-0 bg-green-500 text-white text-[8px] font-black px-2 py-0.5 rounded-bl-lg uppercase tracking-widest">Served</div>}
-                        <span className="font-black text-red-600 text-lg">#{o.orderNumber}</span>
+                      <div key={o._id} className="bg-[#0f1110] border border-red-900/30 px-5 py-3 rounded-2xl flex items-center gap-3 shadow-sm relative overflow-hidden group">
+                        {isCompleted && <div className="absolute top-0 right-0 bg-green-950 text-green-400 border-b border-l border-green-900/50 text-[8px] font-black px-2 py-0.5 rounded-bl-lg uppercase tracking-widest">Served</div>}
+                        <span className="font-playfair italic text-[#f3cf7a] text-lg">#{o.orderNumber}</span>
                         <div className="flex flex-col">
-                          <span className="text-[10px] font-black bg-red-50 text-red-700 px-2.5 py-1 rounded-full border border-red-100 uppercase tracking-tighter">
+                          <span className="text-[10px] font-black bg-red-950/50 text-red-400 px-2.5 py-1 rounded-full border border-red-900/50 uppercase tracking-widest">
                             ⏱️ {delay}m delay
                           </span>
-                          <span className="text-[9px] font-bold text-gray-400 mt-0.5 ml-1 italic lowercase">{isCompleted ? `finished in ${threshold + delay}m` : `exceeded ${threshold}m target`}</span>
+                          <span className="text-[8px] font-bold text-gray-500 mt-1 ml-1 uppercase tracking-widest">{isCompleted ? `finished in ${threshold + delay}m` : `exceeded ${threshold}m target`}</span>
                         </div>
-                        <span className="text-xs font-bold text-gray-400 uppercase tracking-widest border-l-2 border-gray-100 pl-3 ml-1">{o.tableNumber}</span>
+                        <span className="text-[10px] font-bold text-[#d4af37] uppercase tracking-widest border-l border-white/10 pl-3 ml-1">{o.tableNumber}</span>
                       </div>
                     )
                   })}
@@ -465,8 +465,8 @@ export default function AdminOrdersPage() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             {/* Sidebar - Filters & Stats */}
             <div className="lg:col-span-3 flex flex-col gap-4 lg:sticky lg:top-4">
-              <div className="bg-white rounded-xl p-4 md:p-6 shadow-sm border border-gray-200 overflow-hidden">
-                <h2 className="text-lg md:text-xl font-bold text-gray-900 mb-4">{t("adminOrders.title")}</h2>
+              <div className="bg-[#151716] rounded-xl p-4 md:p-6 shadow-2xl border border-white/10 overflow-hidden">
+                <h2 className="text-lg md:text-2xl font-playfair italic text-[#f3cf7a] mb-5">{t("adminOrders.title")}</h2>
                 <div className="flex lg:flex-col overflow-x-auto lg:overflow-x-visible pb-2 lg:pb-0 gap-3 scrollbar-hide">
                   {[
                     { id: "all", label: t("adminOrders.allOrders"), count: stats.all.count - stats.deleted.count, time: stats.all.time, delay: stats.all.delay, foodRevenue: stats.all.foodRevenue, drinkRevenue: stats.all.drinkRevenue, emoji: "📋" },
@@ -479,41 +479,41 @@ export default function AdminOrdersPage() {
                       key={item.id}
                       onClick={() => setFilter(item.id)}
                       className={`flex-shrink-0 lg:w-full flex items-center justify-between p-3 rounded-lg font-medium transition-all ${filter === item.id
-                        ? "bg-[#8B4513] text-white shadow-sm"
-                        : "bg-gray-50 text-gray-600 hover:bg-gray-100"
+                        ? "bg-[#1a1c1b] text-white border border-[#d4af37]/30 shadow-[0_0_15px_rgba(212,175,55,0.1)]"
+                        : "bg-[#0f1110] text-gray-400 hover:bg-[#1a1c1b] border border-white/5"
                         }`}
                     >
-                      <div className="flex flex-col items-start gap-0.5">
+                      <div className="flex flex-col items-start gap-1">
                         <span className="flex items-center gap-2 md:gap-3">
                           <span className="text-lg md:text-xl">{item.emoji}</span>
-                          <span className="whitespace-nowrap">{item.label}</span>
+                          <span className="whitespace-nowrap font-light tracking-wide uppercase text-[10px]">{item.label}</span>
                         </span>
-                        <div className="flex items-center gap-2 ml-7 md:ml-8">
+                        <div className="flex items-center gap-2 md:pl-10">
                           {item.time !== null && (
-                            <span className={`text-[9px] font-black uppercase tracking-tighter ${filter === item.id ? 'text-white/60' : 'text-orange-500'}`}>
+                            <span className={`text-[8px] font-bold uppercase tracking-widest ${filter === item.id ? 'text-[#f3cf7a]' : 'text-gray-500'}`}>
                               {item.time}m avg
                             </span>
                           )}
                           {item.delay !== null && item.delay > 0 && (
-                            <span className={`text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded ${filter === item.id ? 'bg-white/10 text-white' : 'bg-red-50 text-red-500'}`}>
+                            <span className={`text-[8px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded border ${filter === item.id ? 'bg-[#151716] text-[#dfb54f] border-[#dfb54f]/30' : 'bg-red-950/50 text-red-500 border-red-900/50'}`}>
                               +{item.delay}m
                             </span>
                           )}
                         </div>
-                        <div className="flex flex-col gap-0.5 ml-7 md:ml-8 mt-1">
+                        <div className="flex flex-col gap-0.5 md:pl-10 mt-1">
                           {(item as any).foodRevenue !== undefined && (item as any).foodRevenue > 0 && (
-                            <span className={`text-[9px] font-black uppercase tracking-tighter ${filter === item.id ? 'text-white/80' : 'text-orange-600'}`}>
+                            <span className={`text-[8px] font-bold uppercase tracking-widest ${filter === item.id ? 'text-[#d4af37]' : 'text-orange-900/80'}`}>
                               🍳 {(item as any).foodRevenue.toLocaleString()} Br
                             </span>
                           )}
                           {(item as any).drinkRevenue !== undefined && (item as any).drinkRevenue > 0 && (
-                            <span className={`text-[9px] font-black uppercase tracking-tighter ${filter === item.id ? 'text-white/80' : 'text-[#2d5a41]'}`}>
+                            <span className={`text-[8px] font-bold uppercase tracking-widest ${filter === item.id ? 'text-[#d4af37]' : 'text-teal-900/80'}`}>
                               🍹 {(item as any).drinkRevenue.toLocaleString()} Br
                             </span>
                           )}
                         </div>
                       </div>
-                      <span className={`ml-3 px-2 py-0.5 rounded-full text-[10px] md:text-xs font-black ${filter === item.id ? "bg-white/20 text-white" : "bg-gray-200 text-gray-500"}`}>
+                      <span className={`ml-3 px-2 py-0.5 rounded-full text-[10px] font-black tracking-widest ${filter === item.id ? "bg-[#d4af37]/20 text-[#f3cf7a]" : "bg-white/5 text-gray-500"}`}>
                         {item.count}
                       </span>
                     </button>
@@ -521,30 +521,30 @@ export default function AdminOrdersPage() {
                 </div>
               </div>
 
-              <div className="hidden lg:block bg-[#D2691E] rounded-xl p-6 shadow-sm overflow-hidden relative">
+              <div className="hidden lg:block bg-[#1a1c1b] rounded-xl p-6 shadow-xl border border-white/10 overflow-hidden relative group">
                 <div className="relative z-10">
-                  <h3 className="text-xl font-bold text-[#1a1a1a] mb-2">{t("adminOrders.needInsights")}</h3>
-                  <p className="text-sm font-medium text-[#1a1a1a]/70">{t("adminOrders.checkDailyReports")}</p>
+                  <h3 className="text-xl font-playfair italic text-[#f3cf7a] mb-2">{t("adminOrders.needInsights")}</h3>
+                  <p className="text-[10px] tracking-[0.2em] font-light text-gray-400 uppercase">{t("adminOrders.checkDailyReports")}</p>
                 </div>
-                <div className="absolute -bottom-6 -right-6 text-8xl opacity-20 transform group-hover:rotate-12 transition-transform duration-500">📊</div>
+                <div className="absolute -bottom-6 -right-6 text-8xl opacity-5 transform group-hover:rotate-12 group-hover:scale-110 transition-transform duration-500">📊</div>
               </div>
             </div>
 
             {/* Main Content - Order List */}
             <div className="lg:col-span-9">
-              <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 min-h-[600px]">
+              <div className="bg-[#151716] rounded-xl p-6 shadow-2xl border border-white/10 min-h-[600px]">
                 {/* Combined Header: Title, Filters, Search & Delete */}
                 <div className="flex flex-col gap-8 mb-8">
                   <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
                     <div>
-                      <h2 className="text-xl font-bold text-gray-900">{t("adminOrders.orderManagement")}</h2>
-                      <p className="text-gray-500 text-sm mt-1">
+                      <h2 className="text-2xl font-playfair italic text-[#f3cf7a]">{t("adminOrders.orderManagement")}</h2>
+                      <p className="text-gray-400 text-[10px] uppercase font-light tracking-widest mt-1">
                         {filteredOrders.length} {filter !== 'all' ? t(`adminOrders.${filter}`) : ''} {t("adminOrders.ordersCount")}
                       </p>
                     </div>
 
                     <div className="flex items-center gap-3 w-full sm:w-auto">
-                      <div className="flex bg-gray-100 p-1 rounded-xl overflow-x-auto scrollbar-hide flex-1 sm:flex-none">
+                      <div className="flex bg-[#0f1110] border border-white/10 p-1 rounded-xl overflow-x-auto scrollbar-hide flex-1 sm:flex-none">
                         {["today", "week", "month", "year"].map((r) => (
                           <button
                             key={r}
@@ -570,13 +570,13 @@ export default function AdminOrdersPage() {
                         <Popover>
                           <PopoverTrigger asChild>
                             <button
-                              className={`flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-black uppercase transition-all whitespace-nowrap flex items-center gap-2 ${timeRange === 'custom' ? "bg-[#8B4513] text-white shadow-sm" : "text-gray-500 hover:text-gray-900"}`}
+                              className={`flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-[10px] font-bold tracking-wider uppercase transition-all whitespace-nowrap flex items-center gap-2 ${timeRange === 'custom' ? "bg-[#151716] text-[#f3cf7a] shadow-md border border-[#d4af37]/20" : "text-gray-500 hover:text-white"}`}
                             >
                               <CalendarIcon size={12} />
                               {timeRange === 'custom' && selectedDate ? format(selectedDate, "MMM dd, yyyy") : "Specific Date"}
                             </button>
                           </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0 bg-white border-2 border-gray-100 shadow-2xl rounded-2xl z-50" align="end">
+                          <PopoverContent className="w-auto p-0 bg-[#0f1110] border-2 border-white/10 shadow-2xl rounded-2xl z-50 text-white" align="end">
                             <Calendar
                               mode="single"
                               selected={selectedDate}
@@ -595,15 +595,15 @@ export default function AdminOrdersPage() {
                     </div>
                   </div>
 
-                  <div className="flex flex-col sm:flex-row gap-4 w-full justify-between items-center bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                  <div className="flex flex-col sm:flex-row gap-4 w-full justify-between items-center bg-[#0f1110] p-4 rounded-2xl border border-white/10 shadow-inner">
                     <div className="relative w-full sm:w-80">
-                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">🔍</span>
                       <input
                         type="text"
                         placeholder="Search floor, table, order..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-12 pr-4 py-3 bg-white border-2 border-gray-100 rounded-2xl text-sm font-bold focus:border-[#8B4513] focus:ring-0 transition-all outline-none shadow-sm"
+                        className="w-full pl-12 pr-4 py-3 bg-[#151716] border border-white/10 rounded-2xl text-[10px] font-light uppercase tracking-widest text-white focus:border-[#d4af37]/50 focus:ring-0 transition-all outline-none shadow-sm placeholder-gray-600"
                       />
                     </div>
                     {orders.length > 0 && (
@@ -611,34 +611,34 @@ export default function AdminOrdersPage() {
                         <button
                           onClick={handleBulkServeOrders}
                           disabled={bulkServing || bulkDeleting}
-                          className="w-full sm:w-auto bg-[#2d5a41] hover:bg-[#245038] disabled:bg-[#2d5a41]/50 text-white px-6 py-3 rounded-xl font-bold transition-all shadow-lg hover:shadow-xl transform hover:scale-105 disabled:transform-none flex items-center justify-center gap-2 whitespace-nowrap"
+                          className="w-full sm:w-auto bg-gradient-to-b from-[#f3cf7a] to-[#b38822] text-[#2a1708] border border-[#f5db8b] hover:shadow-[0_4px_15px_rgba(212,175,55,0.4)] disabled:opacity-50 px-6 py-3 rounded-xl font-bold transition-all transform hover:scale-105 disabled:transform-none flex items-center justify-center gap-2 whitespace-nowrap"
                         >
                           {bulkServing ? (
                             <>
-                              <span className="animate-spin">⏳</span>
-                              <span className="text-xs">Serving...</span>
+                              <span className="animate-spin text-xs">⏳</span>
+                              <span className="text-[10px] tracking-widest uppercase">Serving...</span>
                             </>
                           ) : (
                             <>
                               <CheckCheck className="h-4 w-4" />
-                              <span className="text-xs sm:text-sm">Mark All as Served</span>
+                              <span className="text-[10px] tracking-widest uppercase">Mark All as Served</span>
                             </>
                           )}
                         </button>
                         <button
                           onClick={handleBulkDeleteOrders}
                           disabled={bulkDeleting || bulkServing}
-                          className="w-full sm:w-auto bg-red-500 hover:bg-red-600 disabled:bg-red-300 text-white px-6 py-3 rounded-xl font-bold transition-all shadow-lg hover:shadow-xl transform hover:scale-105 disabled:transform-none flex items-center justify-center gap-2 whitespace-nowrap"
+                          className="w-full sm:w-auto bg-[#1a0f0f] border border-red-900/50 hover:bg-red-950/80 disabled:opacity-50 text-red-500 px-6 py-3 rounded-xl font-bold transition-all shadow-lg hover:shadow-red-900/20 transform hover:scale-105 disabled:transform-none flex items-center justify-center gap-2 whitespace-nowrap"
                         >
                           {bulkDeleting ? (
                             <>
-                              <span className="animate-spin">⏳</span>
-                              <span className="text-xs">{t("adminOrders.deleting")}</span>
+                              <span className="animate-spin text-xs">⏳</span>
+                              <span className="text-[10px] tracking-widest uppercase">{t("adminOrders.deleting")}</span>
                             </>
                           ) : (
                             <>
                               <span>🗑️</span>
-                              <span className="text-xs sm:text-sm">{t("adminOrders.deleteAllOrders")}</span>
+                              <span className="text-[10px] tracking-widest uppercase">{t("adminOrders.deleteAllOrders")}</span>
                             </>
                           )}
                         </button>
@@ -651,31 +651,31 @@ export default function AdminOrdersPage() {
 
                 {filteredOrders.length === 0 ? (
                   <div className="text-center py-32">
-                    <div className="text-8xl mb-6 opacity-20">🍃</div>
-                    <h3 className="text-2xl font-bold text-gray-400">{t("adminOrders.quietForNow")}</h3>
-                    <p className="text-gray-400">{t("adminOrders.noOrdersFound")}</p>
+                    <div className="text-8xl mb-6 opacity-5">🍃</div>
+                    <h3 className="text-2xl font-playfair italic text-[#f3cf7a] mb-2">{t("adminOrders.quietForNow")}</h3>
+                    <p className="text-gray-500 text-[10px] uppercase tracking-[0.2em]">{t("adminOrders.noOrdersFound")}</p>
                   </div>
                 ) : (
                   <div className="flex flex-col gap-4">
                     {filteredOrders.map((order) => {
                       const status = getStatusConfig(order.status)
                       return (
-                        <div key={order._id} className="bg-gray-50 rounded-2xl p-4 md:p-5 border border-gray-200 hover:border-[#8B4513]/30 hover:shadow-md transition-all flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-8">
+                        <div key={order._id} className="bg-[#0f1110] rounded-2xl p-4 md:p-5 border border-white/10 hover:border-[#d4af37]/30 hover:shadow-[0_4px_20px_rgba(212,175,55,0.1)] transition-all flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-8 group">
 
                           {/* Left: Order Identifier & Status */}
                           <div className="flex-shrink-0 lg:w-48">
                             <div className="flex items-center gap-2 mb-1">
-                              <h3 className="text-xl font-black text-gray-800">#{order.orderNumber}</h3>
+                              <h3 className="text-xl font-playfair italic text-[#f3cf7a]">#{order.orderNumber}</h3>
                               {order.floorNumber && (
-                                <span className="bg-blue-50 text-blue-600 px-2 py-0.5 rounded text-[10px] font-black tracking-widest uppercase">B#{order.floorNumber}</span>
+                                <span className="bg-[#1a1c1b] text-[#f3cf7a] border border-[#d4af37]/20 px-2 py-0.5 rounded text-[10px] font-black tracking-widest uppercase">B#{order.floorNumber}</span>
                               )}
-                              <span className="bg-gray-100 text-gray-500 px-2 py-0.5 rounded text-[10px] font-black tracking-widest uppercase">{order.tableNumber}</span>
+                              <span className="bg-[#1a1c1b] text-gray-400 border border-white/10 px-2 py-0.5 rounded text-[10px] font-black tracking-widest uppercase">{order.tableNumber}</span>
                             </div>
-                            <div className="flex items-center gap-2">
-                              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                            <div className="flex items-center gap-2 mt-2">
+                              <p className="text-[10px] font-light text-gray-500 uppercase tracking-widest">
                                 {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                               </p>
-                              <span className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase ${status.color}`}>
+                              <span className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest ${status.color}`}>
                                 <span>{status.icon}</span>
                                 {status.label}
                               </span>
@@ -683,13 +683,13 @@ export default function AdminOrdersPage() {
                           </div>
 
                           {/* Middle: Items Summary - Compact Flex Wrap */}
-                          <div className="flex-1 min-w-0 bg-white/40 rounded-xl p-3 border border-gray-100/50">
+                          <div className="flex-1 min-w-0 bg-[#151716] rounded-xl p-3 border border-white/5">
                             <div className="flex flex-wrap gap-x-4 gap-y-1.5">
                               {order.items.map((item, idx) => (
                                 <div key={idx} className="flex items-center gap-1.5 text-xs">
-                                  <span className="text-[#8B4513] font-black">{item.quantity}×</span>
-                                  <span className="text-gray-700 font-bold truncate max-w-[140px]">{item.name}</span>
-                                  {item.preparationTime && <span className="text-gray-400 text-[9px] italic">({item.preparationTime}m)</span>}
+                                  <span className="text-[#d4af37] font-black">{item.quantity}×</span>
+                                  <span className="text-gray-300 font-light truncate max-w-[140px] text-[10px] uppercase tracking-wide">{item.name}</span>
+                                  {item.preparationTime && <span className="text-gray-500 text-[9px] italic">({item.preparationTime}m)</span>}
                                 </div>
                               ))}
                             </div>
@@ -715,15 +715,15 @@ export default function AdminOrdersPage() {
                                 }
 
                                 const colorStyles = {
-                                  emerald: "bg-emerald-50 text-emerald-600 border-emerald-100",
-                                  amber: "bg-amber-50 text-amber-600 border-amber-100",
-                                  rose: "bg-rose-50 text-rose-600 border-rose-100"
+                                  emerald: "bg-[#1a2e20] text-[#4ade80] border-[#4ade80]/20",
+                                  amber: "bg-[#2a1f10] text-[#fbbf24] border-[#fbbf24]/20",
+                                  rose: "bg-[#2a0f0f] text-red-500 border-red-500/20"
                                 }
 
                                 return (
-                                  <div className={`group flex items-center gap-3 p-1.5 pr-4 rounded-2xl border transition-all duration-300 hover:shadow-sm ${colorStyles[colorClass as keyof typeof colorStyles]}`}>
+                                  <div className={`group flex items-center gap-3 p-1.5 pr-4 rounded-2xl border transition-all duration-300 shadow-sm ${colorStyles[colorClass as keyof typeof colorStyles]}`}>
                                     {/* Status Pill */}
-                                    <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-black text-[10px] uppercase tracking-wider shadow-sm bg-white/80 backdrop-blur-sm border-inherit`}>
+                                    <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold text-[9px] uppercase tracking-widest shadow-sm bg-[#0f1110]/50 backdrop-blur-sm border border-white/5`}>
                                       <span className="scale-110">{isCompleted ? icon : <Clock className="h-3 w-3 animate-pulse" />}</span>
                                       <span>{label}</span>
                                     </div>
@@ -731,13 +731,13 @@ export default function AdminOrdersPage() {
                                     {/* Metrics */}
                                     <div className="flex flex-col">
                                       <div className="flex items-baseline gap-1">
-                                        <span className="text-xs font-black tracking-tight leading-none">
+                                        <span className="text-[10px] font-black tracking-widest uppercase leading-none">
                                           {isCompleted ? `${totalTaken}m` : (totalTaken < threshold ? `${threshold - totalTaken}m left` : `${totalTaken - threshold}m delay`)}
                                         </span>
                                         {!isCompleted && totalTaken >= threshold && <span className="text-[8px] font-bold opacity-60 uppercase">late</span>}
                                       </div>
-                                      <span className="text-[9px] font-bold opacity-50 leading-tight mt-0.5 whitespace-nowrap lowercase">
-                                        vs {threshold}m target
+                                      <span className="text-[8px] font-bold opacity-50 leading-tight mt-0.5 whitespace-nowrap uppercase tracking-widest">
+                                        vs {threshold}m tgt
                                       </span>
                                     </div>
                                   </div>
@@ -747,13 +747,15 @@ export default function AdminOrdersPage() {
 
                             {/* Total Amount & Primary Action */}
                             <div className="flex items-center gap-4 ml-auto">
-                              <div className="text-2xl font-black text-[#8B4513] whitespace-nowrap">{order.totalAmount.toFixed(0)} <span className="text-xs font-bold text-gray-400">{t("common.currencyBr")}</span></div>
+                              <div className="text-2xl font-playfair italic text-[#f3cf7a] whitespace-nowrap">
+                                {order.totalAmount.toFixed(0)} <span className="text-[10px] font-light text-gray-500 uppercase tracking-widest ml-1">{t("common.currencyBr")}</span>
+                              </div>
                               <div className="flex gap-2">
                                 {!order.isDeleted && (
                                   <button
                                     onClick={() => handleDeleteOrder(order._id, order.orderNumber)}
                                     disabled={deleting === order._id}
-                                    className="bg-red-50 hover:bg-red-100 text-red-500 p-2.5 rounded-xl transition-all border border-red-100 shadow-sm hover:shadow active:scale-95 disabled:opacity-50"
+                                    className="bg-[#1a0f0f] hover:bg-red-950/80 text-red-500 p-2.5 rounded-xl transition-all border border-red-900/50 shadow-sm hover:shadow-[0_0_10px_rgba(239,68,68,0.2)] active:scale-95 disabled:opacity-50"
                                     title="Move to History"
                                   >
                                     {deleting === order._id ? (
@@ -764,7 +766,7 @@ export default function AdminOrdersPage() {
                                   </button>
                                 )}
                                 {order.isDeleted && (
-                                  <span className="text-xs font-bold text-red-400 uppercase tracking-widest bg-red-50 px-3 py-1 rounded-full border border-red-100">
+                                  <span className="text-[9px] font-bold text-red-500 uppercase tracking-widest bg-[#1a0f0f] px-3 py-1.5 rounded-full border border-red-900/50">
                                     Deleted
                                   </span>
                                 )}

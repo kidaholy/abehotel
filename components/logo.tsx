@@ -46,7 +46,7 @@ export function Logo({ size = "md", showText = true, className = "", textColor, 
   return (
     <div className={`flex items-center gap-3 group ${className}`}>
       {logoUrl ? (
-        <div className={`${sizeClasses[size]} relative overflow-hidden rounded-full border-2 border-white shadow-lg transition-transform duration-300 group-hover:scale-110`}>
+        <div className={`${sizeClasses[size]} relative overflow-hidden rounded-full border border-[#d4af37]/20 shadow-lg transition-transform duration-300 group-hover:scale-110`}>
           <Image
             src={logoUrl}
             alt={`${settings.app_name} Logo`}
@@ -64,10 +64,10 @@ export function Logo({ size = "md", showText = true, className = "", textColor, 
 
       {showText && (
         <div className="hidden sm:block">
-          <h1 className={`${textSizeClasses[size]} font-bold brand-font ${textColor || 'text-sidebar-foreground'}`}>
+          <h1 className={`${textSizeClasses[size]} font-black uppercase tracking-widest text-[#f3cf7a] brand-font`}>
             {settings.app_name}
           </h1>
-          <p className={`text-xs ${textColor ? textColor.replace('text-', 'text-').replace('-foreground', '') + '/70' : 'text-sidebar-foreground/70'}`}>
+          <p className="text-[10px] font-black uppercase tracking-widest text-gray-500">
             {settings.app_tagline}
           </p>
         </div>
