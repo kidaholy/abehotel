@@ -196,7 +196,7 @@ export default function StockUsageReportPage() {
   if (loading) {
     return (
       <ProtectedRoute requiredRoles={["admin"]}>
-        <div className="min-h-screen bg-gray-50 p-8">
+        <div className="min-h-screen bg-[#0f1110] p-8">
           <div className="max-w-7xl mx-auto">
             <div className="p-20 text-center">
               <div className="w-10 h-10 border-4 border-[#8B4513] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
@@ -212,7 +212,7 @@ export default function StockUsageReportPage() {
 
   return (
     <ProtectedRoute requiredRoles={["admin"]}>
-      <div className="min-h-screen bg-gray-50 p-4 sm:p-6 md:p-8 font-sans print:bg-white print:p-0">
+      <div className="min-h-screen bg-[#0f1110] p-4 sm:p-6 md:p-8 font-sans print:bg-white print:p-0">
         <div className="max-w-7xl mx-auto space-y-6">
           {/* Header */}
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 print:hidden">
@@ -234,14 +234,14 @@ export default function StockUsageReportPage() {
 
             <div className="flex gap-4 items-center">
               {/* Period Filter */}
-              <div className="flex gap-2 bg-white p-1.5 rounded-lg shadow-sm border">
+              <div className="flex gap-2 bg-[#151716] p-1.5 rounded-lg shadow-sm border">
                 {["today", "week", "month", "year"].map((f) => (
                   <button
                     key={f}
                     onClick={() => setFilter(f)}
                     className={`px-4 py-2 rounded-md text-sm font-bold capitalize transition-all ${filter === f
                       ? "bg-[#8B4513] text-white shadow-md"
-                      : "text-gray-500 hover:bg-gray-50"
+                      : "text-gray-500 hover:bg-[#0f1110]"
                       }`}
                   >
                     {f}
@@ -267,7 +267,7 @@ export default function StockUsageReportPage() {
                 </button>
                 <button
                   onClick={() => window.print()}
-                  className="bg-white text-[#8B4513] px-4 py-2 rounded-lg shadow-sm hover:bg-gray-50 transition-colors border border-gray-200"
+                  className="bg-white text-[#8B4513] px-4 py-2 rounded-lg shadow-sm hover:bg-[#0f1110] transition-colors border border-gray-200"
                 >
                   <Printer size={16} />
                 </button>
@@ -294,7 +294,7 @@ export default function StockUsageReportPage() {
             <>
               {/* Summary Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-                <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+                <div className="bg-[#151716] rounded-lg p-6 shadow-sm border border-gray-200">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium text-gray-500">
@@ -309,7 +309,7 @@ export default function StockUsageReportPage() {
                   </div>
                 </div>
 
-                <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+                <div className="bg-[#151716] rounded-lg p-6 shadow-sm border border-gray-200">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium text-gray-500">
@@ -323,7 +323,7 @@ export default function StockUsageReportPage() {
                   </div>
                 </div>
 
-                <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+                <div className="bg-[#151716] rounded-lg p-6 shadow-sm border border-gray-200">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium text-gray-500">
@@ -337,7 +337,7 @@ export default function StockUsageReportPage() {
                   </div>
                 </div>
 
-                <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+                <div className="bg-[#151716] rounded-lg p-6 shadow-sm border border-gray-200">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium text-gray-500">
@@ -352,7 +352,7 @@ export default function StockUsageReportPage() {
                   </div>
                 </div>
 
-                <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+                <div className="bg-[#151716] rounded-lg p-6 shadow-sm border border-gray-200">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium text-gray-500">
@@ -369,7 +369,7 @@ export default function StockUsageReportPage() {
               </div>
 
               {/* Investment Summary */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+              <div className="bg-[#151716] rounded-lg shadow-sm border border-gray-200">
                 <div className="px-6 py-4 border-b border-gray-200">
                   <h3 className="text-lg font-bold text-gray-900">
                     Investment & Expense Summary
@@ -422,7 +422,7 @@ export default function StockUsageReportPage() {
               </div>
 
               {/* Stock Analysis Table */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+              <div className="bg-[#151716] rounded-lg shadow-sm border border-gray-200">
                 <div className="px-6 py-4 border-b border-gray-200">
                   <h3 className="text-lg font-bold text-gray-900">
                     Detailed Stock Analysis
@@ -430,7 +430,7 @@ export default function StockUsageReportPage() {
                 </div>
                 <div className="hidden lg:block overflow-x-auto">
                   <table className="w-full">
-                    <thead className="bg-gray-50">
+                    <thead className="bg-[#0f1110]">
                       <tr>
                         <th className="text-left py-3 px-4 font-semibold text-sm text-gray-700">
                           Item Name
@@ -467,7 +467,7 @@ export default function StockUsageReportPage() {
                     <tbody className="divide-y divide-gray-200">
                       {reportData.stockAnalysis.map(
                         (item: StockAnalysisItem, idx: number) => (
-                          <tr key={idx} className="hover:bg-gray-50">
+                          <tr key={idx} className="hover:bg-[#0f1110]">
                             <td className="py-3 px-4">
                               <div className="flex items-center gap-3">
                                 <div
@@ -532,7 +532,7 @@ export default function StockUsageReportPage() {
                         )
                       )}
                     </tbody>
-                    <tfoot className="bg-gray-50 border-t-2 border-gray-200">
+                    <tfoot className="bg-[#0f1110] border-t-2 border-gray-200">
                       <tr>
                         <td
                           colSpan={7}
@@ -599,7 +599,7 @@ export default function StockUsageReportPage() {
                             </div>
                           </div>
 
-                          <div className="bg-gray-50 p-2 rounded-lg flex justify-between items-center">
+                          <div className="bg-[#0f1110] p-2 rounded-lg flex justify-between items-center">
                             <div className="flex flex-col">
                               <span className="text-[9px] text-gray-400 uppercase font-bold">Total Value</span>
                               <span className="font-black text-blue-600">{item.closingValue.toLocaleString()} Br</span>
@@ -624,7 +624,7 @@ export default function StockUsageReportPage() {
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* Low Stock Items */}
                     {reportData.alerts.lowStockItems.length > 0 && (
-                      <div className="bg-white rounded-lg shadow-sm border border-red-200">
+                      <div className="bg-[#151716] rounded-lg shadow-sm border border-red-200">
                         <div className="px-6 py-4 border-b border-red-200 bg-red-50">
                           <h3 className="text-lg font-bold text-red-800 flex items-center gap-2">
                             <AlertTriangle size={20} />
@@ -663,7 +663,7 @@ export default function StockUsageReportPage() {
 
                     {/* Near Stock-Out Items */}
                     {reportData.alerts.nearStockOutItems.length > 0 && (
-                      <div className="bg-white rounded-lg shadow-sm border border-orange-200">
+                      <div className="bg-[#151716] rounded-lg shadow-sm border border-orange-200">
                         <div className="px-6 py-4 border-b border-orange-200 bg-orange-50">
                           <h3 className="text-lg font-bold text-orange-800 flex items-center gap-2">
                             <Clock size={20} />

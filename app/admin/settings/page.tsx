@@ -779,7 +779,7 @@ export default function AdminSettingsPage() {
                               }`}
                           >
                             <span
-                              className={`inline-block h-6 w-6 transform rounded-full shadow-xl transition-transform duration-500 ${formData.enable_cashier_printing === "true" ? "translate-x-9 bg-[#4ade80]" : "translate-x-1 bg-gray-500"
+                              className={`inline-block h-6 w-6 transform rounded-full shadow-xl transition-transform duration-500 ${formData.enable_cashier_printing === "true" ? "translate-x-9 bg-[#4ade80]" : "translate-x-1 bg-[#0f1110]0"
                                 }`}
                             />
                           </button>

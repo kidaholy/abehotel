@@ -967,85 +967,93 @@ export function MenuManagementSection({
                     </div>
 
                     {/* Reporting Configuration */}
-                    <div className="bg-[#2d5a41]/5 p-6 rounded-[30px] border border-[#2d5a41]/10">
-                      <h3 className="text-sm font-black text-[#2d5a41] uppercase tracking-widest mb-4">Reporting Configuration</h3>
+                    <div className="bg-[#2d5a41]/10 p-6 rounded-[30px] border border-[#2d5a41]/20">
+                      <h3 className="text-sm font-black text-[#f3cf7a] uppercase tracking-widest mb-4">Reporting Configuration</h3>
                       <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-bold text-gray-700 mb-2">Reporting Unit</label>
-                          <select
-                            value={formData.reportUnit}
-                            onChange={(e) => setFormData({ ...formData, reportUnit: e.target.value as any })}
-                            className="w-full bg-white border border-gray-200 rounded-2xl px-5 py-3.5 text-sm appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#2d5a41]"
-                          >
-                            <option value="kg">kg (Beef)</option>
-                            <option value="liter">liter (Drinks/Milk)</option>
-                            <option value="piece">piece (Soft Drinks)</option>
-                          </select>
+                        <div className="space-y-2">
+                          <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Reporting Unit</label>
+                          <div className="relative">
+                            <select
+                              value={formData.reportUnit}
+                              onChange={(e) => setFormData({ ...formData, reportUnit: e.target.value as any })}
+                              className="w-full bg-[#0f1110] border border-white/5 rounded-2xl px-5 py-3.5 text-sm font-bold text-white outline-none focus:border-[#d4af37]/50 appearance-none cursor-pointer shadow-inner"
+                            >
+                              <option value="kg" className="bg-[#1a1c1b]">kg (Beef)</option>
+                              <option value="liter" className="bg-[#1a1c1b]">liter (Drinks/Milk)</option>
+                              <option value="piece" className="bg-[#1a1c1b]">piece (Soft Drinks)</option>
+                            </select>
+                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500">
+                              <ChevronDown size={14} />
+                            </div>
+                          </div>
                         </div>
-                        <div>
-                          <label className="block text-sm font-bold text-gray-700 mb-2">Amount per Sale</label>
+                        <div className="space-y-2">
+                          <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Amount per Sale</label>
                           <div className="relative">
                             <input
                               type="number"
                               step="any"
                               value={formData.reportQuantity}
                               onChange={(e) => setFormData({ ...formData, reportQuantity: e.target.value })}
-                              className="w-full bg-white border border-gray-200 rounded-2xl px-5 py-3.5 text-sm"
+                              className="w-full bg-[#0f1110] border border-white/5 rounded-2xl px-5 py-3.5 text-sm font-bold text-white outline-none focus:border-[#d4af37]/50 shadow-inner"
                               placeholder="0.00"
                             />
-                            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#2d5a41] text-xs font-bold uppercase">
+                            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#d4af37] text-[10px] font-black uppercase tracking-widest">
                               {formData.reportUnit}
                             </span>
                           </div>
-                          <p className="mt-2 text-[10px] text-gray-400 font-medium">Used for calculating total consumption in reports.</p>
                         </div>
                       </div>
                     </div>
 
                     {/* Stock Linkage Configuration */}
                     <div className="bg-[#f5bc6b]/10 p-6 rounded-[30px] border border-[#f5bc6b]/20">
-                      <h3 className="text-sm font-black text-[#8b6e3f] uppercase tracking-widest mb-4 flex items-center gap-2">
+                      <h3 className="text-sm font-black text-[#f3cf7a] uppercase tracking-widest mb-4 flex items-center gap-2">
                         <Package size={16} /> Stock Linkage (Optional)
                       </h3>
                       <div className="grid grid-cols-1 gap-4">
-                        <div>
-                          <label className="block text-sm font-bold text-gray-700 mb-2">Link to Stock Item</label>
-                          <select
-                            value={formData.stockItemId}
-                            onChange={(e) => {
-                              const stockId = e.target.value;
-                              const stock = stockItems.find((s: any) => s._id === stockId);
-                              setFormData({
-                                ...formData,
-                                stockItemId: stockId,
-                                stockConsumption: stock ? (stock.sellUnitEquivalent || 1).toString() : "1.0"
-                              });
-                            }}
-                            className="w-full bg-white border border-gray-200 rounded-2xl px-5 py-3.5 text-sm appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#f5bc6b]"
-                          >
-                            <option value="">No Stock Linked</option>
-                            {stockItems.map((stock: any) => (
-                              <option key={stock._id} value={stock._id}>
-                                {stock.name} ({stock.unit})
-                              </option>
-                            ))}
-                          </select>
-                          <p className="mt-2 text-[10px] text-gray-400 font-medium italic">Select a stock item to auto-track inventory on every sale.</p>
+                        <div className="space-y-2">
+                          <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Link to Stock Item</label>
+                          <div className="relative">
+                            <select
+                              value={formData.stockItemId}
+                              onChange={(e) => {
+                                const stockId = e.target.value;
+                                const stock = stockItems.find((s: any) => s._id === stockId);
+                                setFormData({
+                                  ...formData,
+                                  stockItemId: stockId,
+                                  stockConsumption: stock ? (stock.sellUnitEquivalent || 1).toString() : "1.0"
+                                });
+                              }}
+                              className="w-full bg-[#0f1110] border border-white/5 rounded-2xl px-5 py-3.5 text-sm font-bold text-white outline-none focus:border-[#d4af37]/50 appearance-none cursor-pointer shadow-inner"
+                            >
+                              <option value="" className="bg-[#1a1c1b]">No Stock Linked</option>
+                              {stockItems.map((stock: any) => (
+                                <option key={stock._id} value={stock._id} className="bg-[#1a1c1b]">
+                                  {stock.name} ({stock.unit})
+                                </option>
+                              ))}
+                            </select>
+                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500">
+                              <ChevronDown size={14} />
+                            </div>
+                          </div>
                         </div>
-
+ 
                         {formData.stockItemId && (
-                          <div>
-                            <label className="block text-sm font-bold text-gray-700 mb-2">Stock Used Per Sale</label>
+                          <div className="space-y-2">
+                            <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Stock Used Per Sale</label>
                             <div className="relative">
                               <input
                                 type="number"
                                 step="any"
                                 value={formData.stockConsumption}
                                 onChange={(e) => setFormData({ ...formData, stockConsumption: e.target.value })}
-                                className="w-full bg-white border border-gray-200 rounded-2xl px-5 py-3.5 text-sm"
+                                className="w-full bg-[#0f1110] border border-white/5 rounded-2xl px-5 py-3.5 text-sm font-bold text-[#f3cf7a] outline-none focus:border-[#d4af37]/50 shadow-inner"
                                 placeholder="1.0"
                               />
-                              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#f5bc6b] text-xs font-black">
+                              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#f3cf7a] text-[10px] font-black uppercase tracking-widest">
                                 {stockItems.find(s => s._id === formData.stockItemId)?.unit || 'units'}
                               </span>
                             </div>
@@ -1057,14 +1065,17 @@ export function MenuManagementSection({
                 </div>
 
                 {/* Distribution Variants */}
-                <div className="md:col-span-2 bg-blue-50/50 p-6 rounded-[30px] border border-blue-100">
-                  <h3 className="text-sm font-black text-blue-700 uppercase tracking-widest mb-2 flex items-center gap-2">
-                    <ArrowLeftRight size={16} /> Distribution Variants (Optional)
+                <div className="md:col-span-2 bg-[#1a1c1b] p-8 rounded-[35px] border border-white/5 shadow-2xl relative overflow-hidden group/variants">
+                  <div className="absolute -right-4 -top-4 opacity-5 group-hover/variants:scale-110 transition-transform duration-500">
+                    <ArrowLeftRight size={80} className="text-[#d4af37]" />
+                  </div>
+                  <h3 className="text-[10px] font-black text-[#d4af37] uppercase tracking-[0.2em] mb-3 flex items-center gap-2">
+                    <ArrowLeftRight size={14} /> Distribution Variants (Optional)
                   </h3>
-                  <p className="text-[11px] text-gray-400 font-medium mb-4">Add options the cashier must choose from when ordering this item (e.g. Hot, Cold, Spicy, Mild).</p>
-
+                  <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-6">Add options (e.g. Hot, Cold, Spicy, Mild).</p>
+ 
                   {/* Input to add new variant */}
-                  <div className="flex gap-2 mb-4">
+                  <div className="flex gap-2 p-1.5 bg-[#0f1110] border border-white/5 rounded-2xl shadow-inner mb-6 focus-within:border-[#d4af37]/30 transition-all">
                     <input
                       type="text"
                       id="newVariantInput"
@@ -1079,7 +1090,7 @@ export function MenuManagementSection({
                           }
                         }
                       }}
-                      className="flex-1 bg-white border border-blue-200 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+                      className="flex-1 bg-transparent px-4 py-3 text-sm font-bold text-white outline-none placeholder-gray-700"
                     />
                     <button
                       type="button"
@@ -1091,7 +1102,7 @@ export function MenuManagementSection({
                           input.value = ''
                         }
                       }}
-                      className="px-5 py-3 bg-blue-600 text-white rounded-2xl text-sm font-bold hover:bg-blue-700 transition-colors"
+                      className="px-6 py-3 bg-gradient-to-r from-[#d4af37] to-[#f3cf7a] text-[#0f1110] rounded-xl text-[10px] font-black uppercase tracking-widest hover:shadow-lg transition-all transform active:scale-95"
                     >
                       + Add
                     </button>

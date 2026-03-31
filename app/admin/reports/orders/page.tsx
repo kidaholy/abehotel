@@ -201,7 +201,7 @@ export default function OrdersReportPage() {
     if (loading) {
         return (
             <ProtectedRoute requiredRoles={["admin"]}>
-                <div className="min-h-screen bg-gray-50 p-8">
+                <div className="min-h-screen bg-[#0f1110] p-8">
                     <div className="max-w-7xl mx-auto">
                         <div className="p-20 text-center">
                             <div className="w-10 h-10 border-4 border-[#8B4513] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
@@ -216,7 +216,7 @@ export default function OrdersReportPage() {
     if (error) {
         return (
             <ProtectedRoute requiredRoles={["admin"]}>
-                <div className="min-h-screen bg-gray-50 p-8">
+                <div className="min-h-screen bg-[#0f1110] p-8">
                     <div className="max-w-7xl mx-auto">
                         <div className="p-20 text-center">
                             <p className="text-red-600 font-bold mb-4">Error: {error}</p>
@@ -235,7 +235,7 @@ export default function OrdersReportPage() {
 
     return (
         <ProtectedRoute requiredRoles={["admin"]}>
-            <div className="min-h-screen bg-gray-50 p-4 sm:p-6 md:p-8 font-sans print:bg-white print:p-0">
+            <div className="min-h-screen bg-[#0f1110] p-4 sm:p-6 md:p-8 font-sans print:bg-white print:p-0">
                 <div className="max-w-7xl mx-auto space-y-6">
                     {/* Header */}
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 print:hidden">
@@ -249,12 +249,12 @@ export default function OrdersReportPage() {
 
                         <div className="flex gap-4 items-center">
                             {/* Period Filter */}
-                            <div className="flex gap-2 bg-white p-1.5 rounded-lg shadow-sm border">
+                            <div className="flex gap-2 bg-[#151716] p-1.5 rounded-lg shadow-sm border">
                                 {["today", "week", "month", "year"].map((f) => (
                                     <button
                                         key={f}
                                         onClick={() => setFilter(f)}
-                                        className={`px-4 py-2 rounded-md text-sm font-bold capitalize transition-all ${filter === f ? "bg-[#8B4513] text-white shadow-md" : "text-gray-500 hover:bg-gray-50"
+                                        className={`px-4 py-2 rounded-md text-sm font-bold capitalize transition-all ${filter === f ? "bg-[#8B4513] text-white shadow-md" : "text-gray-500 hover:bg-[#0f1110]"
                                             }`}
                                     >
                                         {f}
@@ -306,7 +306,7 @@ export default function OrdersReportPage() {
                                 </button>
                                 <button
                                     onClick={() => window.print()}
-                                    className="bg-white text-[#8B4513] px-4 py-2 rounded-lg shadow-sm hover:bg-gray-50 transition-colors border border-gray-200"
+                                    className="bg-white text-[#8B4513] px-4 py-2 rounded-lg shadow-sm hover:bg-[#0f1110] transition-colors border border-gray-200"
                                 >
                                     <Printer size={16} />
                                 </button>
@@ -325,7 +325,7 @@ export default function OrdersReportPage() {
                         <>
                             {/* Summary Cards */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                                <div className="bg-white rounded-lg p-4 sm:p-6 shadow-sm border border-gray-200">
+                                <div className="bg-[#151716] rounded-lg p-4 sm:p-6 shadow-sm border border-gray-200">
                                     <div className="flex items-center justify-between">
                                         <div>
                                             <p className="text-sm font-medium text-gray-500">Total Orders</p>
@@ -335,7 +335,7 @@ export default function OrdersReportPage() {
                                     </div>
                                 </div>
 
-                                <div className="bg-white rounded-lg p-4 sm:p-6 shadow-sm border border-gray-200">
+                                <div className="bg-[#151716] rounded-lg p-4 sm:p-6 shadow-sm border border-gray-200">
                                     <div className="flex items-center justify-between">
                                         <div>
                                             <p className="text-sm font-medium text-gray-500">Total Revenue</p>
@@ -345,7 +345,7 @@ export default function OrdersReportPage() {
                                     </div>
                                 </div>
 
-                                <div className="bg-white rounded-lg p-4 sm:p-6 shadow-sm border border-gray-200">
+                                <div className="bg-[#151716] rounded-lg p-4 sm:p-6 shadow-sm border border-gray-200">
                                     <div className="flex items-center justify-between">
                                         <div>
                                             <p className="text-sm font-medium text-gray-500">Average Order Value</p>
@@ -355,7 +355,7 @@ export default function OrdersReportPage() {
                                     </div>
                                 </div>
 
-                                <div className="bg-white rounded-lg p-4 sm:p-6 shadow-sm border border-gray-200">
+                                <div className="bg-[#151716] rounded-lg p-4 sm:p-6 shadow-sm border border-gray-200">
                                     <div className="flex items-center justify-between">
                                         <div>
                                             <p className="text-sm font-medium text-gray-500">Completed Orders</p>
@@ -367,7 +367,7 @@ export default function OrdersReportPage() {
                             </div>
 
                             {/* Orders Table */}
-                            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+                            <div className="bg-[#151716] rounded-lg shadow-sm border border-gray-200">
                                 <div className="px-6 py-4 border-b border-gray-200">
                                     <h3 className="text-lg font-bold text-gray-900">
                                         Order Details ({filteredOrders.length} orders)
@@ -375,7 +375,7 @@ export default function OrdersReportPage() {
                                 </div>
                                 <div className="hidden lg:block overflow-x-auto">
                                     <table className="w-full">
-                                        <thead className="bg-gray-50">
+                                        <thead className="bg-[#0f1110]">
                                             <tr>
                                                 <th className="text-left py-3 px-4 font-semibold text-sm text-gray-700">Order ID</th>
                                                 <th className="text-left py-3 px-4 font-semibold text-sm text-gray-700">Date & Time</th>
@@ -389,7 +389,7 @@ export default function OrdersReportPage() {
                                         </thead>
                                         <tbody className="divide-y divide-gray-200">
                                             {filteredOrders.map((order: any, idx: number) => (
-                                                <tr key={idx} className="hover:bg-gray-50">
+                                                <tr key={idx} className="hover:bg-[#0f1110]">
                                                     <td className="py-3 px-4 font-mono text-sm font-medium text-gray-900">
                                                         #{order._id.slice(-8)}
                                                     </td>
@@ -435,7 +435,7 @@ export default function OrdersReportPage() {
                                                 </tr>
                                             ))}
                                         </tbody>
-                                        <tfoot className="bg-gray-50 border-t-2 border-gray-200">
+                                        <tfoot className="bg-[#0f1110] border-t-2 border-gray-200">
                                             <tr>
                                                 <td colSpan={5} className="py-3 px-4 text-right font-bold text-gray-700">
                                                     Total Revenue ({filteredOrders.length} orders):
@@ -473,7 +473,7 @@ export default function OrdersReportPage() {
                                                         Table: {order.tableNumber || "N/A"}
                                                     </div>
                                                 </div>
-                                                <div className="flex justify-between items-end bg-gray-50/50 p-2 rounded-lg border border-gray-100/50">
+                                                <div className="flex justify-between items-end bg-[#0f1110]/50 p-2 rounded-lg border border-white/10/50">
                                                     <div className="text-xs font-medium text-gray-500">
                                                         {order.items.length} items
                                                     </div>
@@ -486,7 +486,7 @@ export default function OrdersReportPage() {
                                                                 setSelectedOrder(order)
                                                                 setShowOrderDetails(true)
                                                             }}
-                                                            className="text-[#8B4513] p-1.5 bg-white rounded-full shadow-sm border border-gray-100"
+                                                            className="text-[#8B4513] p-1.5 bg-[#151716] rounded-full shadow-sm border border-white/10"
                                                         >
                                                             <Eye size={14} />
                                                         </button>
@@ -522,7 +522,7 @@ export default function OrdersReportPage() {
                         onClick={() => setShowExportDropdown(false)}
                     />
                     <div
-                        className="fixed z-[201] bg-white rounded-2xl shadow-2xl border-2 border-amber-200 py-2 min-w-[180px] overflow-hidden"
+                        className="fixed z-[201] bg-[#151716] rounded-2xl shadow-2xl border-2 border-amber-200 py-2 min-w-[180px] overflow-hidden"
                         style={{
                             top: `${dropdownPosition.top}px`,
                             left: `${dropdownPosition.left}px`
@@ -542,7 +542,7 @@ export default function OrdersReportPage() {
                             <span className="text-lg">🥤</span>
                             <span>Drinks Only</span>
                         </button>
-                        <div className="my-1 border-t border-gray-100 mx-2" />
+                        <div className="my-1 border-t border-white/10 mx-2" />
                         <button
                             onClick={() => exportCSV('all')}
                             className="w-full px-4 py-3 text-left text-sm hover:bg-gradient-to-r hover:from-amber-50 hover:to-orange-50 flex items-center gap-3 text-gray-700 font-bold transition-all bg-amber-50/50"

@@ -168,12 +168,12 @@ export default function TransfersPage() {
 
     return (
         <ProtectedRoute requiredRoles={["admin", "store_keeper"]}>
-            <div className="min-h-screen bg-gray-50 p-6">
+            <div className="min-h-screen bg-[#0f1110] p-6">
                 <div className="max-w-7xl mx-auto space-y-6">
                     <BentoNavbar />
 
                     {/* Header */}
-                    <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm">
+                    <div className="bg-[#151716] rounded-3xl p-8 border border-white/10 shadow-sm">
                         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                             <div>
                                 <h1 className="text-3xl font-black text-gray-900 tracking-tight flex items-center gap-3">
@@ -207,7 +207,7 @@ export default function TransfersPage() {
                                     placeholder="Search by item or staff..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="w-full bg-white border border-gray-100 rounded-2xl pl-12 pr-4 py-4 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-[#8B4513]/10 transition-all shadow-sm"
+                                    className="w-full bg-white border border-white/10 rounded-2xl pl-12 pr-4 py-4 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-[#8B4513]/10 transition-all shadow-sm"
                                 />
                             </div>
                             <div className="relative group">
@@ -215,7 +215,7 @@ export default function TransfersPage() {
                                 <select
                                     value={filterStatus}
                                     onChange={(e) => setFilterStatus(e.target.value)}
-                                    className="bg-white border border-gray-100 rounded-2xl pl-12 pr-10 py-4 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-[#8B4513]/10 transition-all shadow-sm appearance-none cursor-pointer"
+                                    className="bg-white border border-white/10 rounded-2xl pl-12 pr-10 py-4 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-[#8B4513]/10 transition-all shadow-sm appearance-none cursor-pointer"
                                 >
                                     <option value="all">All Status</option>
                                     <option value="pending">Pending</option>
@@ -228,7 +228,7 @@ export default function TransfersPage() {
                     </div>
 
                     {/* Requests List */}
-                    <div className="bg-white rounded-[2.5rem] border border-gray-100 overflow-hidden shadow-sm min-h-[500px]">
+                    <div className="bg-[#151716] rounded-[2.5rem] border border-white/10 overflow-hidden shadow-sm min-h-[500px]">
                         {loading ? (
                             <div className="flex flex-col items-center justify-center py-20 animate-pulse">
                                 <div className="h-10 w-10 bg-gray-100 rounded-full mb-4"></div>
@@ -250,7 +250,7 @@ export default function TransfersPage() {
                                         layout
                                         initial={{ opacity: 0 }}
                                         animate={{ opacity: 1 }}
-                                        className="p-8 hover:bg-gray-50/50 transition-colors flex flex-col md:flex-row justify-between items-start md:items-center gap-6 group"
+                                        className="p-8 hover:bg-[#0f1110]/50 transition-colors flex flex-col md:flex-row justify-between items-start md:items-center gap-6 group"
                                     >
                                         <div className="flex gap-6 items-center">
                                             <div className={`h-16 w-16 rounded-[1.5rem] flex items-center justify-center shadow-lg transform group-hover:scale-110 transition-transform ${req.status === 'approved' ? 'bg-emerald-50 text-emerald-600 shadow-emerald-100' :
@@ -271,7 +271,7 @@ export default function TransfersPage() {
                                                     <span className="text-gray-300">Requested by <span className="text-gray-500">{req.requestedBy?.name}</span></span>
                                                 </div>
                                                 {req.notes && (
-                                                    <p className="text-sm text-gray-500 italic mt-2 bg-white/50 p-3 rounded-xl border border-gray-100">{req.notes}</p>
+                                                    <p className="text-sm text-gray-500 italic mt-2 bg-white/50 p-3 rounded-xl border border-white/10">{req.notes}</p>
                                                 )}
                                                 {req.status === 'denied' && req.denialReason && (
                                                     <p className="text-sm text-red-500 font-bold mt-2 flex items-center gap-2">
@@ -351,7 +351,7 @@ export default function TransfersPage() {
                                             <select
                                                 value={newRequest.stockId}
                                                 onChange={(e) => setNewRequest({ ...newRequest, stockId: e.target.value })}
-                                                className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl px-5 py-4 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-[#2d5a41]/5 focus:border-[#2d5a41] transition-all appearance-none cursor-pointer"
+                                                className="w-full bg-[#0f1110] border-2 border-white/10 rounded-2xl px-5 py-4 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-[#2d5a41]/5 focus:border-[#2d5a41] transition-all appearance-none cursor-pointer"
                                             >
                                                 <option value="">Choose item...</option>
                                                 {stockItems.map(item => (
@@ -373,7 +373,7 @@ export default function TransfersPage() {
                                             placeholder="0.00"
                                             value={newRequest.quantity}
                                             onChange={(e) => setNewRequest({ ...newRequest, quantity: e.target.value })}
-                                            className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl px-5 py-4 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-[#2d5a41]/5 focus:border-[#2d5a41] transition-all"
+                                            className="w-full bg-[#0f1110] border-2 border-white/10 rounded-2xl px-5 py-4 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-[#2d5a41]/5 focus:border-[#2d5a41] transition-all"
                                         />
                                     </div>
 
@@ -385,7 +385,7 @@ export default function TransfersPage() {
                                             placeholder="Why is this transfer needed?"
                                             value={newRequest.notes}
                                             onChange={(e) => setNewRequest({ ...newRequest, notes: e.target.value })}
-                                            className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl px-5 py-4 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-[#2d5a41]/5 focus:border-[#2d5a41] transition-all h-32 resize-none"
+                                            className="w-full bg-[#0f1110] border-2 border-white/10 rounded-2xl px-5 py-4 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-[#2d5a41]/5 focus:border-[#2d5a41] transition-all h-32 resize-none"
                                         />
                                     </div>
 
@@ -399,7 +399,7 @@ export default function TransfersPage() {
                                         </button>
                                         <button
                                             onClick={() => setShowForm(false)}
-                                            className="px-8 border-2 border-gray-100 text-gray-400 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-gray-50 hover:text-gray-600 transition-all"
+                                            className="px-8 border-2 border-white/10 text-gray-400 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-[#0f1110] hover:text-gray-600 transition-all"
                                         >
                                             Cancel
                                         </button>
@@ -436,7 +436,7 @@ export default function TransfersPage() {
                                         placeholder="Reason for denial..."
                                         value={denialModal.reason}
                                         onChange={(e) => setDenialModal({ ...denialModal, reason: e.target.value })}
-                                        className="w-full bg-gray-50 border-2 border-red-50 rounded-2xl px-5 py-4 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-red-500/5 focus:border-red-500 transition-all h-32 resize-none"
+                                        className="w-full bg-[#0f1110] border-2 border-red-50 rounded-2xl px-5 py-4 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-red-500/5 focus:border-red-500 transition-all h-32 resize-none"
                                     />
                                     <div className="flex gap-3">
                                         <button

@@ -197,7 +197,7 @@ export default function NetWorthReportPage() {
   if (loading) {
     return (
       <ProtectedRoute requiredRoles={["admin"]}>
-        <div className="min-h-screen bg-gray-50 p-8">
+        <div className="min-h-screen bg-[#0f1110] p-8">
           <div className="max-w-7xl mx-auto">
             <div className="p-20 text-center">
               <div className="w-10 h-10 border-4 border-[#8B4513] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
@@ -213,7 +213,7 @@ export default function NetWorthReportPage() {
 
   return (
     <ProtectedRoute requiredRoles={["admin"]}>
-      <div className="min-h-screen bg-gray-50 p-4 sm:p-6 md:p-8 font-sans print:bg-white print:p-0">
+      <div className="min-h-screen bg-[#0f1110] p-4 sm:p-6 md:p-8 font-sans print:bg-white print:p-0">
         <div className="max-w-7xl mx-auto space-y-6">
           {/* Header */}
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 print:hidden">
@@ -234,14 +234,14 @@ export default function NetWorthReportPage() {
 
             <div className="flex gap-4 items-center">
               {/* Period Filter */}
-              <div className="flex gap-2 bg-white p-1.5 rounded-lg shadow-sm border">
+              <div className="flex gap-2 bg-[#151716] p-1.5 rounded-lg shadow-sm border">
                 {["today", "week", "month", "year", "all"].map((f) => (
                   <button
                     key={f}
                     onClick={() => setFilter(f)}
                     className={`px-4 py-2 rounded-md text-sm font-bold capitalize transition-all ${filter === f
                       ? "bg-[#8B4513] text-white shadow-md"
-                      : "text-gray-500 hover:bg-gray-50"
+                      : "text-gray-500 hover:bg-[#0f1110]"
                       }`}
                   >
                     {f}
@@ -267,7 +267,7 @@ export default function NetWorthReportPage() {
                 </button>
                 <button
                   onClick={() => window.print()}
-                  className="bg-white text-[#8B4513] px-4 py-2 rounded-lg shadow-sm hover:bg-gray-50 transition-colors border border-gray-200"
+                  className="bg-white text-[#8B4513] px-4 py-2 rounded-lg shadow-sm hover:bg-[#0f1110] transition-colors border border-gray-200"
                 >
                   <Printer size={16} />
                 </button>
@@ -310,7 +310,7 @@ export default function NetWorthReportPage() {
 
           {/* Summary Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white rounded-lg p-4 sm:p-6 shadow-sm border border-gray-200">
+            <div className="bg-[#151716] rounded-lg p-4 sm:p-6 shadow-sm border border-gray-200">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-500">
@@ -324,7 +324,7 @@ export default function NetWorthReportPage() {
               </div>
             </div>
 
-            <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+            <div className="bg-[#151716] rounded-lg p-6 shadow-sm border border-gray-200">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-500">
@@ -338,7 +338,7 @@ export default function NetWorthReportPage() {
               </div>
             </div>
 
-            <div className="bg-white rounded-lg p-4 sm:p-6 shadow-sm border border-gray-200">
+            <div className="bg-[#151716] rounded-lg p-4 sm:p-6 shadow-sm border border-gray-200">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-500">
@@ -379,13 +379,13 @@ export default function NetWorthReportPage() {
           </div>
 
           {/* Main Order-Stock Value Table */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+          <div className="bg-[#151716] rounded-lg shadow-sm border border-gray-200">
             <div className="px-6 py-4 border-b border-gray-200">
               <h3 className="text-lg font-bold text-gray-900">Order-Stock Value Analysis</h3>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50">
+                <thead className="bg-[#0f1110]">
                   <tr>
                     <th className="text-left py-3 px-4 font-semibold text-sm text-gray-700">Component</th>
                     <th className="text-center py-3 px-4 font-semibold text-sm text-gray-700">Type</th>
@@ -395,7 +395,7 @@ export default function NetWorthReportPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  <tr className="hover:bg-gray-50">
+                  <tr className="hover:bg-[#0f1110]">
                     <td className="py-3 px-4 font-medium text-green-800">Total Revenue</td>
                     <td className="py-3 px-4 text-center">
                       <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">Income</span>
@@ -404,7 +404,7 @@ export default function NetWorthReportPage() {
                     <td className="py-3 px-4 text-center font-medium">100%</td>
                     <td className="py-3 px-4 text-sm text-gray-600">Total sales from {periodData?.sales?.summary?.totalOrders || 0} orders</td>
                   </tr>
-                  <tr className="hover:bg-gray-50">
+                  <tr className="hover:bg-[#0f1110]">
                     <td className="py-3 px-4 font-medium text-red-800">Purchased Price</td>
                     <td className="py-3 px-4 text-center">
                       <span className="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs font-medium">Investment</span>
@@ -415,7 +415,7 @@ export default function NetWorthReportPage() {
                     </td>
                     <td className="py-3 px-4 text-sm text-gray-600">Cost of all purchased inventory items</td>
                   </tr>
-                  <tr className="hover:bg-gray-50">
+                  <tr className="hover:bg-[#0f1110]">
                     <td className="py-3 px-4 font-medium text-orange-800">Other Expenses</td>
                     <td className="py-3 px-4 text-center">
                       <span className="px-2 py-1 bg-orange-100 text-orange-800 rounded-full text-xs font-medium">Expense</span>
@@ -426,7 +426,7 @@ export default function NetWorthReportPage() {
                     </td>
                     <td className="py-3 px-4 text-sm text-gray-600">Additional operational expenses</td>
                   </tr>
-                  <tr className="hover:bg-gray-50">
+                  <tr className="hover:bg-[#0f1110]">
                     <td className="py-3 px-4 font-medium text-blue-800">Stock Asset Value</td>
                     <td className="py-3 px-4 text-center">
                       <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">Investment</span>
@@ -437,7 +437,7 @@ export default function NetWorthReportPage() {
                     </td>
                     <td className="py-3 px-4 text-sm text-gray-600">Current inventory investment value</td>
                   </tr>
-                  <tr className="hover:bg-gray-50 border-t-2 border-gray-300">
+                  <tr className="hover:bg-[#0f1110] border-t-2 border-gray-300">
                     <td className="py-3 px-4 font-bold text-gray-800">Total Investment</td>
                     <td className="py-3 px-4 text-center">
                       <span className="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs font-medium">Total</span>
@@ -449,7 +449,7 @@ export default function NetWorthReportPage() {
                     <td className="py-3 px-4 text-sm text-gray-600">Purchased price + other expenses + stock assets</td>
                   </tr>
                 </tbody>
-                <tfoot className="bg-gray-50 border-t-2 border-gray-200">
+                <tfoot className="bg-[#0f1110] border-t-2 border-gray-200">
                   <tr>
                     <td className="py-4 px-4 font-bold text-lg text-gray-900">Net Worth</td>
                     <td className="py-4 px-4 text-center">
@@ -479,7 +479,7 @@ export default function NetWorthReportPage() {
           {/* Detailed Tables */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Detailed Orders Summary */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div className="bg-[#151716] rounded-lg shadow-sm border border-gray-200">
               <div className="px-6 py-4 border-b border-gray-200">
                 <h3 className="text-lg font-bold text-gray-900">Orders Summary</h3>
               </div>
@@ -510,7 +510,7 @@ export default function NetWorthReportPage() {
                         : 0} ብር
                     </p>
                   </div>
-                  <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                  <div className="flex justify-between items-center p-3 bg-[#0f1110] rounded-lg">
                     <div>
                       <p className="font-medium text-gray-800">Period</p>
                       <p className="text-sm text-gray-600">Analysis timeframe</p>
@@ -522,7 +522,7 @@ export default function NetWorthReportPage() {
             </div>
 
             {/* Detailed Stock Summary */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div className="bg-[#151716] rounded-lg shadow-sm border border-gray-200">
               <div className="px-6 py-4 border-b border-gray-200">
                 <h3 className="text-lg font-bold text-gray-900">Stock Summary</h3>
               </div>
@@ -562,7 +562,7 @@ export default function NetWorthReportPage() {
           </div>
 
           {/* Inventory Investment Details Table */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+          <div className="bg-[#151716] rounded-lg shadow-sm border border-gray-200">
             <div className="px-6 py-4 border-b border-gray-200">
               <h3 className="text-lg font-bold text-gray-900">
                 Inventory Investment Details
@@ -570,7 +570,7 @@ export default function NetWorthReportPage() {
             </div>
             <div className="hidden xl:block overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50">
+                <thead className="bg-[#0f1110]">
                   <tr>
                     <th className="text-left py-3 px-4 font-semibold text-sm text-gray-700">
                       Item Name
@@ -618,7 +618,7 @@ export default function NetWorthReportPage() {
                         const consumedPortions = sellUnitEquivalent > 0 ? consumedQuantity / sellUnitEquivalent : consumedQuantity;
 
                         return (
-                          <tr key={idx} className="hover:bg-gray-50">
+                          <tr key={idx} className="hover:bg-[#0f1110]">
                             <td className="py-3 px-4 font-medium text-gray-900">{item.name}</td>
                             <td className="py-3 px-4 text-right text-sm font-bold text-orange-600">
                               {(item.currentUnitCost || 0).toFixed(0)} ብር
@@ -678,7 +678,7 @@ export default function NetWorthReportPage() {
                     </tr>
                   )}
                 </tbody>
-                <tfoot className="bg-gray-50 border-t-2 border-gray-200">
+                <tfoot className="bg-[#0f1110] border-t-2 border-gray-200">
                   <tr>
                     <td colSpan={3} className="py-3 px-4 text-right font-bold text-gray-700">
                       Total Handled Value:
@@ -743,7 +743,7 @@ export default function NetWorthReportPage() {
                           </div>
                         </div>
 
-                        <div className="bg-gray-50 p-2 rounded-lg flex justify-between items-center">
+                        <div className="bg-[#0f1110] p-2 rounded-lg flex justify-between items-center">
                           <div className="flex flex-col">
                             <span className="text-[9px] text-gray-400 uppercase font-bold">Total Purchase Value</span>
                             <span className="font-black text-green-600">{(item.transferredValue || 0).toLocaleString()} Br</span>

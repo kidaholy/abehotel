@@ -146,7 +146,7 @@ export default function BusinessIntelligencePage() {
   if (loading) {
     return (
       <ProtectedRoute requiredRoles={["admin"]}>
-        <div className="min-h-screen bg-white p-4 flex items-center justify-center">
+        <div className="min-h-screen bg-[#151716] p-4 flex items-center justify-center">
           <div className="text-center">
             <div className="text-6xl animate-bounce mb-4">🧠</div>
             <p className="text-xl font-bold text-[#8B4513]">Loading Business Intelligence...</p>
@@ -158,7 +158,7 @@ export default function BusinessIntelligencePage() {
 
   return (
     <ProtectedRoute requiredRoles={["admin"]}>
-      <div className="min-h-screen bg-white p-4 font-sans text-slate-800">
+      <div className="min-h-screen bg-[#151716] p-4 font-sans text-slate-800">
         <div className="max-w-7xl mx-auto">
           <BentoNavbar />
 
@@ -346,7 +346,7 @@ export default function BusinessIntelligencePage() {
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {businessMetrics.inventory.lowStockItems.map((item, index) => (
-                      <div key={index} className="bg-white p-4 rounded-2xl border border-red-200">
+                      <div key={index} className="bg-[#151716] p-4 rounded-2xl border border-red-200">
                         <p className="font-bold text-red-800">{item.name}</p>
                         <p className="text-sm text-red-600">{item.quantity} {item.unit} remaining</p>
                         <p className="text-xs text-red-500 capitalize">Status: {item.status}</p>
@@ -362,7 +362,7 @@ export default function BusinessIntelligencePage() {
           {activeTab === 'inventory' && inventoryInsights && (
             <div className="space-y-6">
               {/* Reorder Recommendations */}
-              <div className="bg-white rounded-3xl p-6 shadow-lg">
+              <div className="bg-[#151716] rounded-3xl p-6 shadow-lg">
                 <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
                   🚨 Reorder Recommendations
                 </h3>
@@ -498,13 +498,13 @@ export default function BusinessIntelligencePage() {
 
               {/* Best Performance Patterns */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-white rounded-3xl p-6 shadow-lg">
+                <div className="bg-[#151716] rounded-3xl p-6 shadow-lg">
                   <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
                     📅 Best Days
                   </h3>
                   <div className="space-y-3">
                     {salesForecasting.patterns.bestDays.slice(0, 5).map((day, index) => (
-                      <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-2xl">
+                      <div key={index} className="flex justify-between items-center p-3 bg-[#0f1110] rounded-2xl">
                         <span className="font-medium">{day.day}</span>
                         <span className="font-bold text-[#8B4513]">{day.averageRevenue} Br</span>
                       </div>
@@ -512,13 +512,13 @@ export default function BusinessIntelligencePage() {
                   </div>
                 </div>
 
-                <div className="bg-white rounded-3xl p-6 shadow-lg">
+                <div className="bg-[#151716] rounded-3xl p-6 shadow-lg">
                   <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
                     ⏰ Peak Hours
                   </h3>
                   <div className="space-y-3">
                     {salesForecasting.patterns.bestHours.slice(0, 5).map((hour, index) => (
-                      <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-2xl">
+                      <div key={index} className="flex justify-between items-center p-3 bg-[#0f1110] rounded-2xl">
                         <span className="font-medium">{hour.hour}:00</span>
                         <span className="font-bold text-[#8B4513]">{hour.averageOrders} orders</span>
                       </div>
@@ -572,7 +572,7 @@ function ChartCard({ title, subtitle, children }: {
   children: React.ReactNode
 }) {
   return (
-    <div className="bg-white rounded-3xl p-6 shadow-lg">
+    <div className="bg-[#151716] rounded-3xl p-6 shadow-lg">
       <div className="mb-4">
         <h3 className="text-lg font-bold">{title}</h3>
         {subtitle && <p className="text-sm text-gray-600">{subtitle}</p>}
