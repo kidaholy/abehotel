@@ -11,6 +11,7 @@ interface IOrderItem {
   notes?: string
   category?: string
   mainCategory?: 'Food' | 'Drinks'
+  menuTier?: 'standard' | 'vip1' | 'vip2'
   initialStatus?: string
   preparationTime?: number
 }
@@ -59,6 +60,7 @@ const orderSchema = new Schema<IOrder>(
         notes: { type: String },
         category: { type: String },
         mainCategory: { type: String, enum: ['Food', 'Drinks'] },
+        menuTier: { type: String, enum: ['standard', 'vip1', 'vip2'], default: 'standard' },
         initialStatus: { type: String },
         preparationTime: { type: Number }
       },

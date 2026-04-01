@@ -203,6 +203,11 @@ export async function POST(request: Request) {
 
     const linkedMenuItems = [...(standardMenuItems as any[]), ...(vip1MenuItems as any[]), ...(vip2MenuItems as any[])]
 
+    // Build a lookup map for tier detection
+    const standardIds = new Set((standardMenuItems as any[]).map((m: any) => m._id.toString()))
+    const vip1Ids = new Set((vip1MenuItems as any[]).map((m: any) => m._id.toString()))
+    const vip2Ids = new Set((vip2MenuItems as any[]).map((m: any) => m._id.toString()))
+
     // Validate sufficient stock quantities
     for (const [stockId, requiredAmount] of stockConsumptionMap) {
       const stockItem = stockItems.find(s => s._id.toString() === stockId)
@@ -247,8 +252,9 @@ export async function POST(request: Request) {
         return {
           ...item,
           menuId: menu?.menuId,
-          category: menu?.category, // Store category for kitchen routing
-          mainCategory: menu?.mainCategory, // Persist for accurate reporting separation
+          category: menu?.category,
+          mainCategory: menu?.mainCategory,
+          menuTier: vip1Ids.has(item.menuItemId) ? 'vip1' : vip2Ids.has(item.menuItemId) ? 'vip2' : 'standard',
           preparationTime: isDrink ? 0 : (menu?.preparationTime || 0),
           status: isBuyAndGo ? "completed" : isDrink ? "served" : "pending",
           modifiers: item.modifiers || [],

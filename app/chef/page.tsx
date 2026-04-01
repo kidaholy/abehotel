@@ -18,6 +18,7 @@ interface OrderItem {
   specialInstructions?: string
   status: "pending" | "preparing" | "ready" | "served" | "cancelled"
   category?: string
+  menuTier?: 'standard' | 'vip1' | 'vip2'
 }
 
 interface Order {
@@ -447,7 +448,14 @@ function OrderCard({
             <div key={idx} className="flex justify-between items-center text-sm border-b border-white/5 last:border-0 py-2.5">
               <div className="flex-1">
                 <span className="font-bold text-gray-200 tracking-tight">#{item.menuId || item.menuItemId} {item.name}</span>
-                <span className="block text-[9px] text-[#f3cf7a] font-black uppercase tracking-widest mt-0.5 opacity-70">{item.category}</span>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span className="text-[9px] text-[#f3cf7a] font-black uppercase tracking-widest opacity-70">{item.category}</span>
+                  {item.menuTier && item.menuTier !== 'standard' && (
+                    <span className={`text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-widest border ${item.menuTier === 'vip1' ? 'bg-purple-950/40 text-purple-400 border-purple-500/30' : 'bg-amber-950/40 text-amber-400 border-amber-500/30'}`}>
+                      {item.menuTier === 'vip1' ? 'VIP 1' : 'VIP 2'}
+                    </span>
+                  )}
+                </div>
               </div>
               <div className="flex items-center gap-3">
                 <span className="font-black bg-[#151716] text-[#d4af37] px-2.5 py-1 rounded-lg text-[10px] border border-[#d4af37]/20">

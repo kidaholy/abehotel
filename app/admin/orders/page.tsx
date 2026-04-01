@@ -15,7 +15,7 @@ import { format } from "date-fns"
 interface Order {
   _id: string
   orderNumber: string
-  items: Array<{ name: string; quantity: number; price: number; menuId?: string; preparationTime?: number }>
+  items: Array<{ name: string; quantity: number; price: number; menuId?: string; preparationTime?: number; menuTier?: 'standard' | 'vip1' | 'vip2' }>
   totalAmount: number
   status: "pending" | "preparing" | "ready" | "served" | "completed" | "cancelled"
   createdAt: string
@@ -689,6 +689,11 @@ export default function AdminOrdersPage() {
                                 <div key={idx} className="flex items-center gap-1.5 text-xs">
                                   <span className="text-[#d4af37] font-black">{item.quantity}×</span>
                                   <span className="text-gray-300 font-light truncate max-w-[140px] text-[10px] uppercase tracking-wide">{item.name}</span>
+                                  {item.menuTier && item.menuTier !== 'standard' && (
+                                    <span className={`text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-widest border ${item.menuTier === 'vip1' ? 'bg-purple-950/40 text-purple-400 border-purple-500/30' : 'bg-amber-950/40 text-amber-400 border-amber-500/30'}`}>
+                                      {item.menuTier === 'vip1' ? 'VIP 1' : 'VIP 2'}
+                                    </span>
+                                  )}
                                   {item.preparationTime && <span className="text-gray-500 text-[9px] italic">({item.preparationTime}m)</span>}
                                 </div>
                               ))}
