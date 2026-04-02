@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState, useCallback, useRef } from "react"
 import { ProtectedRoute } from "@/components/protected-route"
 import { BentoNavbar } from "@/components/bento-navbar"
 import { useAuth } from "@/context/auth-context"
@@ -112,6 +112,7 @@ export default function KitchenDisplayPage() {
         const data = await response.json()
         const activeOrders = data.filter((order: Order) =>
           order.status !== "completed" && order.status !== "cancelled" &&
+          !pendingUpdates.current.has(order._id) &&
           order.items.some(item => (item as any).mainCategory === "Food")
         ).map((order: Order) => ({
           ...order,
@@ -136,8 +137,12 @@ export default function KitchenDisplayPage() {
     }
   }
 
+  const pendingUpdates = useRef<Set<string>>(new Set())
+
   const handleStatusChange = async (orderId: string, newStatus: string) => {
     const preservedOrders = orders;
+    pendingUpdates.current.add(orderId)
+
     // Remove or update immediately — don't wait for the API
     setOrders(prevOrders => {
       const isComplete = newStatus === 'completed' || newStatus === 'cancelled';
@@ -160,11 +165,12 @@ export default function KitchenDisplayPage() {
       if (response.ok) {
         localStorage.setItem('orderUpdated', Date.now().toString())
       } else {
-        // Rollback on failure
         setOrders(preservedOrders);
       }
     } catch (err) {
       setOrders(preservedOrders);
+    } finally {
+      pendingUpdates.current.delete(orderId)
     }
   }
 
@@ -505,30 +511,17 @@ function OrderCardActions({
     setTimeout(() => setBusy(false), 3000)
   }
 
-  // Pending → mark Ready
-  if (order.status === "pending" || order.status === "preparing") {
-    return (
-      <button
-        onClick={() => handleClick("ready")}
-        disabled={busy}
-        className="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-2.5 px-4 rounded-xl font-black text-xs uppercase tracking-widest transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-      >
-        {busy ? (
-          <><svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" /></svg>Updating...</>
-        ) : "✅ Ready"}
-      </button>
-    )
-  }
-
-  // Ready → mark Served (completed)
-  if (order.status === "ready") {
+  // Single action: Serve → completed (vanishes immediately)
+  if (order.status === "pending" || order.status === "preparing" || order.status === "ready") {
     return (
       <button
         onClick={() => handleClick("completed")}
         disabled={busy}
         className="w-full bg-[#d4af37] hover:bg-[#f3cf7a] text-[#0f1110] py-2.5 px-4 rounded-xl font-black text-xs uppercase tracking-widest transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
       >
-        🍽️ Served
+        {busy ? (
+          <><svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" /></svg>Updating...</>
+        ) : "🍽️ Serve"}
       </button>
     )
   }
