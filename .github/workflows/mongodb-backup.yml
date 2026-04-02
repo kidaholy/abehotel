@@ -2,18 +2,16 @@ name: MongoDB Backup
 
 on:
   schedule:
-    # Runs every 6 hours
     - cron: "0 */6 * * *"
   workflow_dispatch:
 
 jobs:
-  # ── Job 1: Create the dump and share it ─────────────────────────────────────
+
   dump:
     runs-on: ubuntu-latest
     outputs:
       backup_file: ${{ steps.dump.outputs.backup_file }}
       timestamp: ${{ steps.dump.outputs.timestamp }}
-
     steps:
       - name: Install MongoDB Tools
         run: |
@@ -27,30 +25,23 @@ jobs:
         run: |
           TIMESTAMP=$(date +%Y%m%d_%H%M%S)
           BACKUP_FILE="backup_${TIMESTAMP}.gz"
-
-          mongodump \
-            --uri="${{ secrets.MONGODB_URI }}" \
-            --archive="$BACKUP_FILE" \
-            --gzip
-
+          mongodump --uri="${{ secrets.MONGODB_URI }}" --archive="$BACKUP_FILE" --gzip
           echo "backup_file=$BACKUP_FILE" >> $GITHUB_OUTPUT
-          echo "timestamp=$TIMESTAMP"     >> $GITHUB_OUTPUT
-          echo "✅ Dump done: $BACKUP_FILE ($(du -sh $BACKUP_FILE | cut -f1))"
+          echo "timestamp=$TIMESTAMP" >> $GITHUB_OUTPUT
+          echo "Dump done: $BACKUP_FILE ($(du -sh $BACKUP_FILE | cut -f1))"
 
-      - name: Upload dump as artifact (shared between jobs)
+      - name: Share dump between jobs
         uses: actions/upload-artifact@v4
         with:
           name: dump-${{ steps.dump.outputs.timestamp }}
           path: ${{ steps.dump.outputs.backup_file }}
-          retention-days: 1  # temp — only needed to pass between jobs
+          retention-days: 1
 
-  # ── Job 2: Upload to Backblaze B2 (parallel) ────────────────────────────────
   upload-backblaze:
     needs: dump
     runs-on: ubuntu-latest
-
     steps:
-      - name: Download dump artifact
+      - name: Download dump
         uses: actions/download-artifact@v4
         with:
           name: dump-${{ needs.dump.outputs.timestamp }}
@@ -67,7 +58,7 @@ jobs:
           aws s3 cp "${{ needs.dump.outputs.backup_file }}" \
             "s3://${{ secrets.B2_BUCKET_NAME }}/mongodb-backups/${{ needs.dump.outputs.backup_file }}" \
             --endpoint-url "${{ secrets.B2_ENDPOINT }}"
-          echo "✅ Uploaded to Backblaze B2"
+          echo "Uploaded to Backblaze B2"
 
       - name: Prune old backups (keep last 120)
         env:
@@ -77,43 +68,33 @@ jobs:
         run: |
           aws s3 ls "s3://${{ secrets.B2_BUCKET_NAME }}/mongodb-backups/" \
             --endpoint-url "${{ secrets.B2_ENDPOINT }}" \
-            | sort \
-            | head -n -120 \
-            | awk '{print $4}' \
+            | sort | head -n -120 | awk '{print $4}' \
             | while read file; do
-                echo "🗑️  Deleting: $file"
                 aws s3 rm "s3://${{ secrets.B2_BUCKET_NAME }}/mongodb-backups/$file" \
                   --endpoint-url "${{ secrets.B2_ENDPOINT }}"
               done
 
-  # ── Job 3: Save to GitHub Artifact (parallel) ───────────────────────────────
   upload-github-artifact:
     needs: dump
     runs-on: ubuntu-latest
-
     steps:
-      - name: Download dump artifact
+      - name: Download dump
         uses: actions/download-artifact@v4
         with:
           name: dump-${{ needs.dump.outputs.timestamp }}
 
-      - name: Save as long-term GitHub Artifact (90 days)
+      - name: Save as long-term artifact
         uses: actions/upload-artifact@v4
         with:
           name: mongodb-backup-${{ needs.dump.outputs.timestamp }}
           path: ${{ needs.dump.outputs.backup_file }}
           retention-days: 90
 
-      - name: Done
-        run: echo "✅ Saved as GitHub Artifact: mongodb-backup-${{ needs.dump.outputs.timestamp }}"
-
-  # ── Job 4: Restore to local machine MongoDB (parallel, self-hosted) ─────────
   upload-local:
     needs: dump
-    runs-on: self-hosted  # ← your Windows machine
-
+    runs-on: self-hosted
     steps:
-      - name: Download dump artifact
+      - name: Download dump
         uses: actions/download-artifact@v4
         with:
           name: dump-${{ needs.dump.outputs.timestamp }}
@@ -122,24 +103,24 @@ jobs:
         shell: pwsh
         run: |
           $backupDir = "C:\mongodb-backups"
-          if (!(Test-Path $backupDir)) { New-Item -ItemType Directory -Path $backupDir }
+          if (!(Test-Path $backupDir)) { New-Item -ItemType Directory -Path $backupDir | Out-Null }
           Copy-Item "${{ needs.dump.outputs.backup_file }}" "$backupDir\${{ needs.dump.outputs.backup_file }}"
-          echo "✅ Saved to $backupDir\${{ needs.dump.outputs.backup_file }}"
+          Write-Host "Saved to $backupDir"
 
       - name: Restore to local MongoDB
         shell: pwsh
         run: |
-          $args = @("--uri=${{ secrets.LOCAL_MONGODB_URI }}", "--archive=C:\mongodb-backups\${{ needs.dump.outputs.backup_file }}", "--gzip", "--drop")
-          & mongorestore @args
-          echo "✅ Restored to local MongoDB"
+          $file = "C:\mongodb-backups\${{ needs.dump.outputs.backup_file }}"
+          $uri = "${{ secrets.LOCAL_MONGODB_URI }}"
+          mongorestore --uri="$uri" --archive="$file" --gzip --drop
+          Write-Host "Restored to local MongoDB"
 
       - name: Prune local backups (keep last 120)
         shell: pwsh
         run: |
           $backupDir = "C:\mongodb-backups"
           $files = Get-ChildItem "$backupDir\backup_*.gz" | Sort-Object Name
-          $toDelete = $files | Select-Object -First ([Math]::Max(0, $files.Count - 120))
-          foreach ($f in $toDelete) {
-            Remove-Item $f.FullName
-            echo "🗑️  Deleted old backup: $($f.Name)"
+          if ($files.Count -gt 120) {
+            $toDelete = $files | Select-Object -First ($files.Count - 120)
+            foreach ($f in $toDelete) { Remove-Item $f.FullName }
           }
