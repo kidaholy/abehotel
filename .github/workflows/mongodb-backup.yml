@@ -32,6 +32,15 @@ jobs:
 
           echo "✅ Backup created: $BACKUP_FILE ($(du -sh $BACKUP_FILE | cut -f1))"
 
+      # ── Local backup: saved as a GitHub Actions artifact (90 days) ──────────
+      - name: Save backup as GitHub Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mongodb-backup-${{ env.TIMESTAMP }}
+          path: ${{ env.BACKUP_FILE }}
+          retention-days: 90
+
+      # ── Offsite backup: uploaded to Backblaze B2 ────────────────────────────
       - name: Install AWS CLI (S3-compatible for B2)
         run: pip install awscli
 
@@ -47,7 +56,7 @@ jobs:
 
           echo "✅ Uploaded to B2: mongodb-backups/${{ env.BACKUP_FILE }}"
 
-      - name: Prune old backups (keep last 30)
+      - name: Prune old backups (keep last 120)
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.B2_APPLICATION_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.B2_APPLICATION_KEY }}
@@ -68,9 +77,10 @@ jobs:
         if: success()
         run: |
           echo "🎉 Backup complete!"
-          echo "  File : mongodb-backups/${{ env.BACKUP_FILE }}"
-          echo "  Time : ${{ env.TIMESTAMP }}"
-          echo "  Bucket: ${{ secrets.B2_BUCKET_NAME }}"
+          echo "  File    : mongodb-backups/${{ env.BACKUP_FILE }}"
+          echo "  Time    : ${{ env.TIMESTAMP }}"
+          echo "  Bucket  : ${{ secrets.B2_BUCKET_NAME }}"
+          echo "  Artifact: mongodb-backup-${{ env.TIMESTAMP }} (kept 90 days)"
 
       - name: Notify failure
         if: failure()
