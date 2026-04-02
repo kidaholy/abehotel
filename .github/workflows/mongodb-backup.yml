@@ -1,14 +1,18 @@
-name: MongoDB Backup to Backblaze B2
+name: MongoDB Backup
 
 on:
   schedule:
     # Runs every 6 hours
     - cron: "0 */6 * * *"
-  workflow_dispatch: # Allow manual trigger from GitHub UI
+  workflow_dispatch:
 
 jobs:
-  backup:
+  # ── Job 1: Create the dump and share it ─────────────────────────────────────
+  dump:
     runs-on: ubuntu-latest
+    outputs:
+      backup_file: ${{ steps.dump.outputs.backup_file }}
+      timestamp: ${{ steps.dump.outputs.timestamp }}
 
     steps:
       - name: Install MongoDB Tools
@@ -19,29 +23,39 @@ jobs:
           sudo apt-get install -y mongodb-database-tools
 
       - name: Run mongodump
+        id: dump
         run: |
           TIMESTAMP=$(date +%Y%m%d_%H%M%S)
           BACKUP_FILE="backup_${TIMESTAMP}.gz"
-          echo "BACKUP_FILE=$BACKUP_FILE" >> $GITHUB_ENV
-          echo "TIMESTAMP=$TIMESTAMP" >> $GITHUB_ENV
 
           mongodump \
             --uri="${{ secrets.MONGODB_URI }}" \
             --archive="$BACKUP_FILE" \
             --gzip
 
-          echo "✅ Backup created: $BACKUP_FILE ($(du -sh $BACKUP_FILE | cut -f1))"
+          echo "backup_file=$BACKUP_FILE" >> $GITHUB_OUTPUT
+          echo "timestamp=$TIMESTAMP"     >> $GITHUB_OUTPUT
+          echo "✅ Dump done: $BACKUP_FILE ($(du -sh $BACKUP_FILE | cut -f1))"
 
-      # ── Local backup: saved as a GitHub Actions artifact (90 days) ──────────
-      - name: Save backup as GitHub Artifact
+      - name: Upload dump as artifact (shared between jobs)
         uses: actions/upload-artifact@v4
         with:
-          name: mongodb-backup-${{ env.TIMESTAMP }}
-          path: ${{ env.BACKUP_FILE }}
-          retention-days: 90
+          name: dump-${{ steps.dump.outputs.timestamp }}
+          path: ${{ steps.dump.outputs.backup_file }}
+          retention-days: 1  # temp — only needed to pass between jobs
 
-      # ── Offsite backup: uploaded to Backblaze B2 ────────────────────────────
-      - name: Install AWS CLI (S3-compatible for B2)
+  # ── Job 2: Upload to Backblaze B2 (parallel) ────────────────────────────────
+  upload-backblaze:
+    needs: dump
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download dump artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dump-${{ needs.dump.outputs.timestamp }}
+
+      - name: Install AWS CLI
         run: pip install awscli
 
       - name: Upload to Backblaze B2
@@ -50,11 +64,10 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.B2_APPLICATION_KEY }}
           AWS_DEFAULT_REGION: us-east-005
         run: |
-          aws s3 cp "${{ env.BACKUP_FILE }}" \
-            "s3://${{ secrets.B2_BUCKET_NAME }}/mongodb-backups/${{ env.BACKUP_FILE }}" \
+          aws s3 cp "${{ needs.dump.outputs.backup_file }}" \
+            "s3://${{ secrets.B2_BUCKET_NAME }}/mongodb-backups/${{ needs.dump.outputs.backup_file }}" \
             --endpoint-url "${{ secrets.B2_ENDPOINT }}"
-
-          echo "✅ Uploaded to B2: mongodb-backups/${{ env.BACKUP_FILE }}"
+          echo "✅ Uploaded to Backblaze B2"
 
       - name: Prune old backups (keep last 120)
         env:
@@ -68,20 +81,68 @@ jobs:
             | head -n -120 \
             | awk '{print $4}' \
             | while read file; do
-                echo "🗑️  Deleting old backup: $file"
+                echo "🗑️  Deleting: $file"
                 aws s3 rm "s3://${{ secrets.B2_BUCKET_NAME }}/mongodb-backups/$file" \
                   --endpoint-url "${{ secrets.B2_ENDPOINT }}"
               done
 
-      - name: Notify success
-        if: success()
-        run: |
-          echo "🎉 Backup complete!"
-          echo "  File    : mongodb-backups/${{ env.BACKUP_FILE }}"
-          echo "  Time    : ${{ env.TIMESTAMP }}"
-          echo "  Bucket  : ${{ secrets.B2_BUCKET_NAME }}"
-          echo "  Artifact: mongodb-backup-${{ env.TIMESTAMP }} (kept 90 days)"
+  # ── Job 3: Save to GitHub Artifact (parallel) ───────────────────────────────
+  upload-github-artifact:
+    needs: dump
+    runs-on: ubuntu-latest
 
-      - name: Notify failure
-        if: failure()
-        run: echo "❌ Backup failed. Check the logs above."
+    steps:
+      - name: Download dump artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dump-${{ needs.dump.outputs.timestamp }}
+
+      - name: Save as long-term GitHub Artifact (90 days)
+        uses: actions/upload-artifact@v4
+        with:
+          name: mongodb-backup-${{ needs.dump.outputs.timestamp }}
+          path: ${{ needs.dump.outputs.backup_file }}
+          retention-days: 90
+
+      - name: Done
+        run: echo "✅ Saved as GitHub Artifact: mongodb-backup-${{ needs.dump.outputs.timestamp }}"
+
+  # ── Job 4: Restore to local machine MongoDB (parallel, self-hosted) ─────────
+  upload-local:
+    needs: dump
+    runs-on: self-hosted  # ← your Windows machine
+
+    steps:
+      - name: Download dump artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dump-${{ needs.dump.outputs.timestamp }}
+
+      - name: Save backup to local folder
+        shell: pwsh
+        run: |
+          $backupDir = "C:\mongodb-backups"
+          if (!(Test-Path $backupDir)) { New-Item -ItemType Directory -Path $backupDir }
+          Copy-Item "${{ needs.dump.outputs.backup_file }}" "$backupDir\${{ needs.dump.outputs.backup_file }}"
+          echo "✅ Saved to $backupDir\${{ needs.dump.outputs.backup_file }}"
+
+      - name: Restore to local MongoDB
+        shell: pwsh
+        run: |
+          mongorestore `
+            --uri="${{ secrets.LOCAL_MONGODB_URI }}" `
+            --archive="C:\mongodb-backups\${{ needs.dump.outputs.backup_file }}" `
+            --gzip `
+            --drop
+          echo "✅ Restored to local MongoDB"
+
+      - name: Prune local backups (keep last 120)
+        shell: pwsh
+        run: |
+          $backupDir = "C:\mongodb-backups"
+          $files = Get-ChildItem "$backupDir\backup_*.gz" | Sort-Object Name
+          $toDelete = $files | Select-Object -First ([Math]::Max(0, $files.Count - 120))
+          foreach ($f in $toDelete) {
+            Remove-Item $f.FullName
+            echo "🗑️  Deleted old backup: $($f.Name)"
+          }
