@@ -129,11 +129,8 @@ jobs:
       - name: Restore to local MongoDB
         shell: pwsh
         run: |
-          mongorestore `
-            --uri="${{ secrets.LOCAL_MONGODB_URI }}" `
-            --archive="C:\mongodb-backups\${{ needs.dump.outputs.backup_file }}" `
-            --gzip `
-            --drop
+          $args = @("--uri=${{ secrets.LOCAL_MONGODB_URI }}", "--archive=C:\mongodb-backups\${{ needs.dump.outputs.backup_file }}", "--gzip", "--drop")
+          & mongorestore @args
           echo "✅ Restored to local MongoDB"
 
       - name: Prune local backups (keep last 120)
