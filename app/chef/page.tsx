@@ -168,7 +168,7 @@ export default function KitchenDisplayPage() {
     }
   }
 
-  const readyOrders = orders.filter((o) => o.status === "pending" || o.status === "ready")
+  const readyOrders = orders.filter((o) => o.status === "pending" || o.status === "preparing" || o.status === "ready")
 
   // Exit kiosk on Escape
   useEffect(() => {
@@ -453,6 +453,23 @@ function OrderCard({
                   {item.menuTier && item.menuTier !== 'standard' && (
                     <span className={`text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-widest border ${item.menuTier === 'vip1' ? 'bg-purple-950/40 text-purple-400 border-purple-500/30' : 'bg-amber-950/40 text-amber-400 border-amber-500/30'}`}>
                       {item.menuTier === 'vip1' ? 'VIP 1' : 'VIP 2'}
+                    </span>
+                  )}
+                  {item.status && (
+                    <span className={`text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-widest border ${
+                      item.status === 'pending' ? 'bg-orange-950/40 text-orange-400 border-orange-500/30' :
+                      item.status === 'preparing' ? 'bg-blue-950/40 text-blue-400 border-blue-500/30' :
+                      item.status === 'ready' ? 'bg-emerald-950/40 text-emerald-400 border-emerald-500/30' :
+                      item.status === 'served' ? 'bg-gray-950/40 text-gray-400 border-gray-500/30' :
+                      item.status === 'cancelled' ? 'bg-red-950/40 text-red-400 border-red-500/30' :
+                      'bg-gray-950/40 text-gray-400 border-gray-500/30'
+                    }`}>
+                      {item.status === 'pending' ? '⏳ Pending' :
+                       item.status === 'preparing' ? '👨‍🍳 Preparing' :
+                       item.status === 'ready' ? '✅ Ready' :
+                       item.status === 'served' ? '🍽️ Served' :
+                       item.status === 'cancelled' ? '❌ Cancelled' :
+                       item.status}
                     </span>
                   )}
                 </div>
