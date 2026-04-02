@@ -1,46 +1,80 @@
-name: MongoDB Atlas Backup
+name: MongoDB Backup to Backblaze B2
 
 on:
   schedule:
-    - cron: '0 0 * * *' # Daily at midnight
-  workflow_dispatch: # Manual trigger
+    # Runs every day at 2:00 AM UTC
+    - cron: "0 2 * * *"
+  workflow_dispatch: # Allow manual trigger from GitHub UI
 
 jobs:
   backup:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
+
     steps:
-    - name: Install MongoDB Tools
-      run: |
-        curl -fsSL https://www.mongodb.org/static/pgp/server-7.0.asc | \
-           sudo gpg -o /usr/share/keyrings/mongodb-server-7.0.gpg \
-           --dearmor
-        echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 multiverse" | \
-           sudo tee /etc/apt/sources.list.d/mongodb-org-7.0.list
-        sudo apt-get update
-        sudo apt-get install -y mongodb-database-tools
+      - name: Install MongoDB Tools
+        run: |
+          wget -qO - https://www.mongodb.org/static/pgp/server-7.0.asc | sudo apt-key add -
+          echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-7.0.list
+          sudo apt-get update -qq
+          sudo apt-get install -y mongodb-database-tools
 
-    - name: Run mongodump
-      env:
-        MONGODB_ATLAS_URI: ${{ secrets.MONGODB_ATLAS_URI }}
-        MONGODB_ATLAS_DATABASE: ${{ secrets.MONGODB_ATLAS_DATABASE }}
-      run: |
-        if [ -z "$MONGODB_ATLAS_URI" ]; then
-          echo "MONGODB_ATLAS_URI secret is not set"
-          exit 1
-        fi
-        # Create backup directory
-        mkdir dump
-        # Run mongodump
-        mongodump --uri="$MONGODB_ATLAS_URI" --db="$MONGODB_ATLAS_DATABASE" --out=dump/
+      - name: Run mongodump
+        run: |
+          TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+          BACKUP_FILE="backup_${TIMESTAMP}.gz"
+          echo "BACKUP_FILE=$BACKUP_FILE" >> $GITHUB_ENV
+          echo "TIMESTAMP=$TIMESTAMP" >> $GITHUB_ENV
 
-    - name: Archive Backup
-      run: |
-        TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-        zip -r mongodb_backup_$TIMESTAMP.zip dump/
+          mongodump \
+            --uri="${{ secrets.MONGODB_URI }}" \
+            --archive="$BACKUP_FILE" \
+            --gzip
 
-    - name: Upload Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: mongodb-atlas-dump
-        path: mongodb_backup_*.zip
-        retention-days: 7
+          echo "✅ Backup created: $BACKUP_FILE ($(du -sh $BACKUP_FILE | cut -f1))"
+
+      - name: Install B2 CLI
+        run: pip install b2
+
+      - name: Upload to Backblaze B2
+        run: |
+          b2 authorize-account "${{ secrets.B2_APPLICATION_KEY_ID }}" "${{ secrets.B2_APPLICATION_KEY }}"
+
+          b2 upload-file \
+            "${{ secrets.B2_BUCKET_NAME }}" \
+            "${{ env.BACKUP_FILE }}" \
+            "mongodb-backups/${{ env.BACKUP_FILE }}"
+
+          echo "✅ Uploaded to B2: mongodb-backups/${{ env.BACKUP_FILE }}"
+
+      - name: Prune old backups (keep last 30)
+        run: |
+          # List all backups sorted by name (date-based names sort chronologically)
+          b2 ls "${{ secrets.B2_BUCKET_NAME }}" --prefix "mongodb-backups/" --json \
+            | python3 -c "
+          import json, sys
+
+          files = json.load(sys.stdin)
+          # Sort by name ascending (oldest first)
+          files.sort(key=lambda f: f['fileName'])
+
+          # Keep the last 30, delete the rest
+          to_delete = files[:-30] if len(files) > 30 else []
+
+          for f in to_delete:
+              print(f['fileId'], f['fileName'])
+          " | while read file_id file_name; do
+              echo "🗑️  Deleting old backup: $file_name"
+              b2 delete-file-version "$file_name" "$file_id"
+          done
+
+      - name: Notify success
+        if: success()
+        run: |
+          echo "🎉 Backup complete!"
+          echo "  File : mongodb-backups/${{ env.BACKUP_FILE }}"
+          echo "  Time : ${{ env.TIMESTAMP }}"
+          echo "  Bucket: ${{ secrets.B2_BUCKET_NAME }}"
+
+      - name: Notify failure
+        if: failure()
+        run: echo "❌ Backup failed. Check the logs above."
