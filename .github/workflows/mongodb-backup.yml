@@ -33,13 +33,13 @@ jobs:
           echo "✅ Backup created: $BACKUP_FILE ($(du -sh $BACKUP_FILE | cut -f1))"
 
       - name: Install B2 CLI
-        run: pip install b2
+        run: pip install "b2>=3.0.0,<4.0.0"
 
       - name: Upload to Backblaze B2
         run: |
-          b2 authorize-account "${{ secrets.B2_APPLICATION_KEY_ID }}" "${{ secrets.B2_APPLICATION_KEY }}"
+          b2 account authorize "${{ secrets.B2_APPLICATION_KEY_ID }}" "${{ secrets.B2_APPLICATION_KEY }}"
 
-          b2 upload-file \
+          b2 file upload \
             "${{ secrets.B2_BUCKET_NAME }}" \
             "${{ env.BACKUP_FILE }}" \
             "mongodb-backups/${{ env.BACKUP_FILE }}"
@@ -48,7 +48,6 @@ jobs:
 
       - name: Prune old backups (keep last 30)
         run: |
-          # List all backups sorted by name (date-based names sort chronologically)
           b2 ls "${{ secrets.B2_BUCKET_NAME }}" --prefix "mongodb-backups/" --json \
             | python3 -c "
           import json, sys
@@ -64,7 +63,7 @@ jobs:
               print(f['fileId'], f['fileName'])
           " | while read file_id file_name; do
               echo "🗑️  Deleting old backup: $file_name"
-              b2 delete-file-version "$file_name" "$file_id"
+              b2 file delete "$file_name" "$file_id"
           done
 
       - name: Notify success
@@ -74,6 +73,8 @@ jobs:
           echo "  File : mongodb-backups/${{ env.BACKUP_FILE }}"
           echo "  Time : ${{ env.TIMESTAMP }}"
           echo "  Bucket: ${{ secrets.B2_BUCKET_NAME }}"
+          # Verify file exists in bucket
+          b2 file info "b2://${{ secrets.B2_BUCKET_NAME }}/mongodb-backups/${{ env.BACKUP_FILE }}" && echo "✅ Verified file exists in B2" || echo "⚠️ Could not verify file"
 
       - name: Notify failure
         if: failure()
