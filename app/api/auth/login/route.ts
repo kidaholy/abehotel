@@ -56,6 +56,9 @@ export async function POST(request: Request) {
       floorId: user.floorId
     })
 
+    // Record login time (fire and forget)
+    User.findByIdAndUpdate(user._id, { lastLoginAt: new Date() }).catch(() => {})
+
     return NextResponse.json({
       token,
       user: {

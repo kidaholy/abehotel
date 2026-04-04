@@ -164,13 +164,15 @@ export default function KitchenDisplayPage() {
 
       if (response.ok) {
         localStorage.setItem('orderUpdated', Date.now().toString())
+        // Keep in pendingUpdates for 2 extra seconds so the next poll cycle can't bring it back
+        setTimeout(() => pendingUpdates.current.delete(orderId), 2000)
       } else {
+        pendingUpdates.current.delete(orderId)
         setOrders(preservedOrders);
       }
     } catch (err) {
-      setOrders(preservedOrders);
-    } finally {
       pendingUpdates.current.delete(orderId)
+      setOrders(preservedOrders);
     }
   }
 

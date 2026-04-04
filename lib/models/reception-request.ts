@@ -3,16 +3,25 @@ import mongoose, { Schema } from "mongoose"
 export interface IReceptionRequest {
   _id?: string
   guestName: string
+  faydaId?: string
   phone?: string
+  idPhotoFront?: string
+  idPhotoBack?: string
+  floorId?: string
   roomNumber?: string
+  roomPrice?: number
   inquiryType: string
   checkIn?: string
   checkOut?: string
+  checkInTime?: string
+  checkOutTime?: string
   guests?: string
+  paymentMethod?: "cash" | "mobile_banking" | "telebirr" | "cheque"
+  chequeNumber?: string
   notes?: string
   status: "pending" | "approved" | "denied"
-  submittedBy?: string // user id of reception staff
-  reviewedBy?: string // user id of cashier
+  submittedBy?: string
+  reviewedBy?: string
   reviewNote?: string
   createdAt?: Date
   updatedAt?: Date
@@ -21,12 +30,21 @@ export interface IReceptionRequest {
 const receptionRequestSchema = new Schema<IReceptionRequest>(
   {
     guestName: { type: String, required: true },
+    faydaId: { type: String },
     phone: { type: String },
+    idPhotoFront: { type: String },
+    idPhotoBack: { type: String },
+    floorId: { type: String },
     roomNumber: { type: String },
+    roomPrice: { type: Number },
     inquiryType: { type: String, required: true },
     checkIn: { type: String },
     checkOut: { type: String },
+    checkInTime: { type: String },
+    checkOutTime: { type: String },
     guests: { type: String },
+    paymentMethod: { type: String, enum: ["cash", "mobile_banking", "telebirr", "cheque"] },
+    chequeNumber: { type: String },
     notes: { type: String },
     status: { type: String, enum: ["pending", "approved", "denied"], default: "pending" },
     submittedBy: { type: String },

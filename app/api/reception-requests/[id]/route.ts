@@ -3,20 +3,14 @@ import { connectDB } from "@/lib/db"
 import ReceptionRequest from "@/lib/models/reception-request"
 import { validateSession } from "@/lib/auth"
 
-// PUT - approve or deny a request (privileged cashier or admin)
+// PUT - approve or deny a request (admin only)
 export async function PUT(request: Request, context: any) {
   try {
     const params = await context.params
     const decoded = await validateSession(request)
     await connectDB()
 
-    const User = (await import("@/lib/models/user")).default
-    const requestingUser = await User.findById(decoded.id).lean()
-
-    const isAdmin = decoded.role === "admin"
-    const isCashierWithPrivilege = decoded.role === "cashier" && (requestingUser as any)?.canManageReception
-
-    if (!isAdmin && !isCashierWithPrivilege) {
+    if (decoded.role !== "admin") {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 })
     }
 

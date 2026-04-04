@@ -3,20 +3,13 @@ import { connectDB } from "@/lib/db"
 import ReceptionRequest from "@/lib/models/reception-request"
 import { validateSession } from "@/lib/auth"
 
-// GET all requests (cashier with privilege or admin)
+// GET all requests (admin only)
 export async function GET(request: Request) {
   try {
     const decoded = await validateSession(request)
     await connectDB()
 
-    // Import User model to check privilege
-    const User = (await import("@/lib/models/user")).default
-    const requestingUser = await User.findById(decoded.id).lean()
-
-    const isAdmin = decoded.role === "admin"
-    const isCashierWithPrivilege = decoded.role === "cashier" && (requestingUser as any)?.canManageReception
-
-    if (!isAdmin && !isCashierWithPrivilege) {
+    if (decoded.role !== "admin") {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 })
     }
 
@@ -38,14 +31,16 @@ export async function POST(request: Request) {
 
     await connectDB()
     const body = await request.json()
-    const { guestName, phone, roomNumber, inquiryType, checkIn, checkOut, guests, notes } = body
+    const { guestName, faydaId, phone, idPhotoFront, idPhotoBack, floorId, roomNumber, roomPrice,
+            inquiryType, checkIn, checkOut, checkInTime, checkOutTime, guests, paymentMethod, chequeNumber, notes } = body
 
     if (!guestName || !inquiryType) {
       return NextResponse.json({ message: "Guest name and inquiry type are required" }, { status: 400 })
     }
 
     const doc = await ReceptionRequest.create({
-      guestName, phone, roomNumber, inquiryType, checkIn, checkOut, guests, notes,
+      guestName, faydaId, phone, idPhotoFront, idPhotoBack, floorId, roomNumber, roomPrice,
+      inquiryType, checkIn, checkOut, checkInTime, checkOutTime, guests, paymentMethod, chequeNumber, notes,
       status: "pending",
       submittedBy: decoded.id
     })

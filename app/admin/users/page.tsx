@@ -18,7 +18,8 @@ interface User {
   isActive: boolean
   floorId?: string
   assignedCategories?: string[]
-  canManageReception?: boolean
+  lastLoginAt?: string
+  lastLogoutAt?: string
 }
 
 interface Floor {
@@ -39,7 +40,6 @@ export default function AdminUsersPage() {
     role: "cashier" as "admin" | "chef" | "cashier" | "display" | "store_keeper" | "reception",
     floorId: "",
     assignedCategories: [] as string[],
-    canManageReception: false,
   })
   const [floors, setFloors] = useState<Floor[]>([])
   const [categories, setCategories] = useState<{ _id: string, name: string }[]>([])
@@ -234,7 +234,6 @@ export default function AdminUsersPage() {
       role: userToEdit.role,
       floorId: userToEdit.floorId || "",
       assignedCategories: userToEdit.assignedCategories || [],
-      canManageReception: userToEdit.canManageReception ?? false,
     })
     setShowForm(true)
   }
@@ -248,7 +247,6 @@ export default function AdminUsersPage() {
       role: "cashier",
       floorId: "",
       assignedCategories: [],
-      canManageReception: false,
     })
     setShowForm(false)
   }
@@ -335,6 +333,20 @@ export default function AdminUsersPage() {
                           )}
                           <h3 className={`font-playfair italic text-xl text-white mb-0.5 ${!u.isActive ? 'line-through opacity-70' : ''}`}>{u.name}</h3>
                           <p className="text-[10px] text-gray-400 mb-2 font-light uppercase tracking-widest truncate">{u.email}</p>
+
+                          {/* Login / Logout times */}
+                          <div className="mb-3 space-y-1">
+                            {u.lastLoginAt && (
+                              <p className="text-[9px] font-bold text-emerald-400 bg-emerald-900/20 border border-emerald-500/20 px-2 py-1 rounded-lg flex items-center gap-1.5">
+                                🟢 In: {new Date(u.lastLoginAt).toLocaleString()}
+                              </p>
+                            )}
+                            {u.lastLogoutAt && (
+                              <p className="text-[9px] font-bold text-red-400 bg-red-900/20 border border-red-500/20 px-2 py-1 rounded-lg flex items-center gap-1.5">
+                                🔴 Out: {new Date(u.lastLogoutAt).toLocaleString()}
+                              </p>
+                            )}
+                          </div>
 
                           <div className="mb-4 flex items-center gap-2">
                             <div className="bg-[#151716] border border-white/5 rounded-xl px-3 py-2 flex items-center justify-between flex-1 min-h-[40px]">
@@ -522,31 +534,6 @@ export default function AdminUsersPage() {
                       )}
 
                       {categories.length === 0 && <p className="text-center text-gray-500 py-4 text-[9px] font-bold uppercase tracking-widest bg-[#151716] rounded-2xl border border-dashed border-white/10">No categories found</p>}
-                    </div>
-                  )}
-
-                  {/* Reception Privilege Toggle - Cashier only */}
-                  {formData.role === "cashier" && (
-                    <div className="space-y-2 animate-fade-in">
-                      <label className="text-[10px] font-light uppercase tracking-widest text-gray-400 ml-2">Special Privileges</label>
-                      <button
-                        type="button"
-                        onClick={() => setFormData({ ...formData, canManageReception: !formData.canManageReception })}
-                        className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl border transition-all font-light tracking-wide text-[10px] uppercase ${
-                          formData.canManageReception
-                            ? "bg-[#1a1c1b] text-[#f3cf7a] border-[#d4af37]/30 shadow-[0_4px_15px_rgba(212,175,55,0.15)]"
-                            : "bg-[#0f1110] text-gray-500 border-white/5 hover:border-white/10"
-                        }`}
-                      >
-                        <span className="flex items-center gap-2">
-                          <span>🛎️</span>
-                          <span>Can Manage Reception Requests</span>
-                        </span>
-                        <span className={`text-[8px] font-bold tracking-widest px-2 py-0.5 rounded-full ${formData.canManageReception ? "bg-[#d4af37]/20" : "bg-white/5"}`}>
-                          {formData.canManageReception ? "ON" : "OFF"}
-                        </span>
-                      </button>
-                      <p className="text-[9px] text-gray-500 uppercase tracking-widest font-light ml-2">Grants this cashier the ability to approve or deny reception requests.</p>
                     </div>
                   )}
 

@@ -254,7 +254,7 @@ export async function POST(request: Request) {
           menuId: menu?.menuId,
           category: menu?.category,
           mainCategory: menu?.mainCategory,
-          menuTier: vip1Ids.has(item.menuItemId) ? 'vip1' : vip2Ids.has(item.menuItemId) ? 'vip2' : 'standard',
+          menuTier: item.menuTier || (vip1Ids.has(item.menuItemId) ? 'vip1' : vip2Ids.has(item.menuItemId) ? 'vip2' : 'standard'),
           preparationTime: isDrink ? 0 : (menu?.preparationTime || 0),
           status: isBuyAndGo ? "completed" : isDrink ? "served" : "pending",
           modifiers: item.modifiers || [],

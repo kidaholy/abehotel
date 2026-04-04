@@ -145,6 +145,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const logout = () => {
+    const currentToken = localStorage.getItem("token")
+    if (currentToken) {
+      fetch("/api/auth/logout", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${currentToken}` },
+      }).catch(() => {})
+    }
     setUser(null)
     setToken(null)
     localStorage.removeItem("token")

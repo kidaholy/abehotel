@@ -10,6 +10,8 @@ interface IUser {
   floorId?: mongoose.Types.ObjectId | string
   assignedCategories?: string[]
   canManageReception?: boolean
+  lastLoginAt?: Date
+  lastLogoutAt?: Date
   createdAt: Date
   updatedAt: Date
 }
@@ -25,6 +27,8 @@ const userSchema = new Schema<IUser>(
     floorId: { type: Schema.Types.ObjectId, ref: "Floor" },
     assignedCategories: [{ type: String }],
     canManageReception: { type: Boolean, default: false },
+    lastLoginAt: { type: Date },
+    lastLogoutAt: { type: Date },
   },
   { timestamps: true },
 )

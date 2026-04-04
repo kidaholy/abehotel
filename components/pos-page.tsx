@@ -162,7 +162,7 @@ export function POSPage({ fixedTier }: POSPageProps) {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({
-          items: cartItems.map((item) => ({ menuItemId: item.id, name: item.name, quantity: item.quantity, price: item.price })),
+          items: cartItems.map((item) => ({ menuItemId: item.id, name: item.name, quantity: item.quantity, price: item.price, menuTier: fixedTier })),
           totalAmount, subtotal, tax, paymentMethod: "cash", status: "pending",
           tableNumber: finalTableNumber, floorId: selectedFloorId || user?.floorId
         }),

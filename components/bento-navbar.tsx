@@ -42,7 +42,6 @@ export function BentoNavbar() {
         { label: "VIP 1 POS", href: "/cashier/vip1" },
         { label: "VIP 2 POS", href: "/cashier/vip2" },
         { label: t("nav.recentOrders"), href: "/cashier/orders" },
-        { label: "Reception Requests", href: "/cashier/reception-requests" }
     ]
 
     const guestLinks = [

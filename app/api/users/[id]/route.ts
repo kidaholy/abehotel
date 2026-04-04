@@ -164,7 +164,6 @@ export async function PUT(request: Request, context: any) {
     if (typeof isActive === 'boolean') updateData.isActive = isActive
     if (floorId !== undefined) updateData.floorId = floorId || null
     if (assignedCategories !== undefined) updateData.assignedCategories = assignedCategories
-    if (typeof canManageReception === 'boolean') updateData.canManageReception = canManageReception
 
     // Hash new password if provided
     if (password) {
