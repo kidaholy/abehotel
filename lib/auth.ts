@@ -30,7 +30,7 @@ export function verifyToken(token: string): TokenPayload {
  * Uses a lightweight in-memory cache to reduce DB load for frequent polling.
  */
 const sessionCache = new Map<string, { isActive: boolean; timestamp: number }>()
-const CACHE_TTL = 300000 // 5 minutes
+const CACHE_TTL = 600000 // 10 minutes — reduce DB hits significantly
 
 export async function validateSession(request: Request): Promise<TokenPayload> {
     const token = request.headers.get("authorization")?.replace("Bearer ", "")
@@ -41,7 +41,7 @@ export async function validateSession(request: Request): Promise<TokenPayload> {
     try {
         const decoded = verifyToken(token)
 
-        // Check Cache
+        // Serve from cache if fresh — avoids DB round-trip on every poll
         const cached = sessionCache.get(decoded.id)
         if (cached && (Date.now() - cached.timestamp) < CACHE_TTL) {
             if (!cached.isActive) {
@@ -50,26 +50,36 @@ export async function validateSession(request: Request): Promise<TokenPayload> {
             return decoded
         }
 
-        await connectDB()
+        // Try DB check — but if DB is unreachable and we have a stale cache entry, use it
+        try {
+            await connectDB()
+            const user = await User.findById(decoded.id).select("isActive name email").lean()
 
-        // Final source of truth: Database check
-        const user = await User.findById(decoded.id).select("isActive name email").lean()
+            if (!user) {
+                throw new Error("Unauthorized: User no longer exists")
+            }
 
-        console.log(`🔐 validateSession - DB CHECK - User ID: ${decoded.id}, Found: ${!!user}, isActive: ${user?.isActive}`)
+            sessionCache.set(decoded.id, {
+                isActive: user.isActive !== false,
+                timestamp: Date.now()
+            })
 
-        if (!user) {
-            throw new Error("Unauthorized: User no longer exists")
-        }
+            if (user.isActive === false) {
+                throw new Error("Unauthorized: Account deactivated. Please contact administrator.")
+            }
+        } catch (dbError: any) {
+            // If it's an auth error, rethrow it
+            if (dbError.message?.startsWith("Unauthorized")) throw dbError
 
-        // Update Cache
-        sessionCache.set(decoded.id, {
-            isActive: user.isActive !== false,
-            timestamp: Date.now()
-        })
+            // DB is unreachable — if we have ANY cached entry (even stale), trust the JWT
+            if (cached) {
+                console.warn(`⚠️ validateSession - DB unreachable, using stale cache for ${decoded.id}`)
+                if (!cached.isActive) throw new Error("Unauthorized: Account deactivated.")
+                return decoded
+            }
 
-        if (user.isActive === false) {
-            console.log(`🚫 validateSession - DENIED for ${user.email} (Inactive)`)
-            throw new Error("Unauthorized: Account deactivated. Please contact administrator.")
+            // No cache at all and DB is down — trust the JWT alone
+            console.warn(`⚠️ validateSession - DB unreachable, trusting JWT for ${decoded.id}`)
         }
 
         return decoded

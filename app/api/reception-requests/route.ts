@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     await connectDB()
     const body = await request.json()
     const { guestName, faydaId, phone, idPhotoFront, idPhotoBack, floorId, roomNumber, roomPrice,
-            inquiryType, checkIn, checkOut, checkInTime, checkOutTime, guests, paymentMethod, chequeNumber, notes } = body
+            inquiryType, checkIn, checkOut, checkInTime, checkOutTime, guests, paymentMethod, chequeNumber, paymentReference, notes } = body
 
     if (!guestName || !inquiryType) {
       return NextResponse.json({ message: "Guest name and inquiry type are required" }, { status: 400 })
@@ -40,7 +40,7 @@ export async function POST(request: Request) {
 
     const doc = await ReceptionRequest.create({
       guestName, faydaId, phone, idPhotoFront, idPhotoBack, floorId, roomNumber, roomPrice,
-      inquiryType, checkIn, checkOut, checkInTime, checkOutTime, guests, paymentMethod, chequeNumber, notes,
+      inquiryType, checkIn, checkOut, checkInTime, checkOutTime, guests, paymentMethod, chequeNumber, paymentReference, notes,
       status: "pending",
       submittedBy: decoded.id
     })

@@ -7,6 +7,11 @@ import { useAuth } from "@/context/auth-context"
 import { useLanguage } from "@/context/language-context"
 import { ConfirmationCard, NotificationCard } from "@/components/confirmation-card"
 import { useConfirmation } from "@/hooks/use-confirmation"
+import {
+  Users, ShieldCheck, ChefHat, Monitor, Package, ConciergeBell, Coffee,
+  MapPin, LogIn, LogOut, Eye, EyeOff, Pencil, Trash2, Plus, Loader2,
+  UtensilsCrossed, Check, RefreshCw, X
+} from "lucide-react"
 
 interface User {
   _id: string
@@ -262,16 +267,18 @@ export default function AdminUsersPage() {
             <div className="lg:col-span-3 flex flex-col gap-4 lg:sticky lg:top-4">
               <div className="bg-[#151716] rounded-xl p-6 md:p-8 shadow-2xl border border-white/10 text-white relative overflow-hidden group">
                 <div className="relative z-10">
-                  <h1 className="text-2xl md:text-3xl font-playfair italic text-[#f3cf7a] mb-2">{t("adminUsers.title")} 👥</h1>
+                  <h1 className="text-2xl md:text-3xl font-playfair italic text-[#f3cf7a] mb-2 flex items-center gap-3"><Users size={24} /> {t("adminUsers.title")}</h1>
                   <p className="text-gray-400 text-[10px] uppercase font-light tracking-widest mb-6">{t("adminUsers.totalActiveStaff")}: {users.length}</p>
                   <button
                     onClick={() => { resetForm(); setShowForm(true); }}
                     className="w-full bg-gradient-to-b from-[#f3cf7a] to-[#b38822] text-[#2a1708] border border-[#f5db8b] px-6 py-4 rounded-xl font-bold text-xs uppercase tracking-widest shadow-[0_4px_15px_rgba(212,175,55,0.2)] hover:shadow-[0_4px_25px_rgba(212,175,55,0.4)] transition-all flex items-center justify-center gap-2 transform active:scale-95"
                   >
-                    ✨ {t("adminUsers.addNewMember")}
+                    <Plus size={16} /> {t("adminUsers.addNewMember")}
                   </button>
                 </div>
-                <div className="absolute -bottom-4 -right-4 text-8xl opacity-5 transform group-hover:rotate-12 group-hover:scale-110 transition-transform duration-500">👥</div>
+                <div className="absolute -bottom-4 -right-4 opacity-5 transform group-hover:rotate-12 group-hover:scale-110 transition-transform duration-500">
+                  <Users size={96} />
+                </div>
               </div>
 
               <div className="hidden lg:block bg-[#1a1c1b] rounded-xl p-6 border border-white/10 shadow-xl relative overflow-hidden group">
@@ -279,7 +286,9 @@ export default function AdminUsersPage() {
                   <h2 className="text-xl font-playfair italic text-[#f3cf7a] mb-2">{t("adminUsers.permissionsCard")}</h2>
                   <p className="text-gray-400 font-light text-[10px] uppercase tracking-widest">{t("adminUsers.permissionsDesc")}</p>
                 </div>
-                <div className="absolute -bottom-6 -right-6 text-9xl opacity-5 transform group-hover:-rotate-12 transition-transform duration-500">🛡️</div>
+                <div className="absolute -bottom-6 -right-6 opacity-5 transform group-hover:-rotate-12 transition-transform duration-500">
+                  <ShieldCheck size={112} />
+                </div>
               </div>
             </div>
 
@@ -287,7 +296,7 @@ export default function AdminUsersPage() {
               <div className="bg-[#151716] rounded-xl p-6 shadow-2xl border border-white/10 min-h-[600px]">
                 {loading ? (
                   <div className="flex flex-col items-center justify-center py-20 md:py-32">
-                    <div className="text-5xl md:text-6xl animate-bounce mb-4 opacity-50">🧩</div>
+                    <RefreshCw size={48} className="animate-spin text-gray-600 mb-4" />
                     <p className="text-gray-500 font-light uppercase tracking-widest text-[10px]">{t("adminUsers.assemblingTeam")}</p>
                   </div>
                 ) : (
@@ -312,22 +321,27 @@ export default function AdminUsersPage() {
                               {u.isActive ? 'Active' : 'Deactivated'}
                             </div>
                           )}
-                          <div className="w-14 h-14 md:w-16 md:h-16 bg-[#151716] border border-white/5 rounded-2xl flex items-center justify-center text-2xl md:text-3xl mb-4 shadow-sm group-hover:scale-110 transition-transform">
-                            {u.role === "admin" ? "🎩" : u.role === "chef" ? "🍳" : u.role === "display" ? "📺" : u.role === "store_keeper" ? "📦" : u.role === "reception" ? "🛎️" : "☕"}
+                          <div className="w-14 h-14 md:w-16 md:h-16 bg-[#151716] border border-white/5 rounded-2xl flex items-center justify-center mb-4 shadow-sm group-hover:scale-110 transition-transform text-[#d4af37]">
+                            {u.role === "admin"        ? <ShieldCheck size={28} /> :
+                             u.role === "chef"         ? <ChefHat size={28} /> :
+                             u.role === "display"      ? <Monitor size={28} /> :
+                             u.role === "store_keeper" ? <Package size={28} /> :
+                             u.role === "reception"    ? <ConciergeBell size={28} /> :
+                                                         <Coffee size={28} />}
                           </div>
                           {u.role === "chef" && u.assignedCategories && u.assignedCategories.length > 0 && (
                             <div className="mb-3 flex flex-wrap gap-1.5 pt-1">
                               {u.assignedCategories.map(cat => (
                                 <span key={cat} className="text-[9px] font-bold uppercase tracking-widest text-orange-400 bg-orange-500/10 px-2.5 py-1 rounded-lg border border-orange-500/20 shadow-sm flex items-center gap-1">
-                                  <span className="text-[10px]">🍳</span> {cat}
+                                  <UtensilsCrossed size={10} /> {cat}
                                 </span>
                               ))}
                             </div>
                           )}
                           {(u.role === "cashier" || u.role === "display") && u.floorId && (
                             <div className="mb-2">
-                              <span className="text-[9px] font-bold uppercase tracking-widest text-[#f3cf7a] bg-[#d4af37]/10 border border-[#d4af37]/20 px-2 py-1 rounded">
-                                📍 {floors.find(b => b._id === u.floorId)?.floorNumber ? `Floor #${floors.find(b => b._id === u.floorId)?.floorNumber}` : "Assigned Floor"}
+                              <span className="text-[9px] font-bold uppercase tracking-widest text-[#f3cf7a] bg-[#d4af37]/10 border border-[#d4af37]/20 px-2 py-1 rounded flex items-center gap-1">
+                                <MapPin size={10} /> {floors.find(b => b._id === u.floorId)?.floorNumber ? `Floor #${floors.find(b => b._id === u.floorId)?.floorNumber}` : "Assigned Floor"}
                               </span>
                             </div>
                           )}
@@ -338,12 +352,12 @@ export default function AdminUsersPage() {
                           <div className="mb-3 space-y-1">
                             {u.lastLoginAt && (
                               <p className="text-[9px] font-bold text-emerald-400 bg-emerald-900/20 border border-emerald-500/20 px-2 py-1 rounded-lg flex items-center gap-1.5">
-                                🟢 In: {new Date(u.lastLoginAt).toLocaleString()}
+                                <LogIn size={10} /> In: {new Date(u.lastLoginAt).toLocaleString()}
                               </p>
                             )}
                             {u.lastLogoutAt && (
                               <p className="text-[9px] font-bold text-red-400 bg-red-900/20 border border-red-500/20 px-2 py-1 rounded-lg flex items-center gap-1.5">
-                                🔴 Out: {new Date(u.lastLogoutAt).toLocaleString()}
+                                <LogOut size={10} /> Out: {new Date(u.lastLogoutAt).toLocaleString()}
                               </p>
                             )}
                           </div>
@@ -358,7 +372,7 @@ export default function AdminUsersPage() {
                                 onClick={() => togglePasswordVisibility(u._id)}
                                 className="text-gray-500 hover:text-[#f3cf7a] transition-colors p-1"
                               >
-                                {revealedPasswords[u._id] ? "👁️" : "🙈"}
+                                {revealedPasswords[u._id] ? <EyeOff size={14} /> : <Eye size={14} />}
                               </button>
                             </div>
                           </div>
@@ -372,14 +386,14 @@ export default function AdminUsersPage() {
                                 <button
                                   onClick={() => handleToggleStatus(u)}
                                   title={u.isActive ? "Deactivate User" : "Activate User"}
-                                  className={`w-8 h-8 md:w-9 md:h-9 bg-[#0f1110] border border-white/10 rounded-xl flex items-center justify-center shadow-sm hover:scale-110 active:scale-95 transition-all text-sm ${u.isActive ? 'text-gray-500 hover:text-red-500 hover:border-red-500/30' : 'text-emerald-500 hover:text-[#4ade80] hover:border-[#4ade80]/30'}`}
+                                  className={`w-8 h-8 md:w-9 md:h-9 bg-[#0f1110] border border-white/10 rounded-xl flex items-center justify-center shadow-sm hover:scale-110 active:scale-95 transition-all ${u.isActive ? 'text-gray-500 hover:text-red-500 hover:border-red-500/30' : 'text-emerald-500 hover:text-[#4ade80] hover:border-[#4ade80]/30'}`}
                                 >
-                                  {u.isActive ? "👁️" : "👁️‍🗨️"}
+                                  {u.isActive ? <EyeOff size={14} /> : <Eye size={14} />}
                                 </button>
                               )}
-                              <button onClick={() => handleEdit(u)} className="w-8 h-8 md:w-9 md:h-9 bg-[#0f1110] border border-white/10 rounded-xl flex items-center justify-center shadow-sm hover:scale-110 active:scale-95 transition-all text-sm hover:border-[#d4af37]/30 hover:text-[#f3cf7a]">✏️</button>
+                              <button onClick={() => handleEdit(u)} className="w-8 h-8 md:w-9 md:h-9 bg-[#0f1110] border border-white/10 rounded-xl flex items-center justify-center shadow-sm hover:scale-110 active:scale-95 transition-all hover:border-[#d4af37]/30 hover:text-[#f3cf7a]"><Pencil size={14} /></button>
                               {!isMe && (
-                                <button onClick={() => handleDelete(u)} className="w-8 h-8 md:w-9 md:h-9 bg-[#0f1110] border border-white/10 rounded-xl flex items-center justify-center shadow-sm hover:bg-red-950/50 hover:border-red-500/50 hover:text-red-500 hover:scale-110 active:scale-95 transition-all text-sm">🗑️</button>
+                                <button onClick={() => handleDelete(u)} className="w-8 h-8 md:w-9 md:h-9 bg-[#0f1110] border border-white/10 rounded-xl flex items-center justify-center shadow-sm hover:bg-red-950/50 hover:border-red-500/50 hover:text-red-500 hover:scale-110 active:scale-95 transition-all"><Trash2 size={14} /></button>
                               )}
                             </div>
                           </div>
@@ -399,8 +413,8 @@ export default function AdminUsersPage() {
             <div className="bg-[#151716] border border-white/10 rounded-[2.5rem] md:rounded-[3.5rem] shadow-2xl max-w-md w-full relative overflow-hidden flex flex-col max-h-[90vh]">
               <button
                 onClick={resetForm}
-                className="absolute top-6 right-6 w-10 h-10 bg-[#0f1110] border border-white/10 rounded-2xl flex items-center justify-center font-bold text-gray-500 hover:bg-red-950/50 hover:text-red-500 hover:border-red-900 transition-all z-10"
-              >✕</button>
+                className="absolute top-6 right-6 w-10 h-10 bg-[#0f1110] border border-white/10 rounded-2xl flex items-center justify-center text-gray-500 hover:bg-red-950/50 hover:text-red-500 hover:border-red-900 transition-all z-10"
+              ><X size={16} /></button>
 
               <div className="flex-1 overflow-y-auto p-6 md:p-10 pt-16 md:pt-20 scrollbar-hide">
                 <h2 className="text-2xl font-playfair italic text-[#f3cf7a] mb-6">
@@ -514,8 +528,8 @@ export default function AdminUsersPage() {
                                 : "bg-[#151716] text-gray-500 border-white/5 hover:border-white/10 hover:text-gray-300 shadow-sm"
                                 }`}
                             >
-                              <div className={`w-6 h-6 rounded-lg flex items-center justify-center transition-colors ${isSelected ? "bg-[#d4af37]/20 text-[#f3cf7a]" : "bg-[#0f1110] border border-white/5"}`}>
-                                {isSelected ? "✓" : "🍳"}
+              <div className={`w-6 h-6 rounded-lg flex items-center justify-center transition-colors ${isSelected ? "bg-[#d4af37]/20 text-[#f3cf7a]" : "bg-[#0f1110] border border-white/5 text-gray-600"}`}>
+                                {isSelected ? <Check size={12} /> : <UtensilsCrossed size={12} />}
                               </div>
                               <span className="truncate">{category.name}</span>
                             </button>
@@ -552,7 +566,7 @@ export default function AdminUsersPage() {
                       disabled={formLoading}
                       className="flex-[2] bg-gradient-to-b from-[#f3cf7a] to-[#b38822] text-[#2a1708] border border-[#f5db8b] py-4 rounded-2xl font-bold text-[10px] uppercase tracking-widest shadow-[0_4px_15px_rgba(212,175,55,0.2)] hover:shadow-[0_4px_25px_rgba(212,175,55,0.4)] hover:scale-[1.02] transition-all active:scale-95 disabled:opacity-50"
                     >
-                      {formLoading ? t("common.loading") : (editingUser ? t("adminUsers.updateProfile") : t("adminUsers.createAccount"))}
+                      {formLoading ? <span className="flex items-center justify-center gap-2"><Loader2 size={14} className="animate-spin" /> {t("common.loading")}</span> : (editingUser ? t("adminUsers.updateProfile") : t("adminUsers.createAccount"))}
                     </button>
                   </div>
                 </form>

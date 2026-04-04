@@ -41,7 +41,7 @@ const EMPTY_FORM = {
   guestName: "", faydaId: "", phone: "", roomNumber: "", floorId: "",
   inquiryType: "", checkIn: "", checkOut: "", checkInTime: "", checkOutTime: "",
   guests: "1", paymentMethod: "cash", chequeNumber: "", notes: "",
-  idPhotoFront: "", idPhotoBack: "", roomPrice: "",
+  idPhotoFront: "", idPhotoBack: "", roomPrice: "", paymentReference: "",
 }
 
 export default function ReceptionDashboard() {
@@ -301,10 +301,22 @@ export default function ReceptionDashboard() {
                         </button>
                       ))}
                     </div>
-                    {formData.paymentMethod === "cheque" && (
+                    {formData.paymentMethod && (
                       <div className="mt-3">
-                        <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1.5">Cheque Number</label>
-                        <input name="chequeNumber" value={formData.chequeNumber} onChange={handleChange} placeholder="Enter cheque number" className={ic} />
+                        <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1.5">
+                          {formData.paymentMethod === "cash"            ? "Receipt Number"
+                           : formData.paymentMethod === "mobile_banking" ? "Transaction Number"
+                           : formData.paymentMethod === "telebirr"       ? "Telebirr Transaction Number"
+                           : "Cheque Number"}
+                        </label>
+                        <input name="paymentReference" value={formData.paymentReference} onChange={handleChange}
+                          placeholder={
+                            formData.paymentMethod === "cash"            ? "Enter receipt number"
+                            : formData.paymentMethod === "mobile_banking" ? "Enter transaction number"
+                            : formData.paymentMethod === "telebirr"       ? "Enter Telebirr transaction number"
+                            : "Enter cheque number"
+                          }
+                          className={ic} />
                       </div>
                     )}
                   </div>
@@ -372,7 +384,7 @@ export default function ReceptionDashboard() {
                             {s.guests     && <span className="flex items-center gap-1"><Users size={11} /> {s.guests} guest{parseInt(s.guests) > 1 ? "s" : ""}</span>}
                             {s.checkIn    && <span className="flex items-center gap-1"><Calendar size={11} /> {s.checkIn}{s.checkInTime ? ` ${s.checkInTime}` : ""} → {s.checkOut || "?"}{s.checkOutTime ? ` ${s.checkOutTime}` : ""}</span>}
                             {s.paymentMethod && <span className="flex items-center gap-1">{pm?.icon} {pm?.label || s.paymentMethod}</span>}
-                            {s.chequeNumber  && <span className="text-[9px] bg-yellow-900/30 text-yellow-400 border border-yellow-500/30 px-2 py-0.5 rounded">Cheque #{s.chequeNumber}</span>}
+                            {s.paymentReference && <span className="text-[9px] bg-[#1a1c1b] text-[#f3cf7a] border border-[#d4af37]/20 px-2 py-0.5 rounded">Ref #{s.paymentReference}</span>}
                           </div>
                           {(s.idPhotoFront || s.idPhotoBack) && (
                             <div className="flex gap-2 mt-2">
