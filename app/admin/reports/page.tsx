@@ -34,8 +34,8 @@ export default function ReportsPage() {
     const [animating, setAnimating] = useState(false)
     const [direction, setDirection] = useState<"left" | "right">("right")
 
-    // Data State
-    const [loading, setLoading] = useState(true)
+    // Per-section loading — never block the whole page
+    const [loadingSlide, setLoadingSlide] = useState(false)
     const [orders, setOrders] = useState<any[]>([])
     const [stockItems, setStockItems] = useState<any[]>([])
     const [periodData, setPeriodData] = useState<any>(null)
@@ -45,6 +45,7 @@ export default function ReportsPage() {
     const [menuSearchTerm, setMenuSearchTerm] = useState("")
     const [orderHistoryTab, setOrderHistoryTab] = useState<'All' | 'Food' | 'Drinks'>('All')
     const [menuSalesTab, setMenuSalesTab] = useState<'Food' | 'Drinks'>('Food')
+    const [initialized, setInitialized] = useState(false)
 
     // Context
     const { token } = useAuth()
@@ -53,37 +54,46 @@ export default function ReportsPage() {
 
     useEffect(() => {
         if (token) fetchAllData()
-    }, [token, timeRange, selectedDate])
+    }, [token, timeRange]) // removed selectedDate — custom date triggers separately
 
     const fetchAllData = async () => {
-        setLoading(true)
+        setLoadingSlide(true)
         try {
             let salesUrl = `/api/reports/sales?period=${timeRange}`
             let ordersUrl = getOrdersUrl(timeRange)
 
             if (timeRange === 'custom' && selectedDate) {
-                const startDateStr = new Date(selectedDate.setHours(0, 0, 0, 0)).toISOString()
-                const endDateStr = new Date(selectedDate.setHours(23, 59, 59, 999)).toISOString()
-                salesUrl += `&startDate=${startDateStr}&endDate=${endDateStr}`
-                ordersUrl = `/api/orders?startDate=${startDateStr}&endDate=${endDateStr}`
+                const d = new Date(selectedDate)
+                const startDateStr = new Date(d.setHours(0, 0, 0, 0)).toISOString()
+                const endDateStr   = new Date(d.setHours(23, 59, 59, 999)).toISOString()
+                salesUrl  += `&startDate=${startDateStr}&endDate=${endDateStr}`
+                ordersUrl  = `/api/orders?startDate=${startDateStr}&endDate=${endDateStr}&includeDeleted=true&limit=1000`
             }
 
-            const [salesRes, stockRes, usageRes, ordersRes, menuRes] = await Promise.all([
-                fetch(salesUrl, { headers: { Authorization: `Bearer ${token}` } }),
-                fetch(`/api/stock`, { headers: { Authorization: `Bearer ${token}` } }),
-                fetch(`/api/reports/stock-usage?period=${timeRange}`, { headers: { Authorization: `Bearer ${token}` } }),
+            // Fetch critical data first (financial + orders), then secondary
+            const [salesRes, ordersRes] = await Promise.all([
+                fetch(salesUrl,  { headers: { Authorization: `Bearer ${token}` } }),
                 fetch(ordersUrl, { headers: { Authorization: `Bearer ${token}` } }),
-                fetch(`/api/menu?all=true`, { headers: { Authorization: `Bearer ${token}` } })
             ])
-            if (salesRes.ok) setPeriodData(await salesRes.json())
+            if (salesRes.ok)  setPeriodData(await salesRes.json())
+            if (ordersRes.ok) setOrders(await ordersRes.json())
+
+            setInitialized(true)
+            setLoadingSlide(false)
+
+            // Secondary data in background — don't block render
+            const [stockRes, usageRes, menuRes] = await Promise.all([
+                fetch(`/api/stock`,                                    { headers: { Authorization: `Bearer ${token}` } }),
+                fetch(`/api/reports/stock-usage?period=${timeRange}`,  { headers: { Authorization: `Bearer ${token}` } }),
+                fetch(`/api/menu?all=true`,                            { headers: { Authorization: `Bearer ${token}` } }),
+            ])
             if (stockRes.ok) setStockItems(await stockRes.json())
             if (usageRes.ok) setStockUsageData(await usageRes.json())
-            if (ordersRes.ok) setOrders(await ordersRes.json())
-            if (menuRes.ok) setMenuItems(await menuRes.json())
+            if (menuRes.ok)  setMenuItems(await menuRes.json())
         } catch (error) {
             console.error("Failed to load report data:", error)
-        } finally {
-            setLoading(false)
+            setInitialized(true)
+            setLoadingSlide(false)
         }
     }
 
@@ -195,7 +205,7 @@ export default function ReportsPage() {
     }
 
     const exportCategoryCSV = (mainCat: 'Food' | 'Drinks') => {
-        if (loading || (menuItems.length === 0 && orders.length > 0)) {
+        if (loadingSlide || (menuItems.length === 0 && orders.length > 0)) {
             alert("Please wait for menu data to finish loading...")
             return
         }
@@ -343,11 +353,22 @@ export default function ReportsPage() {
         ReportExporter.exportToCSV({ title: "Inventory Investment Report", period: timeRange, headers: ["Item Name", "Unit Cost", "Quantity", "Total Purchase", "Consumed", "Remains", "Potential Rev.", "Status"], data })
     }
 
-    if (loading) {
+    if (!initialized && loadingSlide) {
         return (
-            <div className="flex h-screen items-center justify-center bg-[#0f1110]">
-                <div className="h-10 w-10 animate-spin rounded-full border-4 border-[#d4af37] border-t-transparent"></div>
-            </div>
+            <ProtectedRoute requiredRoles={["admin"]}>
+                <div className="min-h-screen bg-[#0f1110] p-6 text-white">
+                    <div className="max-w-7xl mx-auto space-y-4">
+                        <BentoNavbar />
+                        <div className="bg-[#151716] rounded-xl p-5 border border-white/5 animate-pulse h-20" />
+                        <div className="flex gap-4">
+                            <div className="hidden md:flex flex-col gap-2 w-52 shrink-0">
+                                {SLIDES.map(s => <div key={s.id} className="h-14 bg-[#151716] rounded-2xl border border-white/5 animate-pulse" />)}
+                            </div>
+                            <div className="flex-1 bg-[#151716] rounded-2xl border border-white/5 animate-pulse min-h-[400px]" />
+                        </div>
+                    </div>
+                </div>
+            </ProtectedRoute>
         )
     }
 
@@ -400,6 +421,20 @@ export default function ReportsPage() {
                                             onSelect={(date) => {
                                                 setSelectedDate(date)
                                                 setTimeRange('custom')
+                                                // Trigger fetch for custom date
+                                                if (date && token) {
+                                                    const d = new Date(date)
+                                                    const startDateStr = new Date(d.setHours(0,0,0,0)).toISOString()
+                                                    const endDateStr   = new Date(d.setHours(23,59,59,999)).toISOString()
+                                                    setLoadingSlide(true)
+                                                    Promise.all([
+                                                        fetch(`/api/reports/sales?period=custom&startDate=${startDateStr}&endDate=${endDateStr}`, { headers: { Authorization: `Bearer ${token}` } }),
+                                                        fetch(`/api/orders?startDate=${startDateStr}&endDate=${endDateStr}&includeDeleted=true&limit=1000`, { headers: { Authorization: `Bearer ${token}` } }),
+                                                    ]).then(async ([sRes, oRes]) => {
+                                                        if (sRes.ok) setPeriodData(await sRes.json())
+                                                        if (oRes.ok) setOrders(await oRes.json())
+                                                    }).finally(() => setLoadingSlide(false))
+                                                }
                                             }}
                                             initialFocus
                                             captionLayout="dropdown"
@@ -464,6 +499,12 @@ export default function ReportsPage() {
 
                         {/* Slide Panel */}
                         <div className="flex-1 min-w-0 overflow-hidden">
+                            {/* Thin refresh indicator */}
+                            {loadingSlide && (
+                                <div className="h-0.5 w-full bg-[#151716] rounded-full mb-3 overflow-hidden">
+                                    <div className="h-full bg-gradient-to-r from-[#d4af37] to-[#f3cf7a] animate-pulse rounded-full" style={{ width: "60%" }} />
+                                </div>
+                            )}
                             <div
                                 key={activeSlide}
                                 className={`${!animating
