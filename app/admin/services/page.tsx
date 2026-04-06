@@ -20,10 +20,27 @@ import {
   Utensils,
   Crown,
   ArrowRight,
-  ChefHat
+  ChefHat,
+  ConciergeBell,
+  Hotel,
+  Key,
+  Megaphone,
+  Calendar,
+  MessageSquare,
+  DoorOpen,
+  Users,
+  Phone,
+  IdCard,
+  CheckCircle2,
+  XCircle,
+  Clock,
+  Banknote,
+  Smartphone,
+  CreditCard,
+  Eye
 } from "lucide-react"
 
-type Tab = "menu-standard" | "vip" | "rooms"
+type Tab = "menu-standard" | "vip" | "rooms" | "reception"
 
 interface TabButtonProps {
   active: boolean
@@ -87,6 +104,70 @@ export default function AdminServicesPage() {
   const [editingRoom, setEditingRoom] = useState<Room | null>(null)
   const [formLoading, setFormLoading] = useState(false)
 
+  // Reception state
+  const [receptionRequests, setReceptionRequests] = useState<any[]>([])
+  const [receptionLoading, setReceptionLoading] = useState(false)
+  const [receptionFilter, setReceptionFilter] = useState<"all"|"pending"|"approved"|"denied">("pending")
+  const [selectedRequest, setSelectedRequest] = useState<any | null>(null)
+  const [reviewNote, setReviewNote] = useState("")
+  const [actioning, setActioning] = useState(false)
+
+  const INQUIRY_TYPES: Record<string, { label: string; icon: any }> = {
+    check_in:     { label: "Check-In",       icon: <Hotel size={13} /> },
+    check_out:    { label: "Check-Out",       icon: <Key size={13} /> },
+    room_service: { label: "Room Service",    icon: <Utensils size={13} /> },
+    complaint:    { label: "Complaint",       icon: <Megaphone size={13} /> },
+    reservation:  { label: "Reservation",     icon: <Calendar size={13} /> },
+    general:      { label: "General Inquiry", icon: <MessageSquare size={13} /> },
+  }
+  const PAYMENT_LABELS: Record<string, string> = {
+    cash: "Cash", mobile_banking: "Mobile Banking", telebirr: "Telebirr", cheque: "Cheque"
+  }
+  const STATUS_STYLES: Record<string, string> = {
+    pending:  "bg-yellow-900/30 text-yellow-400 border-yellow-500/30",
+    approved: "bg-emerald-900/30 text-emerald-400 border-emerald-500/30",
+    denied:   "bg-red-900/30 text-red-400 border-red-500/30",
+  }
+
+  const fetchReception = async () => {
+    if (!token) return
+    setReceptionLoading(true)
+    try {
+      const res = await fetch("/api/reception-requests", { headers: { Authorization: `Bearer ${token}` } })
+      if (res.ok) setReceptionRequests(await res.json())
+    } catch { /* silent */ }
+    finally { setReceptionLoading(false) }
+  }
+
+  const handleReceptionAction = async (id: string, status: "approved" | "denied") => {
+    const confirmed = await confirm({
+      title: status === "approved" ? "Approve Request" : "Deny Request",
+      message: `Are you sure you want to ${status} this request?`,
+      type: status === "approved" ? "success" : "danger",
+      confirmText: status === "approved" ? "Approve" : "Deny",
+      cancelText: "Cancel",
+    })
+    if (!confirmed) return
+    setActioning(true)
+    try {
+      const res = await fetch(`/api/reception-requests/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ status, reviewNote }),
+      })
+      if (res.ok) {
+        notify({ title: `Request ${status}`, message: `The request has been ${status}.`, type: status === "approved" ? "success" : "error" })
+        setSelectedRequest(null)
+        setReviewNote("")
+        fetchReception()
+      } else {
+        const err = await res.json()
+        notify({ title: "Error", message: err.message || "Failed", type: "error" })
+      }
+    } catch { notify({ title: "Error", message: "Network error", type: "error" }) }
+    setActioning(false)
+  }
+
   const fetchData = useCallback(async () => {
     if (!token) return
     try {
@@ -108,6 +189,7 @@ export default function AdminServicesPage() {
   }, [token])
 
   useEffect(() => { fetchData() }, [fetchData])
+  useEffect(() => { if (activeTab === "reception") fetchReception() }, [activeTab, token])
 
   const handleAddCategory = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -226,6 +308,7 @@ export default function AdminServicesPage() {
             <TabButton active={activeTab === "rooms"} onClick={() => setActiveTab("rooms")} icon={<Building size={16} />} label="Room Management" />
             <TabButton active={activeTab === "menu-standard"} onClick={() => setActiveTab("menu-standard")} icon={<Utensils size={16} />} label="Standard Menu" />
             <TabButton active={activeTab === "vip"} onClick={() => setActiveTab("vip")} icon={<Crown size={16} />} label="VIP Menus" />
+            <TabButton active={activeTab === "reception"} onClick={() => setActiveTab("reception")} icon={<ConciergeBell size={16} />} label="Reception" />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
@@ -329,8 +412,98 @@ export default function AdminServicesPage() {
                       </div>
                     )}
 
-                    {activeTab === "rooms" && (
-                      <div className="space-y-8">
+                    {activeTab === "reception" && (
+                      <div className="space-y-5">
+                        {/* Filter tabs */}
+                        <div className="flex gap-2 flex-wrap">
+                          {(["pending","approved","denied","all"] as const).map(f => {
+                            const count = f === "all" ? receptionRequests.length : receptionRequests.filter(r => r.status === f).length
+                            return (
+                              <button key={f} onClick={() => setReceptionFilter(f)}
+                                className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-1.5 border ${
+                                  receptionFilter === f
+                                    ? f === "pending"  ? "bg-yellow-900/40 text-yellow-400 border-yellow-500/30"
+                                    : f === "approved" ? "bg-emerald-900/40 text-emerald-400 border-emerald-500/30"
+                                    : f === "denied"   ? "bg-red-900/40 text-red-400 border-red-500/30"
+                                    : "bg-[#d4af37]/10 text-[#f3cf7a] border-[#d4af37]/30"
+                                    : "bg-[#0f1110] text-gray-500 border-white/5 hover:text-gray-300"
+                                }`}>
+                                {f === "pending" && <Clock size={10} />}
+                                {f === "approved" && <CheckCircle2 size={10} />}
+                                {f === "denied" && <XCircle size={10} />}
+                                {f} <span className="opacity-60">({count})</span>
+                              </button>
+                            )
+                          })}
+                          <button onClick={fetchReception} className="ml-auto p-2 hover:bg-white/5 rounded-lg text-gray-500 hover:text-white transition-colors">
+                            <RefreshCw className={`h-4 w-4 ${receptionLoading ? "animate-spin" : ""}`} />
+                          </button>
+                        </div>
+
+                        {receptionLoading ? (
+                          <div className="flex items-center justify-center py-24"><RefreshCw className="h-8 w-8 animate-spin text-[#d4af37]" /></div>
+                        ) : receptionRequests.filter(r => receptionFilter === "all" || r.status === receptionFilter).length === 0 ? (
+                          <div className="flex flex-col items-center justify-center py-24 text-gray-600">
+                            <ConciergeBell size={40} className="mb-3 opacity-30" />
+                            <p className="text-[10px] font-black uppercase tracking-widest">No {receptionFilter} requests</p>
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                            {receptionRequests.filter(r => receptionFilter === "all" || r.status === receptionFilter).map(r => {
+                              const type = INQUIRY_TYPES[r.inquiryType]
+                              return (
+                                <div key={r._id} className="bg-[#0f1110] rounded-2xl border border-white/5 hover:border-white/10 transition-all p-5 flex flex-col gap-3">
+                                  <div className="flex items-start justify-between gap-2">
+                                    <div className="flex items-center gap-2 text-[#d4af37]">
+                                      {type?.icon ?? <MessageSquare size={13} />}
+                                      <span className="font-black text-white text-sm">{r.guestName}</span>
+                                    </div>
+                                    <span className={`text-[9px] font-black px-2.5 py-1 rounded-full uppercase border shrink-0 ${STATUS_STYLES[r.status] || STATUS_STYLES.pending}`}>{r.status}</span>
+                                  </div>
+                                  <span className="text-[9px] font-black uppercase tracking-widest text-gray-500 bg-[#151716] border border-white/5 px-2 py-1 rounded w-fit">{type?.label || r.inquiryType}</span>
+                                  <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-gray-500 font-bold">
+                                    {r.faydaId    && <span className="flex items-center gap-1"><IdCard size={10} /> {r.faydaId}</span>}
+                                    {r.phone      && <span className="flex items-center gap-1"><Phone size={10} /> {r.phone}</span>}
+                                    {r.roomNumber && <span className="flex items-center gap-1"><DoorOpen size={10} /> Room {r.roomNumber}</span>}
+                                    {r.roomPrice  && <span className="flex items-center gap-1"><Banknote size={10} /> {r.roomPrice} ETB</span>}
+                                    {r.guests     && <span className="flex items-center gap-1"><Users size={10} /> {r.guests} guest{parseInt(r.guests) > 1 ? "s" : ""}</span>}
+                                    {r.checkIn    && <span className="flex items-center gap-1"><Calendar size={10} /> {r.checkIn}{r.checkInTime ? ` ${r.checkInTime}` : ""} → {r.checkOut || "?"}{r.checkOutTime ? ` ${r.checkOutTime}` : ""}</span>}
+                                    {r.paymentMethod && <span className="flex items-center gap-1">
+                                      {r.paymentMethod === "cash" ? <Banknote size={10} /> : r.paymentMethod === "mobile_banking" ? <Smartphone size={10} /> : <CreditCard size={10} />}
+                                      {PAYMENT_LABELS[r.paymentMethod] || r.paymentMethod}
+                                    </span>}
+                                    {(r.paymentReference || r.chequeNumber) && <span className="text-[#f3cf7a]">Ref #{r.paymentReference || r.chequeNumber}</span>}
+                                  </div>
+                                  {r.notes && <p className="text-[11px] text-gray-500 bg-[#151716] rounded-lg p-2 border border-white/5 italic">"{r.notes}"</p>}
+                                  {r.reviewNote && <p className="text-[11px] text-blue-400 bg-blue-900/20 rounded-lg p-2 border border-blue-500/20">↩ {r.reviewNote}</p>}
+                                  <p className="text-[9px] text-gray-600 mt-auto">{new Date(r.createdAt).toLocaleString()}</p>
+                                  <div className="flex gap-2 pt-1">
+                                    <button onClick={() => { setSelectedRequest(r); setReviewNote(r.reviewNote || "") }}
+                                      className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-[#151716] border border-white/10 rounded-lg text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-white hover:border-white/20 transition-all">
+                                      <Eye size={12} /> Review
+                                    </button>
+                                    {r.status === "pending" && (
+                                      <>
+                                        <button onClick={() => handleReceptionAction(r._id, "approved")}
+                                          className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-emerald-900/30 border border-emerald-500/30 rounded-lg text-[10px] font-black uppercase tracking-widest text-emerald-400 hover:bg-emerald-900/50 transition-all">
+                                          <CheckCircle2 size={12} /> Approve
+                                        </button>
+                                        <button onClick={() => handleReceptionAction(r._id, "denied")}
+                                          className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-red-900/30 border border-red-500/30 rounded-lg text-[10px] font-black uppercase tracking-widest text-red-400 hover:bg-red-900/50 transition-all">
+                                          <XCircle size={12} /> Deny
+                                        </button>
+                                      </>
+                                    )}
+                                  </div>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {activeTab === "rooms" && (                      <div className="space-y-8">
                         {rooms.length === 0 ? (
                           <div className="flex flex-col items-center justify-center py-32 text-gray-500">
                             <Bed size={48} className="mb-4 opacity-20" />
@@ -393,6 +566,76 @@ export default function AdminServicesPage() {
             </div>
           </div>
         </div>
+
+        {selectedRequest && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
+            <div className="bg-[#151716] border border-white/10 rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between p-6 border-b border-white/5">
+                <h2 className="text-lg font-playfair italic text-[#f3cf7a]">Request Detail</h2>
+                <button onClick={() => setSelectedRequest(null)} className="w-8 h-8 bg-[#0f1110] border border-white/10 rounded-xl flex items-center justify-center text-gray-500 hover:text-red-400 hover:border-red-500/30 transition-all"><X size={14} /></button>
+              </div>
+              <div className="p-6 space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    ["Guest", selectedRequest.guestName],
+                    ["Type", INQUIRY_TYPES[selectedRequest.inquiryType]?.label || selectedRequest.inquiryType],
+                    ["Fayda ID", selectedRequest.faydaId],
+                    ["Phone", selectedRequest.phone],
+                    ["Room", selectedRequest.roomNumber ? `Room ${selectedRequest.roomNumber}` : null],
+                    ["Price", selectedRequest.roomPrice ? `${selectedRequest.roomPrice} ETB` : null],
+                    ["Guests", selectedRequest.guests],
+                    ["Payment", PAYMENT_LABELS[selectedRequest.paymentMethod] || selectedRequest.paymentMethod],
+                    ["Ref #", selectedRequest.paymentReference || selectedRequest.chequeNumber],
+                    ["Check-In", selectedRequest.checkIn ? `${selectedRequest.checkIn}${selectedRequest.checkInTime ? ` ${selectedRequest.checkInTime}` : ""}` : null],
+                    ["Check-Out", selectedRequest.checkOut ? `${selectedRequest.checkOut}${selectedRequest.checkOutTime ? ` ${selectedRequest.checkOutTime}` : ""}` : null],
+                  ].filter(([, v]) => v).map(([label, value]) => (
+                    <div key={label as string} className="bg-[#0f1110] rounded-lg p-3 border border-white/5">
+                      <p className="text-[9px] font-black uppercase tracking-widest text-gray-600 mb-1">{label}</p>
+                      <p className="text-white text-xs font-bold">{value}</p>
+                    </div>
+                  ))}
+                </div>
+                {(selectedRequest.idPhotoFront || selectedRequest.idPhotoBack) && (
+                  <div>
+                    <p className="text-[9px] font-black uppercase tracking-widest text-gray-600 mb-2">ID Photos</p>
+                    <div className="flex gap-3">
+                      {selectedRequest.idPhotoFront && <a href={selectedRequest.idPhotoFront} target="_blank" rel="noreferrer"><img src={selectedRequest.idPhotoFront} alt="ID Front" className="h-24 w-36 object-cover rounded-lg border border-white/10" /></a>}
+                      {selectedRequest.idPhotoBack  && <a href={selectedRequest.idPhotoBack}  target="_blank" rel="noreferrer"><img src={selectedRequest.idPhotoBack}  alt="ID Back"  className="h-24 w-36 object-cover rounded-lg border border-white/10" /></a>}
+                    </div>
+                  </div>
+                )}
+                {selectedRequest.notes && (
+                  <div className="bg-[#0f1110] rounded-lg p-3 border border-white/5">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-gray-600 mb-1">Notes</p>
+                    <p className="text-gray-300 text-xs italic">"{selectedRequest.notes}"</p>
+                  </div>
+                )}
+                <div>
+                  <label className="block text-[9px] font-black uppercase tracking-widest text-gray-500 mb-1.5">Review Note (optional)</label>
+                  <textarea value={reviewNote} onChange={e => setReviewNote(e.target.value)} rows={2}
+                    placeholder="Add a note for the reception staff..."
+                    className="w-full bg-[#0f1110] border border-white/10 text-white rounded-xl px-4 py-3 text-sm outline-none focus:border-[#d4af37]/50 resize-none placeholder:text-gray-600" />
+                </div>
+                {selectedRequest.status === "pending" ? (
+                  <div className="flex gap-3 pt-2">
+                    <button onClick={() => handleReceptionAction(selectedRequest._id, "denied")} disabled={actioning}
+                      className="flex-1 flex items-center justify-center gap-2 py-3 bg-red-900/30 border border-red-500/30 rounded-xl text-[10px] font-black uppercase tracking-widest text-red-400 hover:bg-red-900/50 transition-all disabled:opacity-50">
+                      <XCircle size={14} /> Deny
+                    </button>
+                    <button onClick={() => handleReceptionAction(selectedRequest._id, "approved")} disabled={actioning}
+                      className="flex-[2] flex items-center justify-center gap-2 py-3 bg-gradient-to-b from-[#f3cf7a] to-[#b38822] text-[#2a1708] border border-[#f5db8b] rounded-xl text-[10px] font-black uppercase tracking-widest shadow-[0_4px_15px_rgba(212,175,55,0.2)] transition-all disabled:opacity-50">
+                      <CheckCircle2 size={14} /> Approve
+                    </button>
+                  </div>
+                ) : (
+                  <div className={`p-3 rounded-xl border text-center text-[10px] font-black uppercase tracking-widest ${STATUS_STYLES[selectedRequest.status]}`}>
+                    This request has been {selectedRequest.status}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {showForm && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
