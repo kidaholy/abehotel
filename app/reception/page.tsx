@@ -13,12 +13,8 @@ import {
 } from "lucide-react"
 
 const INQUIRY_TYPES = [
-  { value: "check_in",     label: "Check-In",       icon: <Hotel size={18} /> },
-  { value: "check_out",    label: "Check-Out",       icon: <Key size={18} /> },
-  { value: "room_service", label: "Room Service",    icon: <Utensils size={18} /> },
-  { value: "complaint",    label: "Complaint",       icon: <Megaphone size={18} /> },
-  { value: "reservation",  label: "Reservation",     icon: <Calendar size={18} /> },
-  { value: "general",      label: "General Inquiry", icon: <MessageSquare size={18} /> },
+  { value: "check_in",  label: "Check-In",  icon: <Hotel size={18} /> },
+  { value: "check_out", label: "Check-Out", icon: <Key size={18} /> },
 ]
 
 const PAYMENT_METHODS = [
@@ -49,6 +45,7 @@ export default function ReceptionDashboard() {
   const { notificationState, notify, closeNotification } = useConfirmation()
 
   const [formData, setFormData] = useState({ ...EMPTY_FORM })
+  const [step, setStep] = useState<1 | 2>(1) // step 1 = pick inquiry type, step 2 = fill form
   const [submitting, setSubmitting] = useState(false)
   const [submissions, setSubmissions] = useState<any[]>([])
   const [loadingSubmissions, setLoadingSubmissions] = useState(true)
@@ -72,7 +69,7 @@ export default function ReceptionDashboard() {
   const fetchMetadata = useCallback(async () => {
     try {
       const h = { Authorization: `Bearer ${token}` }
-      const [rr, rf] = await Promise.all([fetch("/api/admin/rooms", { headers: h }), fetch("/api/admin/floors", { headers: h })])
+      const [rr, rf] = await Promise.all([fetch("/api/admin/rooms", { headers: h }), fetch("/api/floors", { headers: h })])
       if (rr.ok) setRooms((await rr.json()).sort((a: any, b: any) => a.roomNumber.localeCompare(b.roomNumber, undefined, { numeric: true })))
       if (rf.ok) setFloors(await rf.json())
     } catch { /* silent */ }
@@ -86,7 +83,8 @@ export default function ReceptionDashboard() {
   const handleRoomChange = (roomNumber: string) => {
     const room = rooms.find(r => r.roomNumber === roomNumber) || null
     setSelectedRoom(room)
-    const floor = room ? floors.find(f => f._id === (room.floorId?._id || room.floorId)) : null
+    const roomFloorId = room ? String(room.floorId?._id || room.floorId) : null
+    const floor = roomFloorId ? floors.find(f => String(f._id) === roomFloorId) : null
     setFormData(p => ({ ...p, roomNumber, floorId: floor?._id || p.floorId, roomPrice: room?.price ? String(room.price) : "" }))
   }
 
@@ -118,7 +116,7 @@ export default function ReceptionDashboard() {
       })
       if (res.ok) {
         notify({ title: "Submitted!", message: `Request for ${formData.guestName} recorded.`, type: "success" })
-        setFormData({ ...EMPTY_FORM }); setSelectedRoom(null); fetchSubmissions()
+        setFormData({ ...EMPTY_FORM }); setSelectedRoom(null); setStep(1); fetchSubmissions()
       } else {
         const err = await res.json()
         notify({ title: "Error", message: err.message || "Failed to submit", type: "error" })
@@ -127,7 +125,9 @@ export default function ReceptionDashboard() {
     setSubmitting(false)
   }
 
-  const filteredRooms = formData.floorId ? rooms.filter(r => (r.floorId?._id || r.floorId) === formData.floorId) : rooms
+  const filteredRooms = formData.floorId
+    ? rooms.filter(r => String(r.floorId?._id || r.floorId) === String(formData.floorId))
+    : rooms
 
   // shared input class — dark theme
   const ic = "w-full bg-[#0f1110] border border-white/10 text-white rounded-xl px-4 py-3 text-sm font-medium outline-none focus:border-[#d4af37]/50 focus:ring-0 transition-all placeholder:text-gray-600"
@@ -155,28 +155,52 @@ export default function ReceptionDashboard() {
             {/* ── FORM ── */}
             <div className="lg:col-span-7">
               <div className="bg-[#151716] rounded-xl shadow-2xl border border-white/5 p-6 md:p-8">
-                <h2 className="text-[10px] font-black text-gray-500 mb-6 uppercase tracking-widest flex items-center gap-2">
-                  <ClipboardList size={13} /> New Guest Request
-                </h2>
-                <form onSubmit={handleSubmit} className="space-y-5">
 
-                  {/* Inquiry Type */}
+                {/* Step indicator */}
+                <div className="flex items-center gap-3 mb-6">
+                  <div className={`flex items-center justify-center w-6 h-6 rounded-full text-[10px] font-black border transition-all ${step === 1 ? "bg-[#d4af37] text-[#0f1110] border-[#d4af37]" : "bg-emerald-900/40 text-emerald-400 border-emerald-500/30"}`}>
+                    {step === 1 ? "1" : "✓"}
+                  </div>
+                  <div className="h-px flex-1 bg-white/5" />
+                  <div className={`flex items-center justify-center w-6 h-6 rounded-full text-[10px] font-black border transition-all ${step === 2 ? "bg-[#d4af37] text-[#0f1110] border-[#d4af37]" : "bg-[#0f1110] text-gray-600 border-white/10"}`}>2</div>
+                  <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">
+                    {step === 1 ? "Select Inquiry Type" : "Guest Details"}
+                  </span>
+                </div>
+
+                {/* ── STEP 1: Inquiry Type ── */}
+                {step === 1 && (
                   <div>
-                    <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Inquiry Type *</label>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    <p className="text-gray-400 text-sm mb-6">What is the guest requesting?</p>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                       {INQUIRY_TYPES.map(t => (
                         <button key={t.value} type="button"
-                          onClick={() => setFormData(p => ({ ...p, inquiryType: t.value }))}
-                          className={`flex flex-col items-center gap-1.5 py-3 px-2 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all ${
-                            formData.inquiryType === t.value
-                              ? "bg-[#d4af37]/10 text-[#f3cf7a] border-[#d4af37]/40 shadow-[0_0_12px_rgba(212,175,55,0.15)]"
-                              : "bg-[#0f1110] text-gray-500 border-white/5 hover:border-[#d4af37]/20 hover:text-gray-300"
-                          }`}>
-                          {t.icon}<span>{t.label}</span>
+                          onClick={() => { setFormData(p => ({ ...p, inquiryType: t.value })); setStep(2) }}
+                          className="flex flex-col items-center gap-3 py-6 px-3 rounded-2xl border text-[10px] font-black uppercase tracking-widest transition-all bg-[#0f1110] text-gray-400 border-white/5 hover:border-[#d4af37]/40 hover:text-[#f3cf7a] hover:bg-[#d4af37]/5 hover:shadow-[0_0_20px_rgba(212,175,55,0.1)] active:scale-95">
+                          <span className="text-[#d4af37]">{t.icon}</span>
+                          <span>{t.label}</span>
                         </button>
                       ))}
                     </div>
                   </div>
+                )}
+
+                {/* ── STEP 2: Guest Details Form ── */}
+                {step === 2 && (
+                  <form onSubmit={handleSubmit} className="space-y-5">
+                    {/* Selected type badge + back button */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 bg-[#d4af37]/10 border border-[#d4af37]/30 rounded-xl px-3 py-2">
+                        <span className="text-[#d4af37]">{INQUIRY_TYPES.find(t => t.value === formData.inquiryType)?.icon}</span>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-[#f3cf7a]">
+                          {INQUIRY_TYPES.find(t => t.value === formData.inquiryType)?.label}
+                        </span>
+                      </div>
+                      <button type="button" onClick={() => setStep(1)}
+                        className="text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-[#d4af37] transition-colors flex items-center gap-1">
+                        ← Change
+                      </button>
+                    </div>
 
                   {/* Guest Name */}
                   <div>
@@ -242,8 +266,11 @@ export default function ReceptionDashboard() {
                     </div>
                     <div>
                       <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1.5">Room *</label>
-                      <select required name="roomNumber" value={formData.roomNumber} onChange={e => handleRoomChange(e.target.value)} className={ic + " appearance-none"}>
-                        <option value="">Select Room…</option>
+                      <select required name="roomNumber" value={formData.roomNumber}
+                        onChange={e => handleRoomChange(e.target.value)}
+                        disabled={!formData.floorId}
+                        className={ic + " appearance-none disabled:opacity-40 disabled:cursor-not-allowed"}>
+                        <option value="">{formData.floorId ? "Select Room…" : "Select a floor first"}</option>
                         {filteredRooms.map(r => <option key={r._id} value={r.roomNumber}>Room {r.roomNumber}{r.price ? ` — ${r.price} ETB` : ""}</option>)}
                       </select>
                     </div>
@@ -335,7 +362,8 @@ export default function ReceptionDashboard() {
                       <span className="flex items-center justify-center gap-2"><CheckCircle2 size={16} /> Submit Request</span>
                     )}
                   </button>
-                </form>
+                  </form>
+                )}
               </div>
             </div>
 
