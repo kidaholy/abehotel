@@ -219,8 +219,8 @@ export default function AdminReceptionPage() {
             <div className="bg-[#151716] border border-white/10 rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
               <div className="flex items-center justify-between p-6 border-b border-white/5">
                 <h2 className="text-lg font-playfair italic text-[#f3cf7a]">Request Detail</h2>
-                <button onClick={() => setSelected(null)} className="w-8 h-8 bg-[#0f1110] border border-white/10 rounded-xl flex items-center justify-center text-gray-500 hover:text-red-400 hover:border-red-500/30 transition-all">
-                  <X size={14} />
+                <button onClick={() => setSelected(null)} className="w-8 h-8 bg-[#0f1110] border border-white/20 rounded-xl flex items-center justify-center text-white hover:text-red-400 hover:border-red-500/30 hover:bg-red-950/30 transition-all">
+                  <X size={16} />
                 </button>
               </div>
 
@@ -250,21 +250,23 @@ export default function AdminReceptionPage() {
                 {/* ID Photos */}
                 {(selected.idPhotoFront || selected.idPhotoBack) && (
                   <div>
-                    <p className="text-[9px] font-black uppercase tracking-widest text-gray-600 mb-2">ID Photos</p>
-                    <div className="flex gap-3">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-gray-600 mb-3">ID Photos</p>
+                    <div className="grid grid-cols-2 gap-3">
                       {selected.idPhotoFront && (
                         <div>
-                          <p className="text-[9px] text-gray-600 mb-1">Front</p>
-                          <a href={selected.idPhotoFront} target="_blank" rel="noreferrer">
-                            <img src={selected.idPhotoFront} alt="ID Front" className="h-24 w-36 object-cover rounded-lg border border-white/10 hover:border-[#d4af37]/30 transition-all" />
+                          <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-1.5">Front</p>
+                          <a href={selected.idPhotoFront} target="_blank" rel="noreferrer" className="block group">
+                            <img src={selected.idPhotoFront} alt="ID Front"
+                              className="w-full h-44 object-cover rounded-xl border border-white/10 group-hover:border-[#d4af37]/40 transition-all shadow-lg" />
                           </a>
                         </div>
                       )}
                       {selected.idPhotoBack && (
                         <div>
-                          <p className="text-[9px] text-gray-600 mb-1">Back</p>
-                          <a href={selected.idPhotoBack} target="_blank" rel="noreferrer">
-                            <img src={selected.idPhotoBack} alt="ID Back" className="h-24 w-36 object-cover rounded-lg border border-white/10 hover:border-[#d4af37]/30 transition-all" />
+                          <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-1.5">Back</p>
+                          <a href={selected.idPhotoBack} target="_blank" rel="noreferrer" className="block group">
+                            <img src={selected.idPhotoBack} alt="ID Back"
+                              className="w-full h-44 object-cover rounded-xl border border-white/10 group-hover:border-[#d4af37]/40 transition-all shadow-lg" />
                           </a>
                         </div>
                       )}
