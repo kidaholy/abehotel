@@ -37,6 +37,7 @@ export function PrinterSetup({ onClose }: PrinterSetupProps) {
     connectPrinters,
     printOrder,
     autoDetectPrinter,
+    autoDetectAny,
     support,
     error
   } = useKitchenPrinter()
@@ -93,6 +94,9 @@ export function PrinterSetup({ onClose }: PrinterSetupProps) {
         break
       case 'auto':
         autoDetectPrinter()
+        return
+      case 'auto_any':
+        autoDetectAny()
         return
       case 'SQUARE_POS':
         const squareSetup = COMMON_SETUPS.SQUARE_POS()
@@ -233,7 +237,8 @@ export function PrinterSetup({ onClose }: PrinterSetupProps) {
                 className="w-full p-2 border-2 border-[#8B4513] rounded-lg"
               >
                 <option value="">Select printer type...</option>
-                <option value="auto">🔍 Auto-detect USB printer</option>
+                <option value="auto">🔍 Auto-detect USB (known brands)</option>
+                <option value="auto_any">🔌 Detect any USB device (show all)</option>
                 <option value="USB_THERMAL">🖨️ Generic USB thermal printer</option>
                 <option value="EPSON_TM">📄 Epson TM series</option>
                 <option value="STAR_TSP">⭐ Star Micronics TSP</option>

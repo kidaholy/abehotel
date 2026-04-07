@@ -8,7 +8,8 @@ import {
   KitchenOrder,
   PRINTER_CONFIGS,
   checkPrinterSupport,
-  detectPrinter
+  detectPrinter,
+  detectAnyUSBPrinter
 } from '@/lib/pos-printer'
 
 interface PrinterStatus {
@@ -27,6 +28,7 @@ interface UsePrinterReturn {
   connectPrinters: () => Promise<void>
   printOrder: (order: KitchenOrder, printerId?: string) => Promise<boolean>
   autoDetectPrinter: () => Promise<void>
+  autoDetectAny: () => Promise<void>
   support: {
     serial: boolean
     usb: boolean
@@ -154,6 +156,26 @@ export function useKitchenPrinter(): UsePrinterReturn {
     }
   }, [addPrinter, connectPrinters])
 
+  // Auto-detect any USB device (no vendor filter)
+  const autoDetectAny = useCallback(async () => {
+    setIsConnecting(true)
+    setError(null)
+    try {
+      const config = await detectAnyUSBPrinter()
+      if (config) {
+        const id = `usb-any-${Date.now()}`
+        addPrinter(id, config)
+        setTimeout(() => connectPrinters(), 500)
+      } else {
+        setError('No USB device selected')
+      }
+    } catch (err) {
+      setError(`Detection failed: ${err}`)
+    } finally {
+      setIsConnecting(false)
+    }
+  }, [addPrinter, connectPrinters])
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -169,6 +191,7 @@ export function useKitchenPrinter(): UsePrinterReturn {
     connectPrinters,
     printOrder,
     autoDetectPrinter,
+    autoDetectAny,
     support,
     error
   }

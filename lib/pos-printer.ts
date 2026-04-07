@@ -544,22 +544,45 @@ export async function detectPrinter(): Promise<PrinterConfig | null> {
           { vendorId: 0x04b8 }, // Epson
           { vendorId: 0x0519 }, // Star Micronics
           { vendorId: 0x154f }, // Citizen
+          { vendorId: 0x0dd4 }, // Custom Engineering
+          { vendorId: 0x20d1 }, // Rongta
+          { vendorId: 0x0fe6 }, // ICS Advent / Bixolon
+          { vendorId: 0x1fc9 }, // Sewoo / Woosim
+          { vendorId: 0x0456 }, // Analog Devices (some POS)
+          { vendorId: 0x6868 }, // Xprinter
+          { vendorId: 0x28e9 }, // GprinterGP
+          { vendorId: 0x0483 }, // STMicroelectronics (many Chinese thermal)
+          { vendorId: 0x1a86 }, // QinHeng Electronics (CH340 based)
         ]
       })
       
-      // Return appropriate config based on vendor
-      if (device.vendorId === 0x04b8) {
-        return PRINTER_CONFIGS.EPSON_TM_T88V
-      } else if (device.vendorId === 0x0519) {
-        return PRINTER_CONFIGS.STAR_TSP143
-      } else if (device.vendorId === 0x154f) {
-        return PRINTER_CONFIGS.CITIZEN_CT_S310A
-      }
+      if (device.vendorId === 0x04b8) return PRINTER_CONFIGS.EPSON_TM_T88V
+      if (device.vendorId === 0x0519) return PRINTER_CONFIGS.STAR_TSP143
+      if (device.vendorId === 0x154f) return PRINTER_CONFIGS.CITIZEN_CT_S310A
+      // All other vendors — use generic thermal config
+      return PRINTER_CONFIGS.GENERIC_THERMAL
     } catch (error) {
       console.log('USB printer detection failed:', error)
     }
   }
   
-  // Fallback to generic
   return PRINTER_CONFIGS.GENERIC_THERMAL
+}
+
+// Show ALL USB devices (no filter) — last resort detection
+export async function detectAnyUSBPrinter(): Promise<PrinterConfig | null> {
+  if (!('usb' in navigator)) return null
+  try {
+    // Empty filters = show all connected USB devices
+    const device = await (navigator as any).usb.requestDevice({ filters: [] })
+    console.log(`USB device selected: vendorId=0x${device.vendorId.toString(16)} productId=0x${device.productId.toString(16)} name="${device.productName}"`)
+    return {
+      ...PRINTER_CONFIGS.GENERIC_THERMAL,
+      brand: device.manufacturerName || 'Unknown',
+      model: device.productName || `USB 0x${device.vendorId.toString(16)}`,
+    }
+  } catch (error) {
+    console.log('USB any-device detection failed:', error)
+    return null
+  }
 }
