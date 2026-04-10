@@ -13,7 +13,7 @@ import { format } from "date-fns"
 import {
   RefreshCw, Hotel, Key, Utensils, Megaphone, Calendar, MessageSquare,
   ConciergeBell, ClipboardList, DoorOpen, Users, CheckCircle2,
-  Phone, Upload, X, CreditCard, Banknote, Smartphone, IdCard, Link2, FileText
+  Phone, Upload, X, CreditCard, Banknote, Smartphone, IdCard, Link2, FileText, XCircle
 } from "lucide-react"
 
 const INQUIRY_TYPES = [
@@ -44,6 +44,47 @@ const EMPTY_FORM = {
   idPhotoFront: "", idPhotoBack: "", roomPrice: "", paymentReference: "", transactionUrl: "", photoUrl: "",
 }
 
+function SubmissionCard({ s }: { s: any }) {
+  const INQUIRY_TYPES = [
+    { value: "check_in",  label: "Check-In" },
+    { value: "check_out", label: "Check-Out" },
+  ]
+  const PAYMENT_METHODS = [
+    { value: "cash",           label: "Cash" },
+    { value: "mobile_banking", label: "Mobile Banking" },
+    { value: "telebirr",       label: "Telebirr" },
+    { value: "cheque",         label: "Cheque" },
+  ]
+  const STATUS_STYLES: Record<string, string> = {
+    pending: "bg-yellow-900/30 text-yellow-400 border-yellow-500/30",
+    denied:  "bg-red-900/30 text-red-400 border-red-500/30",
+  }
+  const type = INQUIRY_TYPES.find(t => t.value === s.inquiryType)
+  const pm   = PAYMENT_METHODS.find(p => p.value === s.paymentMethod)
+  return (
+    <div className={`bg-[#0f1110] rounded-xl p-4 border transition-all ${s.status === "denied" ? "border-red-500/10" : "border-white/5 hover:border-white/10"}`}>
+      <div className="flex items-start justify-between gap-2 mb-2">
+        <span className="font-black text-white text-sm">{s.guestName}</span>
+        <span className={`text-[9px] font-black px-2.5 py-1 rounded-full uppercase border shrink-0 ${STATUS_STYLES[s.status] || STATUS_STYLES.pending}`}>
+          {s.status}
+        </span>
+      </div>
+      <div className="flex flex-wrap gap-2 text-[10px] text-gray-500 font-bold">
+        {s.roomNumber && <span>{type?.label} · Room {s.roomNumber}</span>}
+        {s.phone      && <span>{s.phone}</span>}
+        {s.checkIn    && <span>{s.checkIn} → {s.checkOut || "?"}</span>}
+        {s.paymentMethod && <span>{pm?.label || s.paymentMethod}</span>}
+        {s.paymentReference && <span className="text-[#f3cf7a]">Ref #{s.paymentReference}</span>}
+      </div>
+      {s.reviewNote && (
+        <p className="mt-2 text-[10px] text-red-400 bg-red-900/20 rounded-lg px-2 py-1 border border-red-500/20">
+          ↩ {s.reviewNote}
+        </p>
+      )}
+    </div>
+  )
+}
+
 export default function ReceptionDashboard() {
   const { user, token } = useAuth()
   const { notificationState, notify, closeNotification } = useConfirmation()
@@ -53,7 +94,7 @@ export default function ReceptionDashboard() {
   const [submitting, setSubmitting] = useState(false)
   const [submissions, setSubmissions] = useState<any[]>([])
   const [loadingSubmissions, setLoadingSubmissions] = useState(true)
-  const [rightTab, setRightTab] = useState<"submissions" | "guests">("guests")
+  const [rightTab, setRightTab] = useState<"submissions" | "guests" | "denied">("guests")
   const [rooms, setRooms] = useState<Room[]>([])
   const [floors, setFloors] = useState<Floor[]>([])
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null)
@@ -457,8 +498,12 @@ export default function ReceptionDashboard() {
                       <Users size={11} /> Guests ({submissions.filter(s => s.status === "approved").length})
                     </button>
                     <button onClick={() => setRightTab("submissions")}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${rightTab === "submissions" ? "bg-[#d4af37]/10 text-[#f3cf7a] border border-[#d4af37]/30" : "text-gray-500 hover:text-gray-300"}`}>
-                      <ClipboardList size={11} /> My Requests ({submissions.filter(s => s.status === "pending").length})
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${rightTab === "submissions" ? "bg-yellow-900/40 text-yellow-400 border border-yellow-500/30" : "text-gray-500 hover:text-gray-300"}`}>
+                      <ClipboardList size={11} /> Pending ({submissions.filter(s => s.status === "pending").length})
+                    </button>
+                    <button onClick={() => setRightTab("denied")}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${rightTab === "denied" ? "bg-red-900/40 text-red-400 border border-red-500/30" : "text-gray-500 hover:text-gray-300"}`}>
+                      <XCircle size={11} /> Rejected ({submissions.filter(s => s.status === "denied").length})
                     </button>
                   </div>
                   <button onClick={fetchSubmissions} className="text-gray-500 hover:text-[#d4af37] transition-colors">
@@ -512,42 +557,43 @@ export default function ReceptionDashboard() {
                       ))
                     })()}
 
-                    {/* ── SUBMISSIONS TAB: pending/denied ── */}
+                    {/* ── SUBMISSIONS TAB: pending only ── */}
                     {rightTab === "submissions" && (() => {
-                      const mine = submissions.filter(s => s.status !== "approved")
-                      const pending = mine.filter(s => s.status === "pending")
-                      const denied  = mine.filter(s => s.status === "denied")
-                      if (mine.length === 0) return (
+                      const pending = submissions.filter(s => s.status === "pending")
+                      if (pending.length === 0) return (
                         <div className="flex flex-col items-center justify-center py-16 text-center">
-                          <Hotel size={40} className="text-gray-700 mb-3" />
+                          <ClipboardList size={40} className="text-gray-700 mb-3" />
                           <p className="text-gray-600 text-[10px] font-black uppercase tracking-widest">No pending requests</p>
                         </div>
                       )
                       return (
-                        <>
-                          {pending.length > 0 && (
-                            <div>
-                              <p className="text-[9px] font-black uppercase tracking-widest text-yellow-500 mb-2 flex items-center gap-1.5">
-                                <span className="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse" />
-                                Pending Approval ({pending.length})
-                              </p>
-                              <div className="space-y-2 mb-4">
-                                {pending.map((s: any) => <SubmissionCard key={s._id} s={s} />)}
-                              </div>
-                            </div>
-                          )}
-                          {denied.length > 0 && (
-                            <div>
-                              <p className="text-[9px] font-black uppercase tracking-widest text-red-400 mb-2 flex items-center gap-1.5">
-                                <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                                Denied ({denied.length})
-                              </p>
-                              <div className="space-y-2">
-                                {denied.map((s: any) => <SubmissionCard key={s._id} s={s} />)}
-                              </div>
-                            </div>
-                          )}
-                        </>
+                        <div className="space-y-2">
+                          <p className="text-[9px] font-black uppercase tracking-widest text-yellow-500 mb-2 flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse" />
+                            Awaiting Admin Approval ({pending.length})
+                          </p>
+                          {pending.map((s: any) => <SubmissionCard key={s._id} s={s} />)}
+                        </div>
+                      )
+                    })()}
+
+                    {/* ── DENIED TAB ── */}
+                    {rightTab === "denied" && (() => {
+                      const denied = submissions.filter(s => s.status === "denied")
+                      if (denied.length === 0) return (
+                        <div className="flex flex-col items-center justify-center py-16 text-center">
+                          <XCircle size={40} className="text-gray-700 mb-3" />
+                          <p className="text-gray-600 text-[10px] font-black uppercase tracking-widest">No rejected requests</p>
+                        </div>
+                      )
+                      return (
+                        <div className="space-y-2">
+                          <p className="text-[9px] font-black uppercase tracking-widest text-red-400 mb-2 flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                            Rejected by Admin ({denied.length})
+                          </p>
+                          {denied.map((s: any) => <SubmissionCard key={s._id} s={s} />)}
+                        </div>
                       )
                     })()}
 
