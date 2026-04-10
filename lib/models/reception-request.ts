@@ -20,6 +20,7 @@ export interface IReceptionRequest {
   paymentMethod?: "cash" | "mobile_banking" | "telebirr" | "cheque"
   chequeNumber?: string
   paymentReference?: string
+  transactionUrl?: string
   notes?: string
   status: "pending" | "approved" | "denied"
   submittedBy?: string
@@ -49,6 +50,7 @@ const receptionRequestSchema = new Schema<IReceptionRequest>(
     paymentMethod: { type: String, enum: ["cash", "mobile_banking", "telebirr", "cheque"] },
     chequeNumber: { type: String },
     paymentReference: { type: String },
+    transactionUrl: { type: String },
     notes: { type: String },
     status: { type: String, enum: ["pending", "approved", "denied"], default: "pending" },
     submittedBy: { type: String },

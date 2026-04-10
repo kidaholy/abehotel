@@ -9,7 +9,7 @@ import { useConfirmation } from "@/hooks/use-confirmation"
 import {
   RefreshCw, Hotel, Key, Utensils, Megaphone, Calendar, MessageSquare,
   ConciergeBell, ClipboardList, DoorOpen, Users, CheckCircle2,
-  Phone, Upload, X, CreditCard, Banknote, Smartphone, IdCard, Link2
+  Phone, Upload, X, CreditCard, Banknote, Smartphone, IdCard, Link2, FileText
 } from "lucide-react"
 
 const INQUIRY_TYPES = [
@@ -37,7 +37,27 @@ const EMPTY_FORM = {
   guestName: "", faydaId: "", phone: "", roomNumber: "", floorId: "",
   inquiryType: "", checkIn: "", checkOut: "", checkInTime: "", checkOutTime: "",
   guests: "1", paymentMethod: "cash", chequeNumber: "", notes: "",
-  idPhotoFront: "", idPhotoBack: "", roomPrice: "", paymentReference: "", photoUrl: "",
+  idPhotoFront: "", idPhotoBack: "", roomPrice: "", paymentReference: "", transactionUrl: "", photoUrl: "",
+}
+
+function TransactionPreview({ url }: { url: string }) {
+  const proxyUrl = `/api/proxy-pdf?url=${encodeURIComponent(url)}`
+  const filename = url.split("/").pop() || "receipt.pdf"
+  const isPdf = url.toLowerCase().includes(".pdf") || url.toLowerCase().includes("receipt")
+
+  return (
+    <a href={proxyUrl} target="_blank" rel="noreferrer"
+      className="mt-2 flex items-center gap-3 bg-[#1a1c1b] border border-white/10 rounded-xl px-4 py-3 hover:border-[#d4af37]/30 hover:bg-[#d4af37]/5 transition-all group">
+      <div className="w-10 h-10 bg-blue-900/40 border border-blue-500/30 rounded-xl flex items-center justify-center shrink-0">
+        <FileText size={20} className="text-blue-400" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-white text-xs font-black truncate group-hover:text-[#f3cf7a] transition-colors">{filename}</p>
+        <p className="text-[10px] text-gray-500 mt-0.5">{isPdf ? "PDF Document" : "File"} · Click to open</p>
+      </div>
+      <Link2 size={14} className="text-gray-600 group-hover:text-[#d4af37] transition-colors shrink-0" />
+    </a>
+  )
 }
 
 export default function ReceptionDashboard() {
@@ -404,6 +424,16 @@ export default function ReceptionDashboard() {
                             : "Enter cheque number"
                           }
                           className={ic} />
+                        <div className="mt-2">
+                          <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1.5 flex items-center gap-1">
+                            <Link2 size={11} /> Transaction Screenshot URL
+                          </label>
+                          <input name="transactionUrl" value={formData.transactionUrl} onChange={handleChange}
+                            placeholder="https://..." className={ic} />
+                          {formData.transactionUrl && (
+                            <TransactionPreview url={formData.transactionUrl} />
+                          )}
+                        </div>
                       </div>
                     )}
                   </div>
@@ -473,6 +503,12 @@ export default function ReceptionDashboard() {
                             {s.checkIn    && <span className="flex items-center gap-1"><Calendar size={11} /> {s.checkIn}{s.checkInTime ? ` ${s.checkInTime}` : ""} → {s.checkOut || "?"}{s.checkOutTime ? ` ${s.checkOutTime}` : ""}</span>}
                             {s.paymentMethod && <span className="flex items-center gap-1">{pm?.icon} {pm?.label || s.paymentMethod}</span>}
                             {s.paymentReference && <span className="text-[9px] bg-[#1a1c1b] text-[#f3cf7a] border border-[#d4af37]/20 px-2 py-0.5 rounded">Ref #{s.paymentReference}</span>}
+                            {s.transactionUrl && (
+                              <a href={`/api/proxy-pdf?url=${encodeURIComponent(s.transactionUrl)}`} target="_blank" rel="noreferrer"
+                                className="text-[9px] text-blue-400 flex items-center gap-1 hover:text-blue-300">
+                                <Link2 size={10} /> Transaction
+                              </a>
+                            )}
                           </div>
                           {(s.idPhotoFront || s.idPhotoBack) && (
                             <div className="flex gap-2 mt-2">

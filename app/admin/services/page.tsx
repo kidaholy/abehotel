@@ -37,7 +37,8 @@ import {
   Banknote,
   Smartphone,
   CreditCard,
-  Eye
+  Eye,
+  Link
 } from "lucide-react"
 
 type Tab = "menu-standard" | "vip" | "rooms" | "reception"
@@ -568,15 +569,14 @@ export default function AdminServicesPage() {
         </div>
 
         {selectedRequest && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
-            <div className="bg-[#151716] border border-white/10 rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] flex flex-col">
-              {/* Sticky header */}
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4"
+            onClick={e => { if (e.target === e.currentTarget) setSelectedRequest(null) }}>
+            <div className="bg-[#151716] border border-white/10 rounded-2xl shadow-2xl max-w-lg w-full flex flex-col" style={{ maxHeight: "85vh" }}>
               <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 shrink-0">
                 <h2 className="text-lg font-playfair italic text-[#f3cf7a]">Request Detail</h2>
                 <button onClick={() => setSelectedRequest(null)} className="w-8 h-8 bg-[#0f1110] border border-white/20 rounded-xl flex items-center justify-center text-white hover:text-red-400 hover:border-red-500/30 transition-all"><X size={16} /></button>
               </div>
-              {/* Scrollable body */}
-              <div className="overflow-y-auto flex-1 p-6 space-y-4">
+              <div className="overflow-y-auto p-6 space-y-4">
                 <div className="grid grid-cols-2 gap-3">
                   {[
                     ["Guest", selectedRequest.guestName],
@@ -597,6 +597,21 @@ export default function AdminServicesPage() {
                     </div>
                   ))}
                 </div>
+                {selectedRequest.transactionUrl && (
+                  <div className="bg-[#0f1110] rounded-lg p-3 border border-white/5">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-gray-600 mb-2">Transaction</p>
+                    <a href={`/api/proxy-pdf?url=${encodeURIComponent(selectedRequest.transactionUrl)}`} target="_blank" rel="noreferrer"
+                      className="flex items-center gap-3 bg-[#151716] border border-white/10 rounded-xl px-3 py-2.5 hover:border-blue-500/30 transition-all group">
+                      <div className="w-8 h-8 bg-blue-900/40 border border-blue-500/30 rounded-lg flex items-center justify-center shrink-0">
+                        <Link size={14} className="text-blue-400" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-white text-xs font-black truncate">{selectedRequest.transactionUrl.split("/").pop() || "receipt.pdf"}</p>
+                        <p className="text-[9px] text-gray-500">Click to open</p>
+                      </div>
+                    </a>
+                  </div>
+                )}
                 {(selectedRequest.idPhotoFront || selectedRequest.idPhotoBack) && (
                   <div>
                     <p className="text-[9px] font-black uppercase tracking-widest text-gray-600 mb-2">ID Photos</p>
