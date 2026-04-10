@@ -46,6 +46,7 @@ export default function ReportsPage() {
     const [orderHistoryTab, setOrderHistoryTab] = useState<'All' | 'Food' | 'Drinks'>('All')
     const [menuSalesTab, setMenuSalesTab] = useState<'Food' | 'Drinks'>('Food')
     const [initialized, setInitialized] = useState(false)
+    const [receptionRevenue, setReceptionRevenue] = useState(0)
 
     // Context
     const { token } = useAuth()
@@ -82,14 +83,19 @@ export default function ReportsPage() {
             setLoadingSlide(false)
 
             // Secondary data in background — don't block render
-            const [stockRes, usageRes, menuRes] = await Promise.all([
+            const [stockRes, usageRes, menuRes, bedroomRes] = await Promise.all([
                 fetch(`/api/stock`,                                    { headers: { Authorization: `Bearer ${token}` } }),
                 fetch(`/api/reports/stock-usage?period=${timeRange}`,  { headers: { Authorization: `Bearer ${token}` } }),
                 fetch(`/api/menu?all=true`,                            { headers: { Authorization: `Bearer ${token}` } }),
+                fetch(`/api/reports/bedroom-revenue?period=${timeRange}`, { headers: { Authorization: `Bearer ${token}` } }),
             ])
             if (stockRes.ok) setStockItems(await stockRes.json())
             if (usageRes.ok) setStockUsageData(await usageRes.json())
             if (menuRes.ok)  setMenuItems(await menuRes.json())
+            if (bedroomRes.ok) {
+                const bd = await bedroomRes.json()
+                setReceptionRevenue(bd.totalRevenue || 0)
+            }
         } catch (error) {
             console.error("Failed to load report data:", error)
             setInitialized(true)
@@ -185,6 +191,7 @@ export default function ReportsPage() {
     const exportFinancialReport = () => {
         const data = [
             { Metric: "Total Revenue", Type: "INCOME", Amount: `${totalRevenue.toLocaleString()} ETB`, Description: "Total completed orders value for this period" },
+            { Metric: "Reception Revenue", Type: "INCOME", Amount: `${receptionRevenue.toLocaleString()} ETB`, Description: "Approved room bookings for this period" },
             { Metric: "Period Investment (Stock)", Type: "EXPENSE", Amount: `${periodInvestment.toLocaleString()} ETB`, Description: "Inventory restocks and historical bulk purchases" },
             { Metric: "Operational Expenses", Type: "EXPENSE", Amount: `${totalOperationalExpenses.toLocaleString()} ETB`, Description: "Running costs (Rent, Utilities, etc.)" },
             { Metric: "Period Net Profit", Type: "RESULT", Amount: `${periodProfit.toLocaleString()} ETB`, Description: "Revenue - Total Investment for this period" },
@@ -549,6 +556,12 @@ export default function ReportsPage() {
                                                         <td className="p-4 text-gray-500 text-xs text-medium">Total completed orders value for this period</td>
                                                     </tr>
                                                     <tr className="hover:bg-white/5 transition-colors">
+                                                        <td className="p-4 text-gray-300 pl-8 flex items-center gap-2"><div className="w-1.5 h-4 bg-blue-400 rounded-full"></div> Reception Revenue</td>
+                                                        <td className="p-4 text-center"><span className="bg-blue-950/30 text-blue-400 border border-blue-500/30 py-1 px-3 rounded-md text-[9px] font-black uppercase tracking-widest">INCOME</span></td>
+                                                        <td className="p-4 text-right font-black text-blue-400">+{receptionRevenue.toLocaleString()} ETB</td>
+                                                        <td className="p-4 text-gray-500 text-xs">Approved room bookings for this period</td>
+                                                    </tr>
+                                                    <tr className="hover:bg-white/5 transition-colors">
                                                         <td className="p-4 text-gray-300 pl-8 flex items-center gap-2"><div className="w-1.5 h-4 bg-[#f3cf7a] rounded-full"></div> Food Revenue</td>
                                                         <td className="p-4 text-center"><span className="bg-[#b38822]/10 text-[#f3cf7a] border border-[#d4af37]/30 py-1 px-3 rounded-md text-[9px] font-black uppercase tracking-widest">BREAKDOWN</span></td>
                                                         <td className="p-4 text-right font-bold text-[#f3cf7a]">{foodRevenue.toLocaleString()} ETB</td>
@@ -594,6 +607,9 @@ export default function ReportsPage() {
                                                     <span className="text-[10px] font-bold text-gray-400 uppercase">Total Revenue</span>
                                                 </div>
                                                 <p className="text-2xl font-black text-white">+{totalRevenue.toLocaleString()} <span className="text-xs text-[#d4af37]">ETB</span></p>
+                                                {receptionRevenue > 0 && (
+                                                    <p className="text-[10px] text-blue-400 mt-1">+{receptionRevenue.toLocaleString()} ETB reception</p>
+                                                )}
                                             </div>
                                             <div className="p-4 rounded-2xl bg-[#0f1110] border border-white/5">
                                                 <div className="flex justify-between items-center mb-1">

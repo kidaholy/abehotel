@@ -89,12 +89,14 @@ export default function ReceptionDashboard() {
   const { user, token } = useAuth()
   const { notificationState, notify, closeNotification } = useConfirmation()
 
-  const [formData, setFormData] = useState({ ...EMPTY_FORM })
-  const [step, setStep] = useState<1 | 2>(1)
+  const [formData, setFormData] = useState({ ...EMPTY_FORM, inquiryType: "check_in" })
   const [submitting, setSubmitting] = useState(false)
   const [submissions, setSubmissions] = useState<any[]>([])
   const [loadingSubmissions, setLoadingSubmissions] = useState(true)
   const [rightTab, setRightTab] = useState<"submissions" | "guests" | "denied">("guests")
+  const [extendGuest, setExtendGuest] = useState<any | null>(null)
+  const [newCheckOut, setNewCheckOut] = useState("")
+  const [extending, setExtending] = useState(false)
   const [rooms, setRooms] = useState<Room[]>([])
   const [floors, setFloors] = useState<Floor[]>([])
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null)
@@ -140,6 +142,23 @@ export default function ReceptionDashboard() {
     setSelectedRoom(null)
   }
 
+  // Auto-calculate duration and total payment
+  const calcDuration = () => {
+    if (!formData.checkIn || !formData.checkOut) return null
+    const inDate  = new Date(`${formData.checkIn}T${formData.checkInTime || "12:00"}`)
+    const outDate = new Date(`${formData.checkOut}T${formData.checkOutTime || "12:00"}`)
+    const diffMs  = outDate.getTime() - inDate.getTime()
+    if (diffMs <= 0) return null
+    const totalHours = diffMs / (1000 * 60 * 60)
+    const nights = Math.ceil(totalHours / 24)
+    const savedPrice = parseFloat(formData.roomPrice || "0")
+    const pricePerNight = savedPrice > 0 ? savedPrice : (selectedRoom?.price || 0)
+    const total = nights * pricePerNight
+    return { nights, totalHours: Math.round(totalHours), total, pricePerNight }
+  }
+
+  const duration = calcDuration()
+
   const handlePhotoUpload = (file: File, side: "front" | "back") => {
     const set = side === "front" ? setUploadingFront : setUploadingBack
     set(true)
@@ -163,13 +182,39 @@ export default function ReceptionDashboard() {
       })
       if (res.ok) {
         notify({ title: "Submitted!", message: `Request for ${formData.guestName} recorded.`, type: "success" })
-        setFormData({ ...EMPTY_FORM }); setSelectedRoom(null); setStep(1); fetchSubmissions()
+        setFormData({ ...EMPTY_FORM, inquiryType: "check_in" }); setSelectedRoom(null); fetchSubmissions()
       } else {
         const err = await res.json()
         notify({ title: "Error", message: err.message || "Failed to submit", type: "error" })
       }
     } catch { notify({ title: "Error", message: "Network error", type: "error" }) }
     setSubmitting(false)
+  }
+
+  const handleExtend = async () => {
+    if (!extendGuest || !newCheckOut) return
+    setExtending(true)
+    try {
+      const res = await fetch(`/api/reception-requests/${extendGuest._id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          status: "pending",
+          reviewNote: `Extension requested: new check-out ${newCheckOut}`,
+          checkOut: newCheckOut,
+        }),
+      })
+      if (res.ok) {
+        notify({ title: "Extension Requested", message: `New check-out date ${newCheckOut} sent for admin approval.`, type: "success" })
+        setExtendGuest(null)
+        setNewCheckOut("")
+        fetchSubmissions()
+      } else {
+        const err = await res.json()
+        notify({ title: "Error", message: err.message || "Failed", type: "error" })
+      }
+    } catch { notify({ title: "Error", message: "Network error", type: "error" }) }
+    setExtending(false)
   }
 
   const filteredRooms = formData.floorId
@@ -202,52 +247,11 @@ export default function ReceptionDashboard() {
             {/* ── FORM ── */}
             <div className="lg:col-span-7">
               <div className="bg-[#151716] rounded-xl shadow-2xl border border-white/5 p-6 md:p-8">
+                <h2 className="text-[10px] font-black text-gray-500 mb-6 uppercase tracking-widest flex items-center gap-2">
+                  <Hotel size={13} className="text-[#d4af37]" /> New Check-In
+                </h2>
 
-                {/* Step indicator */}
-                <div className="flex items-center gap-3 mb-6">
-                  <div className={`flex items-center justify-center w-6 h-6 rounded-full text-[10px] font-black border transition-all ${step === 1 ? "bg-[#d4af37] text-[#0f1110] border-[#d4af37]" : "bg-emerald-900/40 text-emerald-400 border-emerald-500/30"}`}>
-                    {step === 1 ? "1" : "✓"}
-                  </div>
-                  <div className="h-px flex-1 bg-white/5" />
-                  <div className={`flex items-center justify-center w-6 h-6 rounded-full text-[10px] font-black border transition-all ${step === 2 ? "bg-[#d4af37] text-[#0f1110] border-[#d4af37]" : "bg-[#0f1110] text-gray-600 border-white/10"}`}>2</div>
-                  <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">
-                    {step === 1 ? "Select Inquiry Type" : "Guest Details"}
-                  </span>
-                </div>
-
-                {/* ── STEP 1: Inquiry Type ── */}
-                {step === 1 && (
-                  <div>
-                    <p className="text-gray-400 text-sm mb-6">What is the guest requesting?</p>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                      {INQUIRY_TYPES.map(t => (
-                        <button key={t.value} type="button"
-                          onClick={() => { setFormData(p => ({ ...p, inquiryType: t.value })); setStep(2) }}
-                          className="flex flex-col items-center gap-3 py-6 px-3 rounded-2xl border text-[10px] font-black uppercase tracking-widest transition-all bg-[#0f1110] text-gray-400 border-white/5 hover:border-[#d4af37]/40 hover:text-[#f3cf7a] hover:bg-[#d4af37]/5 hover:shadow-[0_0_20px_rgba(212,175,55,0.1)] active:scale-95">
-                          <span className="text-[#d4af37]">{t.icon}</span>
-                          <span>{t.label}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* ── STEP 2: Guest Details Form ── */}
-                {step === 2 && (
-                  <form onSubmit={handleSubmit} className="space-y-5">
-                    {/* Selected type badge + back button */}
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2 bg-[#d4af37]/10 border border-[#d4af37]/30 rounded-xl px-3 py-2">
-                        <span className="text-[#d4af37]">{INQUIRY_TYPES.find(t => t.value === formData.inquiryType)?.icon}</span>
-                        <span className="text-[10px] font-black uppercase tracking-widest text-[#f3cf7a]">
-                          {INQUIRY_TYPES.find(t => t.value === formData.inquiryType)?.label}
-                        </span>
-                      </div>
-                      <button type="button" onClick={() => setStep(1)}
-                        className="text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-[#d4af37] transition-colors flex items-center gap-1">
-                        ← Change
-                      </button>
-                    </div>
+                <form onSubmit={handleSubmit} className="space-y-5">
 
                   {/* Guest Name */}
                   <div>
@@ -421,6 +425,34 @@ export default function ReceptionDashboard() {
                     </div>
                   </div>
 
+                  {/* Duration & Payment Summary */}
+                  {duration && (
+                    <div className="bg-[#0f1110] border border-[#d4af37]/20 rounded-xl p-4 space-y-3">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-[#d4af37] flex items-center gap-2">
+                        <Calendar size={11} /> Stay Summary
+                      </p>
+                      <div className="grid grid-cols-3 gap-3">
+                        <div className="text-center">
+                          <p className="text-2xl font-black text-white">{duration.nights}</p>
+                          <p className="text-[9px] font-black uppercase tracking-widest text-gray-500">Night{duration.nights !== 1 ? "s" : ""}</p>
+                        </div>
+                        <div className="text-center border-x border-white/5">
+                          <p className="text-2xl font-black text-white">{duration.totalHours}h</p>
+                          <p className="text-[9px] font-black uppercase tracking-widest text-gray-500">Total Hours</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-2xl font-black text-[#f3cf7a]">{duration.total.toLocaleString()}</p>
+                          <p className="text-[9px] font-black uppercase tracking-widest text-gray-500">ETB Total</p>
+                        </div>
+                      </div>
+                      {duration.pricePerNight > 0 && (
+                        <p className="text-[10px] text-gray-500 text-center">
+                          {duration.pricePerNight.toLocaleString()} ETB/night × {duration.nights} night{duration.nights !== 1 ? "s" : ""}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
                   {/* Payment Method */}
                   <div>
                     <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Payment Method</label>
@@ -453,16 +485,21 @@ export default function ReceptionDashboard() {
                             : "Enter cheque number"
                           }
                           className={ic} />
-                        <div className="mt-2">
-                          <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1.5 flex items-center gap-1">
-                            <Link2 size={11} /> Transaction Screenshot URL
-                          </label>
-                          <input name="transactionUrl" value={formData.transactionUrl} onChange={handleChange}
-                            placeholder="https://..." className={ic} />
-                          {formData.transactionUrl && (
-                            <TxPreview url={formData.transactionUrl} />
-                          )}
-                        </div>
+                        {(formData.paymentMethod === "mobile_banking" || formData.paymentMethod === "telebirr") && (
+                          <div className="mt-2">
+                            <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1.5 flex items-center gap-2">
+                              <Link2 size={11} />
+                              {formData.paymentMethod === "telebirr" ? "Telebirr" : "Mobile Banking"} Receipt URL
+                              <span className="text-red-400">*</span>
+                            </label>
+                            <input name="transactionUrl" value={formData.transactionUrl} onChange={handleChange}
+                              placeholder="Paste receipt link from Telebirr / CBE Birr / HelloCash…"
+                              className={ic} />
+                            {formData.transactionUrl && (
+                              <TxPreview url={formData.transactionUrl} />
+                            )}
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -482,7 +519,6 @@ export default function ReceptionDashboard() {
                     )}
                   </button>
                   </form>
-                )}
               </div>
             </div>
 
@@ -527,7 +563,25 @@ export default function ReceptionDashboard() {
                           <p className="text-gray-600 text-[10px] font-black uppercase tracking-widest">No approved guests yet</p>
                         </div>
                       )
-                      return guests.map((s: any) => (
+                      return guests.map((s: any) => {
+                        // Calculate duration for this guest
+                        const calcGuestDuration = () => {
+                          if (!s.checkIn || !s.checkOut) return null
+                          const inDate  = new Date(`${s.checkIn}T${s.checkInTime || "12:00"}`)
+                          const outDate = new Date(`${s.checkOut}T${s.checkOutTime || "12:00"}`)
+                          const diffMs  = outDate.getTime() - inDate.getTime()
+                          if (diffMs <= 0) return null
+                          const nights = Math.ceil(diffMs / (1000 * 60 * 60 * 24))
+                          // Use saved roomPrice, fallback to rooms list
+                          const savedPrice = parseFloat(s.roomPrice || "0")
+                          const roomFromList = rooms.find(r => r.roomNumber === s.roomNumber)
+                          const pricePerNight = savedPrice > 0 ? savedPrice : (roomFromList?.price || 0)
+                          const total = nights * pricePerNight
+                          return { nights, total, pricePerNight }
+                        }
+                        const gd = calcGuestDuration()
+
+                        return (
                         <div key={s._id} className="bg-[#0f1110] rounded-xl p-4 border border-emerald-500/10 hover:border-emerald-500/20 transition-all">
                           <div className="flex items-start gap-3">
                             {s.photoUrl ? (
@@ -546,15 +600,53 @@ export default function ReceptionDashboard() {
                                 {s.roomNumber && <span className="flex items-center gap-1"><DoorOpen size={10} /> Room {s.roomNumber}</span>}
                                 {s.phone      && <span className="flex items-center gap-1"><Phone size={10} /> {s.phone}</span>}
                                 {s.faydaId    && <span className="flex items-center gap-1"><IdCard size={10} /> {s.faydaId}</span>}
-                                {s.checkIn    && <span className="flex items-center gap-1"><Calendar size={10} /> {s.checkIn}{s.checkInTime ? ` ${s.checkInTime}` : ""} → {s.checkOut || "?"}</span>}
+                                {s.checkIn    && <span className="flex items-center gap-1"><Calendar size={10} /> {s.checkIn}{s.checkInTime ? ` ${s.checkInTime}` : ""} → {s.checkOut || "?"}{s.checkOutTime ? ` ${s.checkOutTime}` : ""}</span>}
                                 {s.guests     && <span className="flex items-center gap-1"><Users size={10} /> {s.guests} guest{parseInt(s.guests) > 1 ? "s" : ""}</span>}
-                                {s.roomPrice  && <span className="text-[#f3cf7a]">{s.roomPrice} ETB</span>}
                               </div>
+
+                              {/* Duration & Payment Summary */}
+                              {gd && (
+                                <div className="mt-2 grid grid-cols-3 gap-2">
+                                  <div className="bg-[#151716] rounded-lg p-2 text-center border border-white/5">
+                                    <p className="text-sm font-black text-white">{gd.nights}</p>
+                                    <p className="text-[8px] font-black uppercase tracking-widest text-gray-600">Night{gd.nights !== 1 ? "s" : ""}</p>
+                                  </div>
+                                  <div className="bg-[#151716] rounded-lg p-2 text-center border border-white/5">
+                                    <p className="text-sm font-black text-[#f3cf7a]">{gd.pricePerNight.toLocaleString()}</p>
+                                    <p className="text-[8px] font-black uppercase tracking-widest text-gray-600">ETB/Night</p>
+                                  </div>
+                                  <div className="bg-[#d4af37]/10 rounded-lg p-2 text-center border border-[#d4af37]/20">
+                                    <p className="text-sm font-black text-[#f3cf7a]">{gd.total.toLocaleString()}</p>
+                                    <p className="text-[8px] font-black uppercase tracking-widest text-[#d4af37]/60">Total ETB</p>
+                                  </div>
+                                </div>
+                              )}
+
                               {s.reviewNote && <p className="mt-1.5 text-[10px] text-blue-400 bg-blue-900/20 rounded-lg px-2 py-1 border border-blue-500/20">↩ {s.reviewNote}</p>}
+                              <div className="mt-2 flex gap-2">
+                                <button type="button"
+                                  onClick={() => { setExtendGuest(s); setNewCheckOut(s.checkOut || "") }}
+                                  className="flex items-center gap-1.5 px-3 py-1.5 bg-[#d4af37]/10 border border-[#d4af37]/30 rounded-lg text-[10px] font-black uppercase tracking-widest text-[#f3cf7a] hover:bg-[#d4af37]/20 transition-all">
+                                  <Calendar size={11} /> Extend Stay
+                                </button>
+                                <button type="button"
+                                  onClick={async () => {
+                                    const res = await fetch(`/api/reception-requests/${s._id}`, {
+                                      method: "PUT",
+                                      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                                      body: JSON.stringify({ status: "pending", reviewNote: "Check-out requested by reception" }),
+                                    })
+                                    if (res.ok) { notify({ title: "Check-Out Requested", message: `${s.guestName} check-out sent for admin approval.`, type: "success" }); fetchSubmissions() }
+                                  }}
+                                  className="flex items-center gap-1.5 px-3 py-1.5 bg-red-900/20 border border-red-500/20 rounded-lg text-[10px] font-black uppercase tracking-widest text-red-400 hover:bg-red-900/30 transition-all">
+                                  <Key size={11} /> Check Out
+                                </button>
+                              </div>
                             </div>
                           </div>
                         </div>
-                      ))
+                        )
+                      })
                     })()}
 
                     {/* ── SUBMISSIONS TAB: pending only ── */}
@@ -608,6 +700,52 @@ export default function ReceptionDashboard() {
           title={notificationState.options.title} message={notificationState.options.message}
           type={notificationState.options.type} autoClose={notificationState.options.autoClose}
           duration={notificationState.options.duration} />
+
+        {/* Extend Stay Modal */}
+        {extendGuest && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4"
+            onClick={e => { if (e.target === e.currentTarget) setExtendGuest(null) }}>
+            <div className="bg-[#151716] border border-white/10 rounded-2xl shadow-2xl max-w-sm w-full p-6 space-y-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-playfair italic font-bold text-[#f3cf7a]">Extend Stay</h2>
+                  <p className="text-[10px] text-gray-500 uppercase tracking-widest mt-0.5">{extendGuest.guestName} · Room {extendGuest.roomNumber}</p>
+                </div>
+                <button onClick={() => setExtendGuest(null)} className="w-8 h-8 bg-[#0f1110] border border-white/20 rounded-xl flex items-center justify-center text-white hover:text-red-400 transition-all">
+                  <X size={14} />
+                </button>
+              </div>
+
+              <div className="bg-[#0f1110] rounded-xl p-3 border border-white/5 text-[10px] text-gray-500 font-bold space-y-1">
+                <p>Current check-out: <span className="text-white">{extendGuest.checkOut || "—"}</span></p>
+                <p>Room price: <span className="text-[#f3cf7a]">{extendGuest.roomPrice} ETB/night</span></p>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1.5">New Check-Out Date</label>
+                <input type="date" value={newCheckOut}
+                  min={extendGuest.checkOut || extendGuest.checkIn || undefined}
+                  onChange={e => setNewCheckOut(e.target.value)}
+                  className="w-full bg-[#0f1110] border border-white/10 text-white rounded-xl px-4 py-3 text-sm outline-none focus:border-[#d4af37]/50 transition-all [color-scheme:dark]" />
+              </div>
+
+              <div className="bg-[#0f1110] rounded-xl p-3 border border-[#d4af37]/10 text-[10px] text-gray-500">
+                This will send an extension request to admin for approval.
+              </div>
+
+              <div className="flex gap-3">
+                <button onClick={() => setExtendGuest(null)}
+                  className="flex-1 py-3 bg-[#0f1110] border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-white transition-all">
+                  Cancel
+                </button>
+                <button onClick={handleExtend} disabled={extending || !newCheckOut}
+                  className="flex-[2] py-3 bg-gradient-to-b from-[#f3cf7a] to-[#b38822] text-[#2a1708] border border-[#f5db8b] rounded-xl font-black text-[10px] uppercase tracking-widest shadow-[0_4px_15px_rgba(212,175,55,0.2)] disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all">
+                  {extending ? <><RefreshCw size={12} className="animate-spin" /> Sending…</> : <><Calendar size={12} /> Request Extension</>}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </ProtectedRoute>
   )
