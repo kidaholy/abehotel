@@ -7,6 +7,7 @@ import { BentoNavbar } from "@/components/bento-navbar"
 import { useAuth } from "@/context/auth-context"
 import { ConfirmationCard, NotificationCard } from "@/components/confirmation-card"
 import { useConfirmation } from "@/hooks/use-confirmation"
+import { TransactionPreview } from "@/components/transaction-preview"
 import { MenuManagementSection, CategoryManager } from "@/components/admin/menu-management-section"
 import { 
   Plus, 
@@ -600,25 +601,41 @@ export default function AdminServicesPage() {
                 {selectedRequest.transactionUrl && (
                   <div className="bg-[#0f1110] rounded-lg p-3 border border-white/5">
                     <p className="text-[9px] font-black uppercase tracking-widest text-gray-600 mb-2">Transaction</p>
-                    <a href={`/api/proxy-pdf?url=${encodeURIComponent(selectedRequest.transactionUrl)}`} target="_blank" rel="noreferrer"
-                      className="flex items-center gap-3 bg-[#151716] border border-white/10 rounded-xl px-3 py-2.5 hover:border-blue-500/30 transition-all group">
-                      <div className="w-8 h-8 bg-blue-900/40 border border-blue-500/30 rounded-lg flex items-center justify-center shrink-0">
-                        <Link size={14} className="text-blue-400" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-white text-xs font-black truncate">{selectedRequest.transactionUrl.split("/").pop() || "receipt.pdf"}</p>
-                        <p className="text-[9px] text-gray-500">Click to open</p>
-                      </div>
-                    </a>
+                    <TransactionPreview url={selectedRequest.transactionUrl} />
                   </div>
                 )}
                 {(selectedRequest.idPhotoFront || selectedRequest.idPhotoBack) && (
                   <div>
-                    <p className="text-[9px] font-black uppercase tracking-widest text-gray-600 mb-2">ID Photos</p>
-                    <div className="flex gap-3">
-                      {selectedRequest.idPhotoFront && <a href={selectedRequest.idPhotoFront} target="_blank" rel="noreferrer"><img src={selectedRequest.idPhotoFront} alt="ID Front" className="h-24 w-36 object-cover rounded-lg border border-white/10" /></a>}
-                      {selectedRequest.idPhotoBack  && <a href={selectedRequest.idPhotoBack}  target="_blank" rel="noreferrer"><img src={selectedRequest.idPhotoBack}  alt="ID Back"  className="h-24 w-36 object-cover rounded-lg border border-white/10" /></a>}
+                    <p className="text-[9px] font-black uppercase tracking-widest text-gray-600 mb-2">ID Card Photos</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      {selectedRequest.idPhotoFront && (
+                        <div>
+                          <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-1.5">Front</p>
+                          <a href={selectedRequest.idPhotoFront} target="_blank" rel="noreferrer" className="block group">
+                            <img src={selectedRequest.idPhotoFront} alt="ID Front"
+                              className="w-full h-44 object-cover rounded-xl border border-white/10 group-hover:border-[#d4af37]/40 transition-all shadow-lg" />
+                          </a>
+                        </div>
+                      )}
+                      {selectedRequest.idPhotoBack && (
+                        <div>
+                          <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-1.5">Back</p>
+                          <a href={selectedRequest.idPhotoBack} target="_blank" rel="noreferrer" className="block group">
+                            <img src={selectedRequest.idPhotoBack} alt="ID Back"
+                              className="w-full h-44 object-cover rounded-xl border border-white/10 group-hover:border-[#d4af37]/40 transition-all shadow-lg" />
+                          </a>
+                        </div>
+                      )}
                     </div>
+                  </div>
+                )}
+                {selectedRequest.photoUrl && (
+                  <div>
+                    <p className="text-[9px] font-black uppercase tracking-widest text-gray-600 mb-2">Guest Photo (URL)</p>
+                    <a href={selectedRequest.photoUrl} target="_blank" rel="noreferrer" className="block group">
+                      <img src={selectedRequest.photoUrl} alt="Guest"
+                        className="w-full h-48 object-contain rounded-xl border border-white/10 group-hover:border-[#d4af37]/40 transition-all shadow-lg bg-[#0f1110]" />
+                    </a>
                   </div>
                 )}
                 {selectedRequest.notes && (

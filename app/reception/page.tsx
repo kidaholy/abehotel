@@ -6,6 +6,7 @@ import { BentoNavbar } from "@/components/bento-navbar"
 import { useAuth } from "@/context/auth-context"
 import { NotificationCard } from "@/components/confirmation-card"
 import { useConfirmation } from "@/hooks/use-confirmation"
+import { TransactionPreview as TxPreview } from "@/components/transaction-preview"
 import {
   RefreshCw, Hotel, Key, Utensils, Megaphone, Calendar, MessageSquare,
   ConciergeBell, ClipboardList, DoorOpen, Users, CheckCircle2,
@@ -38,26 +39,6 @@ const EMPTY_FORM = {
   inquiryType: "", checkIn: "", checkOut: "", checkInTime: "", checkOutTime: "",
   guests: "1", paymentMethod: "cash", chequeNumber: "", notes: "",
   idPhotoFront: "", idPhotoBack: "", roomPrice: "", paymentReference: "", transactionUrl: "", photoUrl: "",
-}
-
-function TransactionPreview({ url }: { url: string }) {
-  const proxyUrl = `/api/proxy-pdf?url=${encodeURIComponent(url)}`
-  const filename = url.split("/").pop() || "receipt.pdf"
-  const isPdf = url.toLowerCase().includes(".pdf") || url.toLowerCase().includes("receipt")
-
-  return (
-    <a href={proxyUrl} target="_blank" rel="noreferrer"
-      className="mt-2 flex items-center gap-3 bg-[#1a1c1b] border border-white/10 rounded-xl px-4 py-3 hover:border-[#d4af37]/30 hover:bg-[#d4af37]/5 transition-all group">
-      <div className="w-10 h-10 bg-blue-900/40 border border-blue-500/30 rounded-xl flex items-center justify-center shrink-0">
-        <FileText size={20} className="text-blue-400" />
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-white text-xs font-black truncate group-hover:text-[#f3cf7a] transition-colors">{filename}</p>
-        <p className="text-[10px] text-gray-500 mt-0.5">{isPdf ? "PDF Document" : "File"} · Click to open</p>
-      </div>
-      <Link2 size={14} className="text-gray-600 group-hover:text-[#d4af37] transition-colors shrink-0" />
-    </a>
-  )
 }
 
 export default function ReceptionDashboard() {
@@ -431,7 +412,7 @@ export default function ReceptionDashboard() {
                           <input name="transactionUrl" value={formData.transactionUrl} onChange={handleChange}
                             placeholder="https://..." className={ic} />
                           {formData.transactionUrl && (
-                            <TransactionPreview url={formData.transactionUrl} />
+                            <TxPreview url={formData.transactionUrl} />
                           )}
                         </div>
                       </div>
