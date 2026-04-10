@@ -7,6 +7,9 @@ import { useAuth } from "@/context/auth-context"
 import { NotificationCard } from "@/components/confirmation-card"
 import { useConfirmation } from "@/hooks/use-confirmation"
 import { TransactionPreview as TxPreview } from "@/components/transaction-preview"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Calendar as CalendarPicker } from "@/components/ui/calendar"
+import { format } from "date-fns"
 import {
   RefreshCw, Hotel, Key, Utensils, Megaphone, Calendar, MessageSquare,
   ConciergeBell, ClipboardList, DoorOpen, Users, CheckCircle2,
@@ -50,6 +53,7 @@ export default function ReceptionDashboard() {
   const [submitting, setSubmitting] = useState(false)
   const [submissions, setSubmissions] = useState<any[]>([])
   const [loadingSubmissions, setLoadingSubmissions] = useState(true)
+  const [rightTab, setRightTab] = useState<"submissions" | "guests">("guests")
   const [rooms, setRooms] = useState<Room[]>([])
   const [floors, setFloors] = useState<Floor[]>([])
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null)
@@ -357,11 +361,14 @@ export default function ReceptionDashboard() {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1.5">Check-In Date</label>
-                      <input name="checkIn" type="date" value={formData.checkIn} onChange={handleChange} className={ic} />
+                      <input name="checkIn" type="date" value={formData.checkIn} onChange={handleChange}
+                        className={ic + " [color-scheme:dark]"} />
                     </div>
                     <div>
                       <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1.5">Check-Out Date</label>
-                      <input name="checkOut" type="date" value={formData.checkOut} onChange={handleChange} className={ic} />
+                      <input name="checkOut" type="date" value={formData.checkOut} onChange={handleChange}
+                        min={formData.checkIn || undefined}
+                        className={ic + " [color-scheme:dark]"} />
                     </div>
                     <div>
                       <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1.5">Check-In Time</label>
@@ -440,68 +447,110 @@ export default function ReceptionDashboard() {
 
             {/* ── SUBMISSIONS ── */}
             <div className="lg:col-span-5">
-              <div className="bg-[#151716] rounded-xl shadow-2xl border border-white/5 p-6 h-full">
+              <div className="bg-[#151716] rounded-xl shadow-2xl border border-white/5 p-6 h-full flex flex-col">
+
+                {/* Tab bar */}
                 <div className="flex items-center justify-between mb-5">
-                  <h2 className="text-[10px] font-black text-gray-500 uppercase tracking-widest flex items-center gap-2">
-                    <ClipboardList size={13} /> My Submissions ({submissions.length})
-                  </h2>
+                  <div className="flex gap-1 bg-[#0f1110] border border-white/5 p-1 rounded-xl">
+                    <button onClick={() => setRightTab("guests")}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${rightTab === "guests" ? "bg-emerald-900/40 text-emerald-400 border border-emerald-500/30" : "text-gray-500 hover:text-gray-300"}`}>
+                      <Users size={11} /> Guests ({submissions.filter(s => s.status === "approved").length})
+                    </button>
+                    <button onClick={() => setRightTab("submissions")}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${rightTab === "submissions" ? "bg-[#d4af37]/10 text-[#f3cf7a] border border-[#d4af37]/30" : "text-gray-500 hover:text-gray-300"}`}>
+                      <ClipboardList size={11} /> My Requests ({submissions.filter(s => s.status === "pending").length})
+                    </button>
+                  </div>
                   <button onClick={fetchSubmissions} className="text-gray-500 hover:text-[#d4af37] transition-colors">
                     <RefreshCw className={`w-4 h-4 ${loadingSubmissions ? "animate-spin" : ""}`} />
                   </button>
                 </div>
 
                 {loadingSubmissions ? (
-                  <div className="flex items-center justify-center py-16">
+                  <div className="flex items-center justify-center py-16 flex-1">
                     <RefreshCw className="w-6 h-6 animate-spin text-gray-600" />
                   </div>
-                ) : submissions.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-16 text-center">
-                    <Hotel size={48} className="text-gray-700 mb-3" />
-                    <p className="text-gray-600 text-[10px] font-black uppercase tracking-widest">No submissions yet</p>
-                  </div>
                 ) : (
-                  <div className="space-y-3 max-h-[700px] overflow-y-auto pr-1">
-                    {submissions.map((s: any) => {
-                      const type = INQUIRY_TYPES.find(t => t.value === s.inquiryType)
-                      const pm   = PAYMENT_METHODS.find(p => p.value === s.paymentMethod)
-                      return (
-                        <div key={s._id} className="bg-[#0f1110] rounded-xl p-4 border border-white/5 hover:border-white/10 transition-all">
-                          <div className="flex items-start justify-between gap-2 mb-2">
-                            <div className="flex items-center gap-2 text-[#d4af37]">
-                              {type?.icon ?? <MessageSquare size={16} />}
-                              <span className="font-black text-white text-sm">{s.guestName}</span>
-                            </div>
-                            <span className={`text-[9px] font-black px-2.5 py-1 rounded-full uppercase border ${STATUS_STYLES[s.status] || STATUS_STYLES.pending}`}>
-                              {s.status}
-                            </span>
-                          </div>
-                          <div className="flex flex-wrap gap-2 text-[10px] text-gray-500 font-bold">
-                            {s.faydaId    && <span className="flex items-center gap-1"><IdCard size={11} /> {s.faydaId}</span>}
-                            {s.phone      && <span className="flex items-center gap-1"><Phone size={11} /> {s.phone}</span>}
-                            {s.roomNumber && <span className="flex items-center gap-1"><DoorOpen size={11} /> Room {s.roomNumber}</span>}
-                            {s.roomPrice  && <span>💰 {s.roomPrice} ETB</span>}
-                            {s.guests     && <span className="flex items-center gap-1"><Users size={11} /> {s.guests} guest{parseInt(s.guests) > 1 ? "s" : ""}</span>}
-                            {s.checkIn    && <span className="flex items-center gap-1"><Calendar size={11} /> {s.checkIn}{s.checkInTime ? ` ${s.checkInTime}` : ""} → {s.checkOut || "?"}{s.checkOutTime ? ` ${s.checkOutTime}` : ""}</span>}
-                            {s.paymentMethod && <span className="flex items-center gap-1">{pm?.icon} {pm?.label || s.paymentMethod}</span>}
-                            {s.paymentReference && <span className="text-[9px] bg-[#1a1c1b] text-[#f3cf7a] border border-[#d4af37]/20 px-2 py-0.5 rounded">Ref #{s.paymentReference}</span>}
-                            {s.transactionUrl && (
-                              <a href={`/api/proxy-pdf?url=${encodeURIComponent(s.transactionUrl)}`} target="_blank" rel="noreferrer"
-                                className="text-[9px] text-blue-400 flex items-center gap-1 hover:text-blue-300">
-                                <Link2 size={10} /> Transaction
-                              </a>
-                            )}
-                          </div>
-                          {(s.idPhotoFront || s.idPhotoBack) && (
-                            <div className="flex gap-2 mt-2">
-                              {s.idPhotoFront && <a href={s.idPhotoFront} target="_blank" rel="noreferrer"><img src={s.idPhotoFront} alt="ID Front" className="h-12 w-20 object-cover rounded-lg border border-white/10" /></a>}
-                              {s.idPhotoBack  && <a href={s.idPhotoBack}  target="_blank" rel="noreferrer"><img src={s.idPhotoBack}  alt="ID Back"  className="h-12 w-20 object-cover rounded-lg border border-white/10" /></a>}
-                            </div>
-                          )}
-                          {s.notes      && <p className="mt-2 text-[11px] text-gray-500 bg-[#151716] rounded-lg p-2 border border-white/5 italic">"{s.notes}"</p>}
-                          {s.reviewNote && <p className="mt-2 text-[11px] text-blue-400 bg-blue-900/20 rounded-lg p-2 border border-blue-500/20 flex items-center gap-2"><MessageSquare size={11} /> {s.reviewNote}</p>}
+                  <div className="overflow-y-auto flex-1 space-y-3 pr-1">
+
+                    {/* ── GUESTS TAB: approved check-ins ── */}
+                    {rightTab === "guests" && (() => {
+                      const guests = submissions.filter(s => s.status === "approved")
+                      if (guests.length === 0) return (
+                        <div className="flex flex-col items-center justify-center py-16 text-center">
+                          <Users size={40} className="text-gray-700 mb-3" />
+                          <p className="text-gray-600 text-[10px] font-black uppercase tracking-widest">No approved guests yet</p>
                         </div>
                       )
-                    })}
+                      return guests.map((s: any) => (
+                        <div key={s._id} className="bg-[#0f1110] rounded-xl p-4 border border-emerald-500/10 hover:border-emerald-500/20 transition-all">
+                          <div className="flex items-start gap-3">
+                            {s.photoUrl ? (
+                              <img src={s.photoUrl} alt={s.guestName} className="w-12 h-12 rounded-xl object-cover border border-white/10 shrink-0" />
+                            ) : (
+                              <div className="w-12 h-12 rounded-xl bg-emerald-900/30 border border-emerald-500/20 flex items-center justify-center shrink-0">
+                                <Users size={20} className="text-emerald-400" />
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="font-black text-white text-sm truncate">{s.guestName}</span>
+                                <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-emerald-900/30 text-emerald-400 border border-emerald-500/30 shrink-0">Checked In</span>
+                              </div>
+                              <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1 text-[10px] text-gray-500 font-bold">
+                                {s.roomNumber && <span className="flex items-center gap-1"><DoorOpen size={10} /> Room {s.roomNumber}</span>}
+                                {s.phone      && <span className="flex items-center gap-1"><Phone size={10} /> {s.phone}</span>}
+                                {s.faydaId    && <span className="flex items-center gap-1"><IdCard size={10} /> {s.faydaId}</span>}
+                                {s.checkIn    && <span className="flex items-center gap-1"><Calendar size={10} /> {s.checkIn}{s.checkInTime ? ` ${s.checkInTime}` : ""} → {s.checkOut || "?"}</span>}
+                                {s.guests     && <span className="flex items-center gap-1"><Users size={10} /> {s.guests} guest{parseInt(s.guests) > 1 ? "s" : ""}</span>}
+                                {s.roomPrice  && <span className="text-[#f3cf7a]">{s.roomPrice} ETB</span>}
+                              </div>
+                              {s.reviewNote && <p className="mt-1.5 text-[10px] text-blue-400 bg-blue-900/20 rounded-lg px-2 py-1 border border-blue-500/20">↩ {s.reviewNote}</p>}
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    })()}
+
+                    {/* ── SUBMISSIONS TAB: pending/denied ── */}
+                    {rightTab === "submissions" && (() => {
+                      const mine = submissions.filter(s => s.status !== "approved")
+                      const pending = mine.filter(s => s.status === "pending")
+                      const denied  = mine.filter(s => s.status === "denied")
+                      if (mine.length === 0) return (
+                        <div className="flex flex-col items-center justify-center py-16 text-center">
+                          <Hotel size={40} className="text-gray-700 mb-3" />
+                          <p className="text-gray-600 text-[10px] font-black uppercase tracking-widest">No pending requests</p>
+                        </div>
+                      )
+                      return (
+                        <>
+                          {pending.length > 0 && (
+                            <div>
+                              <p className="text-[9px] font-black uppercase tracking-widest text-yellow-500 mb-2 flex items-center gap-1.5">
+                                <span className="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse" />
+                                Pending Approval ({pending.length})
+                              </p>
+                              <div className="space-y-2 mb-4">
+                                {pending.map((s: any) => <SubmissionCard key={s._id} s={s} />)}
+                              </div>
+                            </div>
+                          )}
+                          {denied.length > 0 && (
+                            <div>
+                              <p className="text-[9px] font-black uppercase tracking-widest text-red-400 mb-2 flex items-center gap-1.5">
+                                <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                                Denied ({denied.length})
+                              </p>
+                              <div className="space-y-2">
+                                {denied.map((s: any) => <SubmissionCard key={s._id} s={s} />)}
+                              </div>
+                            </div>
+                          )}
+                        </>
+                      )
+                    })()}
+
                   </div>
                 )}
               </div>

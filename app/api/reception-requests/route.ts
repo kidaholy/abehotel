@@ -3,17 +3,27 @@ import { connectDB } from "@/lib/db"
 import ReceptionRequest from "@/lib/models/reception-request"
 import { validateSession } from "@/lib/auth"
 
-// GET all requests (admin only)
+// GET all requests (admin) or own submissions (reception)
 export async function GET(request: Request) {
   try {
     const decoded = await validateSession(request)
     await connectDB()
 
-    if (decoded.role !== "admin") {
+    let requests
+    if (decoded.role === "admin") {
+      requests = await ReceptionRequest.find({}).sort({ createdAt: -1 }).lean()
+    } else if (decoded.role === "reception") {
+      // Reception staff sees all approved guests + their own submissions
+      requests = await ReceptionRequest.find({
+        $or: [
+          { submittedBy: decoded.id },
+          { status: "approved" }
+        ]
+      }).sort({ createdAt: -1 }).lean()
+    } else {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 })
     }
 
-    const requests = await ReceptionRequest.find({}).sort({ createdAt: -1 }).lean()
     return NextResponse.json(requests.map(r => ({ ...r, _id: r._id?.toString() })))
   } catch (error: any) {
     const status = error.message?.includes("Unauthorized") ? 401 : 500
