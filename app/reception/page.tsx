@@ -9,7 +9,7 @@ import { useConfirmation } from "@/hooks/use-confirmation"
 import {
   RefreshCw, Hotel, Key, Utensils, Megaphone, Calendar, MessageSquare,
   ConciergeBell, ClipboardList, DoorOpen, Users, CheckCircle2,
-  Phone, Upload, X, CreditCard, Banknote, Smartphone, IdCard
+  Phone, Upload, X, CreditCard, Banknote, Smartphone, IdCard, Link2
 } from "lucide-react"
 
 const INQUIRY_TYPES = [
@@ -37,7 +37,7 @@ const EMPTY_FORM = {
   guestName: "", faydaId: "", phone: "", roomNumber: "", floorId: "",
   inquiryType: "", checkIn: "", checkOut: "", checkInTime: "", checkOutTime: "",
   guests: "1", paymentMethod: "cash", chequeNumber: "", notes: "",
-  idPhotoFront: "", idPhotoBack: "", roomPrice: "", paymentReference: "",
+  idPhotoFront: "", idPhotoBack: "", roomPrice: "", paymentReference: "", photoUrl: "",
 }
 
 export default function ReceptionDashboard() {
@@ -45,7 +45,7 @@ export default function ReceptionDashboard() {
   const { notificationState, notify, closeNotification } = useConfirmation()
 
   const [formData, setFormData] = useState({ ...EMPTY_FORM })
-  const [step, setStep] = useState<1 | 2>(1) // step 1 = pick inquiry type, step 2 = fill form
+  const [step, setStep] = useState<1 | 2>(1)
   const [submitting, setSubmitting] = useState(false)
   const [submissions, setSubmissions] = useState<any[]>([])
   const [loadingSubmissions, setLoadingSubmissions] = useState(true)
@@ -54,6 +54,7 @@ export default function ReceptionDashboard() {
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null)
   const [uploadingFront, setUploadingFront] = useState(false)
   const [uploadingBack, setUploadingBack]   = useState(false)
+  const [photoUploadMode, setPhotoUploadMode] = useState<"url" | "file">("url")
   const frontRef = useRef<HTMLInputElement>(null)
   const backRef  = useRef<HTMLInputElement>(null)
 
@@ -211,8 +212,24 @@ export default function ReceptionDashboard() {
                   {/* Fayda ID + Phone */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1.5 flex items-center gap-1"><IdCard size={11} /> Fayda ID</label>
-                      <input name="faydaId" value={formData.faydaId} onChange={handleChange} placeholder="Fayda ID number" className={ic} />
+                      <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1.5 flex items-center gap-1"><IdCard size={11} /> Fayda ID (FAN)</label>
+                      <input
+                        name="faydaId"
+                        value={formData.faydaId}
+                        onChange={e => {
+                          const v = e.target.value.replace(/\D/g, "").slice(0, 16)
+                          setFormData(p => ({ ...p, faydaId: v }))
+                        }}
+                        placeholder="16-digit FAN number"
+                        maxLength={16}
+                        className={ic}
+                      />
+                      {formData.faydaId && formData.faydaId.length < 16 && (
+                        <p className="text-[9px] text-gray-600 mt-1">{formData.faydaId.length}/16 digits</p>
+                      )}
+                      {formData.faydaId.length === 16 && (
+                        <p className="text-[9px] text-emerald-500 mt-1 flex items-center gap-1"><CheckCircle2 size={10} /> Valid FAN</p>
+                      )}
                     </div>
                     <div>
                       <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1.5 flex items-center gap-1"><Phone size={11} /> Phone</label>
@@ -220,39 +237,82 @@ export default function ReceptionDashboard() {
                     </div>
                   </div>
 
-                  {/* ID Photo Upload */}
+                  {/* ID Photo */}
                   <div>
                     <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">ID Photo</label>
-                    <div className="grid grid-cols-2 gap-3">
-                      {(["front", "back"] as const).map(side => {
-                        const val      = side === "front" ? formData.idPhotoFront : formData.idPhotoBack
-                        const loading  = side === "front" ? uploadingFront : uploadingBack
-                        const ref      = side === "front" ? frontRef : backRef
-                        const key      = side === "front" ? "idPhotoFront" : "idPhotoBack"
-                        return (
-                          <div key={side}>
-                            <p className="text-[9px] font-black text-gray-600 uppercase tracking-widest mb-1.5">{side === "front" ? "Front" : "Back"}</p>
-                            <input ref={ref} type="file" accept="image/*" className="hidden"
-                              onChange={e => e.target.files?.[0] && handlePhotoUpload(e.target.files[0], side)} />
-                            {val ? (
-                              <div className="relative rounded-xl overflow-hidden border border-white/10 h-24">
-                                <img src={val} alt={`ID ${side}`} className="w-full h-full object-cover" />
-                                <button type="button" onClick={() => setFormData(p => ({ ...p, [key]: "" }))}
-                                  className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-0.5 hover:bg-red-500">
-                                  <X size={11} />
-                                </button>
-                              </div>
-                            ) : (
-                              <button type="button" onClick={() => ref.current?.click()}
-                                className="w-full h-24 border border-dashed border-white/10 rounded-xl flex flex-col items-center justify-center gap-1.5 text-gray-600 hover:border-[#d4af37]/30 hover:text-gray-400 transition-all">
-                                {loading ? <RefreshCw size={16} className="animate-spin" /> : <Upload size={16} />}
-                                <span className="text-[9px] font-black uppercase tracking-widest">Upload {side === "front" ? "Front" : "Back"}</span>
-                              </button>
-                            )}
-                          </div>
-                        )
-                      })}
+
+                    {/* Mode toggle */}
+                    <div className="flex gap-1 bg-[#0f1110] border border-white/5 p-1 rounded-xl w-fit mb-3">
+                      <button type="button" onClick={() => setPhotoUploadMode("url")}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${photoUploadMode === "url" ? "bg-[#d4af37]/10 text-[#f3cf7a] border border-[#d4af37]/30" : "text-gray-500 hover:text-gray-300"}`}>
+                        <Link2 size={11} /> URL
+                      </button>
+                      <button type="button" onClick={() => setPhotoUploadMode("file")}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${photoUploadMode === "file" ? "bg-[#d4af37]/10 text-[#f3cf7a] border border-[#d4af37]/30" : "text-gray-500 hover:text-gray-300"}`}>
+                        <Upload size={11} /> File
+                      </button>
                     </div>
+
+                    {/* URL mode */}
+                    {photoUploadMode === "url" && (
+                      <div className="space-y-3">
+                        <div>
+                          <p className="text-[9px] font-black text-gray-600 uppercase tracking-widest mb-1.5">Photo URL</p>
+                          <input
+                            name="photoUrl"
+                            value={formData.photoUrl}
+                            onChange={handleChange}
+                            placeholder="https://example.com/photo.jpg"
+                            className={ic}
+                          />
+                        </div>
+                        {formData.photoUrl && (
+                          <div className="relative rounded-xl overflow-hidden border border-white/10 h-36 w-36">
+                            <img src={formData.photoUrl} alt="Guest Photo"
+                              className="w-full h-full object-cover"
+                              onError={e => { (e.target as HTMLImageElement).src = "" }} />
+                            <button type="button" onClick={() => setFormData(p => ({ ...p, photoUrl: "" }))}
+                              className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-0.5 hover:bg-red-500">
+                              <X size={11} />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* File mode — front & back */}
+                    {photoUploadMode === "file" && (
+                      <div className="grid grid-cols-2 gap-3">
+                        {(["front", "back"] as const).map(side => {
+                          const val     = side === "front" ? formData.idPhotoFront : formData.idPhotoBack
+                          const loading = side === "front" ? uploadingFront : uploadingBack
+                          const ref     = side === "front" ? frontRef : backRef
+                          const key     = side === "front" ? "idPhotoFront" : "idPhotoBack"
+                          return (
+                            <div key={side}>
+                              <p className="text-[9px] font-black text-gray-600 uppercase tracking-widest mb-1.5">{side === "front" ? "Front" : "Back"}</p>
+                              <input ref={ref} type="file" accept="image/*" className="hidden"
+                                onChange={e => e.target.files?.[0] && handlePhotoUpload(e.target.files[0], side)} />
+                              {val ? (
+                                <div className="relative rounded-xl overflow-hidden border border-white/10 h-24">
+                                  <img src={val} alt={`ID ${side}`} className="w-full h-full object-cover" />
+                                  <button type="button" onClick={() => setFormData(p => ({ ...p, [key]: "" }))}
+                                    className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-0.5 hover:bg-red-500">
+                                    <X size={11} />
+                                  </button>
+                                </div>
+                              ) : (
+                                <button type="button" onClick={() => ref.current?.click()}
+                                  className="w-full h-24 border border-dashed border-white/10 rounded-xl flex flex-col items-center justify-center gap-1.5 text-gray-600 hover:border-[#d4af37]/30 hover:text-gray-400 transition-all">
+                                  {loading ? <RefreshCw size={16} className="animate-spin" /> : <Upload size={16} />}
+                                  <span className="text-[9px] font-black uppercase tracking-widest">Upload {side === "front" ? "Front" : "Back"}</span>
+                                </button>
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
                   </div>
 
                   {/* Floor + Room */}

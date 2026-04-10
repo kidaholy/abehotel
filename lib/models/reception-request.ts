@@ -7,6 +7,7 @@ export interface IReceptionRequest {
   phone?: string
   idPhotoFront?: string
   idPhotoBack?: string
+  photoUrl?: string
   floorId?: string
   roomNumber?: string
   roomPrice?: number
@@ -35,6 +36,7 @@ const receptionRequestSchema = new Schema<IReceptionRequest>(
     phone: { type: String },
     idPhotoFront: { type: String },
     idPhotoBack: { type: String },
+    photoUrl: { type: String },
     floorId: { type: String },
     roomNumber: { type: String },
     roomPrice: { type: Number },

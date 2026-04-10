@@ -60,8 +60,17 @@ export default function AdminSettingsPage() {
   const [newCategory, setNewCategory] = useState({ name: "", type: "menu" as "menu" | "stock", description: "" })
   const [categoryType, setCategoryType] = useState<"menu" | "stock">("menu")
 
+  // Always keep formData in sync with settings from DB
+  // Use a ref to track if user has made local changes
+  const isDirty = useRef(false)
+
+  const updateFormData = (updater: (prev: AdminSettings) => AdminSettings) => {
+    isDirty.current = true
+    setFormData(updater)
+  }
+
   useEffect(() => {
-    if (settings && !isInitialized.current) {
+    if (settings && !isDirty.current) {
       setFormData({
         logo_url: settings.logo_url || "",
         favicon_url: settings.favicon_url || "",
@@ -256,7 +265,6 @@ export default function AdminSettingsPage() {
     setSaving(true)
 
     try {
-      // Save all settings one by one to better track failures
       const settingsToSave = [
         { key: "logo_url", value: formData.logo_url, type: "url", desc: t("adminSettings.applicationLogoUrl") },
         { key: "favicon_url", value: formData.favicon_url, type: "url", desc: "Browser Tab Icon (Favicon)" },
@@ -270,7 +278,7 @@ export default function AdminSettingsPage() {
         await handleSaveSetting(s.key, s.value, s.type, s.desc)
       }
 
-      // Refresh settings in context
+      isDirty.current = false
       await refreshSettings()
       notify({
         title: "Settings Saved",
@@ -329,9 +337,9 @@ export default function AdminSettingsPage() {
       setFormData(prev => ({
         ...prev,
         logo_url: compressedImage,
-        // If favicon is empty, update it too
         favicon_url: prev.favicon_url === "" ? compressedImage : prev.favicon_url
       }))
+      isDirty.current = true
     } catch (error) {
       console.error('Failed to process image:', error)
       notify({
@@ -518,7 +526,7 @@ export default function AdminSettingsPage() {
                           <input
                             type="url"
                             value={formData.logo_url.startsWith('data:') ? '' : formData.logo_url}
-                            onChange={(e) => setFormData(prev => ({ ...prev, logo_url: e.target.value }))}
+                            onChange={(e) => { isDirty.current = true; setFormData(prev => ({ ...prev, logo_url: e.target.value })) }}
                             className="w-full bg-[#0f1110] border border-white/10 rounded-2xl px-6 py-4 text-sm focus:outline-none focus:ring-1 focus:ring-[#d4af37] focus:border-[#d4af37] transition-all font-medium text-white placeholder-gray-600"
                             placeholder={t("adminSettings.logoUrlPlaceholder")}
                           />
@@ -624,7 +632,7 @@ export default function AdminSettingsPage() {
                             <input
                               type="url"
                               value={formData.favicon_url.startsWith('data:') ? '' : formData.favicon_url}
-                              onChange={(e) => setFormData(prev => ({ ...prev, favicon_url: e.target.value }))}
+                              onChange={(e) => updateFormData(prev => ({ ...prev, favicon_url: e.target.value }))}
                               className="w-full bg-[#0f1110] border border-white/10 rounded-2xl px-6 py-4 text-sm focus:outline-none focus:ring-1 focus:ring-[#d4af37] focus:border-[#d4af37] transition-all font-medium text-white placeholder-gray-600"
                               placeholder="Favicon URL (e.g. https://.../favicon.png)"
                             />
@@ -643,7 +651,7 @@ export default function AdminSettingsPage() {
                                   setUploading(true)
                                   try {
                                     const compressed = await compressImage(file, { maxWidth: 64, maxHeight: 64, quality: 0.9, format: 'png' })
-                                    setFormData(prev => ({ ...prev, favicon_url: compressed }))
+                                    updateFormData(prev => ({ ...prev, favicon_url: compressed }))
                                   } catch (err) {
                                     console.error(err)
                                   } finally {
@@ -667,7 +675,7 @@ export default function AdminSettingsPage() {
                               </div>
                               <button
                                 type="button"
-                                onClick={() => setFormData(prev => ({ ...prev, favicon_url: "" }))}
+                                onClick={() => updateFormData(prev => ({ ...prev, favicon_url: "" }))}
                                 className="absolute -top-2 -right-2 bg-red-950/80 text-red-500 rounded-full w-7 h-7 flex items-center justify-center text-xs shadow-md hover:bg-red-900 border border-red-500/30 transition-colors"
                               >
                                 ✕
@@ -689,7 +697,7 @@ export default function AdminSettingsPage() {
                       <input
                         type="text"
                         value={formData.app_name}
-                        onChange={(e) => setFormData(prev => ({ ...prev, app_name: e.target.value }))}
+                        onChange={(e) => updateFormData(prev => ({ ...prev, app_name: e.target.value }))}
                         className="w-full bg-[#0f1110] border border-white/10 rounded-2xl px-6 py-4 text-sm focus:outline-none focus:ring-1 focus:ring-[#d4af37] focus:border-[#d4af37] transition-all font-bold text-white placeholder-gray-600"
                         placeholder={t("adminSettings.appNamePlaceholder")}
                         required
@@ -708,7 +716,7 @@ export default function AdminSettingsPage() {
                       <input
                         type="text"
                         value={formData.app_tagline}
-                        onChange={(e) => setFormData(prev => ({ ...prev, app_tagline: e.target.value }))}
+                        onChange={(e) => updateFormData(prev => ({ ...prev, app_tagline: e.target.value }))}
                         className="w-full bg-[#0f1110] border border-white/10 rounded-2xl px-6 py-4 text-sm focus:outline-none focus:ring-1 focus:ring-[#d4af37] focus:border-[#d4af37] transition-all font-medium text-gray-300 placeholder-gray-600"
                         placeholder={t("adminSettings.appTaglinePlaceholder")}
                         required
@@ -731,7 +739,7 @@ export default function AdminSettingsPage() {
                             min="0"
                             max="1"
                             value={formData.vat_rate}
-                            onChange={(e) => setFormData(prev => ({ ...prev, vat_rate: e.target.value }))}
+                            onChange={(e) => updateFormData(prev => ({ ...prev, vat_rate: e.target.value }))}
                             className="w-full bg-[#0f1110] border border-white/10 rounded-2xl px-6 py-4 text-sm focus:outline-none focus:ring-1 focus:ring-[#d4af37] focus:border-[#d4af37] transition-all font-bold text-white placeholder-gray-600"
                             placeholder={t("adminSettings.vatRatePlaceholder")}
                             required
@@ -771,10 +779,10 @@ export default function AdminSettingsPage() {
                         <div className="flex flex-col items-center gap-3 pl-14 sm:pl-0 shrink-0">
                           <button
                             type="button"
-                            onClick={() => setFormData({
-                              ...formData,
-                              enable_cashier_printing: formData.enable_cashier_printing === "true" ? "false" : "true"
-                            })}
+                            onClick={() => updateFormData(prev => ({
+                              ...prev,
+                              enable_cashier_printing: prev.enable_cashier_printing === "true" ? "false" : "true"
+                            }))}
                             className={`relative inline-flex h-8 w-16 items-center rounded-full transition-all duration-500 shadow-inner focus:outline-none ${formData.enable_cashier_printing === "true" ? "bg-[#1a2e20] border border-[#4ade80]/50" : "bg-[#1a1c1b] border border-white/10"
                               }`}
                           >

@@ -31,7 +31,7 @@ export async function POST(request: Request) {
 
     await connectDB()
     const body = await request.json()
-    const { guestName, faydaId, phone, idPhotoFront, idPhotoBack, floorId, roomNumber, roomPrice,
+    const { guestName, faydaId, phone, idPhotoFront, idPhotoBack, photoUrl, floorId, roomNumber, roomPrice,
             inquiryType, checkIn, checkOut, checkInTime, checkOutTime, guests, paymentMethod, chequeNumber, paymentReference, notes } = body
 
     if (!guestName || !inquiryType) {
@@ -39,7 +39,7 @@ export async function POST(request: Request) {
     }
 
     const doc = await ReceptionRequest.create({
-      guestName, faydaId, phone, idPhotoFront, idPhotoBack, floorId, roomNumber, roomPrice,
+      guestName, faydaId, phone, idPhotoFront, idPhotoBack, photoUrl, floorId, roomNumber, roomPrice,
       inquiryType, checkIn, checkOut, checkInTime, checkOutTime, guests, paymentMethod, chequeNumber, paymentReference, notes,
       status: "pending",
       submittedBy: decoded.id

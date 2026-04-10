@@ -216,15 +216,15 @@ export default function AdminReceptionPage() {
         {/* Detail / Review Modal */}
         {selected && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
-            <div className="bg-[#151716] border border-white/10 rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
-              <div className="flex items-center justify-between p-6 border-b border-white/5">
+            <div className="bg-[#151716] border border-white/10 rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] flex flex-col">
+              <div className="flex items-center justify-between p-6 border-b border-white/5 shrink-0">
                 <h2 className="text-lg font-playfair italic text-[#f3cf7a]">Request Detail</h2>
                 <button onClick={() => setSelected(null)} className="w-8 h-8 bg-[#0f1110] border border-white/20 rounded-xl flex items-center justify-center text-white hover:text-red-400 hover:border-red-500/30 hover:bg-red-950/30 transition-all">
                   <X size={16} />
                 </button>
               </div>
 
-              <div className="p-6 space-y-4">
+              <div className="overflow-y-auto flex-1 p-6 space-y-4">
                 {/* Guest info */}
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   {[
