@@ -91,6 +91,6 @@ export async function POST(request: Request) {
         })
     } catch (error: any) {
         console.error("❌ Bulk serve error:", error)
-        return NextResponse.json({ message: error.message || "Failed to mark orders as served" }, { status: 500 })
+        return NextResponse.json({ message: "Failed to mark orders as served" }, { status: 500 })
     }
 }

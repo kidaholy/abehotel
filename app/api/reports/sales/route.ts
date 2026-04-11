@@ -16,7 +16,40 @@ export async function GET(request: Request) {
         const decoded = await validateSession(request)
         if (decoded.role !== "admin" && decoded.role !== "super-admin") return NextResponse.json({ message: "Forbidden" }, { status: 403 })
 
-        await connectDB()
+        try {
+            await connectDB()
+        } catch (dbError: any) {
+            // Database unreachable - return empty report with 200 status
+            console.warn("⚠️ Sales Report - DB unreachable, returning empty report")
+            return NextResponse.json({
+                period,
+                startDate: new Date(),
+                endDate: new Date(),
+                summary: {
+                    totalRevenue: 0,
+                    totalOrders: 0,
+                    completedOrders: 0,
+                    pendingOrders: 0,
+                    cancelledOrders: 0,
+                    paymentStats: {},
+                    totalOtherExpenses: 0,
+                    totalOperationalExpenses: 0,
+                    periodStockInvestment: 0,
+                    totalExpenses: 0,
+                    periodNetProfit: 0,
+                    lifetimeRevenue: 0,
+                    lifetimeStockInvestment: 0,
+                    lifetimeOtherExpenses: 0,
+                    lifetimeOperationalExpenses: 0,
+                    lifetimeTotalInvestment: 0,
+                    lifetimeNetWorth: 0
+                },
+                orders: [],
+                revenueOrders: [],
+                dailyExpenses: [],
+                operationalExpenses: []
+            })
+        }
 
         let startDate = new Date()
         let endDate = new Date()

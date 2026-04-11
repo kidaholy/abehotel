@@ -14,7 +14,21 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url)
     const menuType = searchParams.get('type') || 'all' // 'standard', 'vip1', 'vip2', 'all'
 
-    await connectDB()
+    try {
+      await connectDB()
+    } catch (dbError: any) {
+      // Database unreachable - return empty menu with 200 status
+      console.warn("⚠️ Menu - DB unreachable, returning empty menu")
+      return NextResponse.json([], {
+        headers: {
+          'X-Menu-Count': '0',
+          'X-VIP1-Count': '0',
+          'X-VIP2-Count': '0',
+          'X-Standard-Count': '0',
+        }
+      })
+    }
+
     // Ensure Stock model is registered
     void Stock.modelName
 
@@ -97,6 +111,6 @@ export async function GET(request: Request) {
   } catch (error: any) {
     console.error("Get menu error:", error)
     const status = error.message?.includes("Unauthorized") ? 401 : 500
-    return NextResponse.json({ message: error.message || "Failed to get menu" }, { status })
+    return NextResponse.json({ message: "Failed to get menu" }, { status })
   }
 }

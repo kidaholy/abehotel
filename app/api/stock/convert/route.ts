@@ -44,6 +44,6 @@ export async function POST(request: Request) {
 
     } catch (error: any) {
         console.error("❌ Stock conversion error:", error)
-        return NextResponse.json({ message: error.message || "Failed to convert stock" }, { status: 500 })
+        return NextResponse.json({ message: "Failed to convert stock" }, { status: 500 })
     }
 }

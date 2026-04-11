@@ -76,7 +76,7 @@ export async function PUT(
     } catch (error: any) {
         console.error("❌ Update fixed asset error:", error)
         const status = error.message?.includes("Unauthorized") ? 401 : 500
-        return NextResponse.json({ message: error.message || "Failed to update fixed asset" }, { status })
+        return NextResponse.json({ message: "Failed to update fixed asset" }, { status })
     }
 }
 
@@ -103,6 +103,6 @@ export async function DELETE(
     } catch (error: any) {
         console.error("❌ Delete fixed asset error:", error)
         const status = error.message?.includes("Unauthorized") ? 401 : 500
-        return NextResponse.json({ message: error.message || "Failed to delete fixed asset" }, { status })
+        return NextResponse.json({ message: "Failed to delete fixed asset" }, { status })
     }
 }

@@ -42,7 +42,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
         return NextResponse.json(serializedStock)
     } catch (error: any) {
         console.error("❌ Get stock item error:", error)
-        return NextResponse.json({ message: error.message || "Failed to get stock item" }, { status: 500 })
+        return NextResponse.json({ message: "Failed to get stock item" }, { status: 500 })
     }
 }
 
@@ -182,7 +182,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
         return NextResponse.json(serializedStock)
     } catch (error: any) {
         console.error("❌ Update stock error:", error)
-        return NextResponse.json({ message: error.message || "Failed to update stock item" }, { status: 500 })
+        return NextResponse.json({ message: "Failed to update stock item" }, { status: 500 })
     }
 }
 
@@ -248,6 +248,6 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
         }
     } catch (error: any) {
         console.error("❌ Delete stock error:", error)
-        return NextResponse.json({ message: error.message || "Failed to delete stock item" }, { status: 500 })
+        return NextResponse.json({ message: "Failed to delete stock item" }, { status: 500 })
     }
 }

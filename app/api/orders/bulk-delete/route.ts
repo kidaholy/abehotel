@@ -67,6 +67,6 @@ export async function DELETE(request: Request) {
     })
   } catch (error: any) {
     console.error("Bulk delete orders error:", error)
-    return NextResponse.json({ message: error.message || "Failed to delete orders" }, { status: 500 })
+    return NextResponse.json({ message: "Failed to delete orders" }, { status: 500 })
   }
 }

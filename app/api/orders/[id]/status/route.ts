@@ -94,6 +94,6 @@ export async function PUT(request: Request, context: any) {
     return NextResponse.json({ ok: true, status: orderToUpdate.status })
   } catch (error: any) {
     console.error("Update order status error:", error)
-    return NextResponse.json({ message: error.message || "Failed to update order status" }, { status: 500 })
+    return NextResponse.json({ message: "Failed to update order status" }, { status: 500 })
   }
 }

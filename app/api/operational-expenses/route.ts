@@ -53,7 +53,7 @@ export async function GET(request: Request) {
         return NextResponse.json(expenses)
     } catch (error: any) {
         console.error("❌ Get operational expenses error:", error)
-        return NextResponse.json({ message: error.message || "Failed to get expenses" }, { status: 500 })
+        return NextResponse.json({ message: "Failed to get expenses" }, { status: 500 })
     }
 }
 
@@ -92,7 +92,7 @@ export async function POST(request: Request) {
         return NextResponse.json(expense, { status: _id ? 200 : 201 })
     } catch (error: any) {
         console.error("❌ Save operational expense error:", error)
-        return NextResponse.json({ message: error.message || "Failed to save expense" }, { status: 500 })
+        return NextResponse.json({ message: "Failed to save expense" }, { status: 500 })
     }
 }
 
@@ -121,6 +121,6 @@ export async function DELETE(request: Request) {
         return NextResponse.json({ message: "Expense deleted successfully" })
     } catch (error: any) {
         console.error("❌ Delete operational expense error:", error)
-        return NextResponse.json({ message: error.message || "Failed to delete expense" }, { status: 500 })
+        return NextResponse.json({ message: "Failed to delete expense" }, { status: 500 })
     }
 }

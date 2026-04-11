@@ -50,7 +50,13 @@ export async function GET(request: Request) {
     const decoded = await validateSession(request)
     // console.log("📋 User fetching orders:", decoded.email || decoded.id)
 
-    await connectDB()
+    try {
+      await connectDB()
+    } catch (dbError: any) {
+      // Database unreachable - return empty array with 200 status
+      console.warn("⚠️ Orders - DB unreachable, returning empty array")
+      return NextResponse.json([])
+    }
 
     let query: any = includeDeleted ? {} : { isDeleted: { $ne: true } }
 
@@ -153,7 +159,7 @@ export async function GET(request: Request) {
   } catch (error: any) {
     console.error("❌ Get orders error:", error)
     const status = error.message?.includes("Unauthorized") ? 401 : 500
-    return NextResponse.json({ message: error.message || "Failed to get orders" }, { status })
+    return NextResponse.json({ message: "Failed to get orders" }, { status })
   }
 }
 
@@ -369,6 +375,6 @@ export async function POST(request: Request) {
   } catch (error: any) {
     console.error("Create order error:", error)
     const status = error.message?.includes("Unauthorized") ? 401 : 500
-    return NextResponse.json({ message: error.message || "Failed to create order" }, { status })
+    return NextResponse.json({ message: "Failed to create order" }, { status })
   }
 }

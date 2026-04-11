@@ -60,7 +60,7 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
     return NextResponse.json({ message: "VIP 2 Menu item updated successfully", item: updated })
   } catch (error: any) {
     console.error("[VIP2] PUT error:", error)
-    return NextResponse.json({ message: error.message || "Failed to update VIP 2 item" }, { status: 500 })
+    return NextResponse.json({ message: "Failed to update VIP 2 item" }, { status: 500 })
   }
 }
 
@@ -85,6 +85,6 @@ export async function DELETE(request: Request, context: { params: Promise<{ id: 
     return NextResponse.json({ message: "VIP 2 Menu item deleted successfully" })
   } catch (error: any) {
     console.error("[VIP2] DELETE error:", error)
-    return NextResponse.json({ message: error.message || "Failed to delete VIP 2 item" }, { status: 500 })
+    return NextResponse.json({ message: "Failed to delete VIP 2 item" }, { status: 500 })
   }
 }

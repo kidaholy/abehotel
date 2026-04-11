@@ -54,6 +54,6 @@ export async function POST(request: Request) {
         })
     } catch (error: any) {
         console.error("Normalize VIP 2 menu IDs error:", error)
-        return NextResponse.json({ message: error.message || "Failed to normalize VIP 2 menu IDs" }, { status: 500 })
+        return NextResponse.json({ message: "Failed to normalize VIP 2 menu IDs" }, { status: 500 })
     }
 }

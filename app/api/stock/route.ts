@@ -77,7 +77,7 @@ export async function GET(request: Request) {
     } catch (error: any) {
         console.error("❌ Get stock error:", error)
         const status = error.message?.includes("Unauthorized") ? 401 : 500
-        return NextResponse.json({ message: error.message || "Failed to get stock items" }, { status })
+        return NextResponse.json({ message: "Failed to get stock items" }, { status })
     }
 }
 
@@ -169,6 +169,6 @@ export async function POST(request: Request) {
     } catch (error: any) {
         console.error("❌ Create stock error:", error)
         const status = error.message?.includes("Unauthorized") ? 401 : 500
-        return NextResponse.json({ message: error.message || "Failed to create stock item" }, { status })
+        return NextResponse.json({ message: "Failed to create stock item" }, { status })
     }
 }

@@ -35,7 +35,7 @@ export async function GET(request: Request) {
     return NextResponse.json(serializedItems)
   } catch (error: any) {
     console.error("[VIP2] GET error:", error)
-    return NextResponse.json({ message: error.message || "Failed to get VIP 2 items" }, { status: 500 })
+    return NextResponse.json({ message: "Failed to get VIP 2 items" }, { status: 500 })
   }
 }
 
@@ -121,6 +121,6 @@ export async function POST(request: Request) {
     })
   } catch (error: any) {
     console.error("[VIP2] POST error:", error)
-    return NextResponse.json({ message: error.message || "Failed to create VIP 2 item" }, { status: 500 })
+    return NextResponse.json({ message: "Failed to create VIP 2 item" }, { status: 500 })
   }
 }

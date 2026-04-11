@@ -186,6 +186,6 @@ export async function GET(request: Request) {
         return NextResponse.json(response)
     } catch (error: any) {
         console.error("❌ Stock report error:", error)
-        return NextResponse.json({ message: error.message || "Failed to generate stock report" }, { status: 500 })
+        return NextResponse.json({ message: "Failed to generate stock report" }, { status: 500 })
     }
 }

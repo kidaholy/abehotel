@@ -35,7 +35,7 @@ export async function POST(request: Request) {
         const table = await Table.create({ tableNumber, name, capacity, floorId, isVIP: isVIP || false, status: "active" })
         return NextResponse.json(table, { status: 201 })
     } catch (error: any) {
-        return NextResponse.json({ message: error.message || "Failed to create table" }, { status: 500 })
+        return NextResponse.json({ message: "Failed to create table" }, { status: 500 })
     }
 }
 
@@ -71,7 +71,7 @@ export async function PUT(request: Request) {
 
         return NextResponse.json(updatedTable)
     } catch (error: any) {
-        return NextResponse.json({ message: error.message || "Failed to update table" }, { status: 500 })
+        return NextResponse.json({ message: "Failed to update table" }, { status: 500 })
     }
 }
 

@@ -173,7 +173,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
         return NextResponse.json(serializedOrder)
     } catch (error: any) {
         console.error("❌ Update order error:", error)
-        return NextResponse.json({ message: error.message || "Failed to update order" }, { status: 500 })
+        return NextResponse.json({ message: "Failed to update order" }, { status: 500 })
     }
 }
 
@@ -213,6 +213,6 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
         return NextResponse.json({ message: "Order moved to history successfully" })
     } catch (error: any) {
         console.error("❌ Delete order error:", error)
-        return NextResponse.json({ message: error.message || "Failed to delete order" }, { status: 500 })
+        return NextResponse.json({ message: "Failed to delete order" }, { status: 500 })
     }
 }

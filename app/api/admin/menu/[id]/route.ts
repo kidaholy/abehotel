@@ -64,7 +64,7 @@ export async function PUT(request: Request, context: any) {
     })
   } catch (error: any) {
     console.error("[STANDARD] PUT error:", error)
-    return NextResponse.json({ message: error.message || "Failed to update menu item" }, { status: 500 })
+    return NextResponse.json({ message: "Failed to update menu item" }, { status: 500 })
   }
 }
 
@@ -94,6 +94,6 @@ export async function DELETE(request: Request, context: any) {
     return NextResponse.json({ message: "Menu item deleted successfully" })
   } catch (error: any) {
     console.error("[STANDARD] DELETE error:", error)
-    return NextResponse.json({ message: error.message || "Failed to delete menu item" }, { status: 500 })
+    return NextResponse.json({ message: "Failed to delete menu item" }, { status: 500 })
   }
 }

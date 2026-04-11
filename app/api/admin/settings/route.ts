@@ -31,7 +31,7 @@ export async function GET(request: Request) {
   } catch (error: any) {
     console.error("Get settings error:", error)
     const status = error.message?.includes("Unauthorized") ? 401 : 500
-    return NextResponse.json({ message: error.message || "Failed to get settings" }, { status })
+    return NextResponse.json({ message: "Failed to get settings" }, { status })
   }
 }
 
@@ -73,6 +73,6 @@ export async function PUT(request: Request) {
   } catch (error: any) {
     console.error("Update settings error:", error)
     const status = error.message?.includes("Unauthorized") ? 401 : 500
-    return NextResponse.json({ message: error.message || "Failed to update setting" }, { status })
+    return NextResponse.json({ message: "Failed to update setting" }, { status })
   }
 }

@@ -19,7 +19,7 @@ export async function GET(request: Request) {
     } catch (error: any) {
         console.error("❌ Get categories error:", error)
         const status = error.message?.includes("Unauthorized") ? 401 : 500
-        return NextResponse.json({ message: error.message || "Failed to get categories" }, { status })
+        return NextResponse.json({ message: "Failed to get categories" }, { status })
     }
 }
 
@@ -51,7 +51,7 @@ export async function POST(request: Request) {
     } catch (error: any) {
         console.error("❌ Create category error:", error)
         const status = error.message?.includes("Unauthorized") ? 401 : 500
-        return NextResponse.json({ message: error.message || "Failed to create category" }, { status })
+        return NextResponse.json({ message: "Failed to create category" }, { status })
     }
 }
 // DELETE category (Admin only)
@@ -80,6 +80,6 @@ export async function DELETE(request: Request) {
     } catch (error: any) {
         console.error("❌ Delete category error:", error)
         const status = error.message?.includes("Unauthorized") ? 401 : 500
-        return NextResponse.json({ message: error.message || "Failed to delete category" }, { status })
+        return NextResponse.json({ message: "Failed to delete category" }, { status })
     }
 }

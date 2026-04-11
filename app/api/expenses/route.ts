@@ -65,7 +65,7 @@ export async function GET(request: Request) {
     } catch (error: any) {
         console.error("❌ Get expenses error:", error)
         const status = error.message?.includes("Unauthorized") ? 401 : 500
-        return NextResponse.json({ message: error.message || "Failed to get expenses" }, { status })
+        return NextResponse.json({ message: "Failed to get expenses" }, { status })
     }
 }
 
@@ -94,7 +94,7 @@ export async function DELETE(request: Request) {
         return NextResponse.json({ message: "Expense deleted successfully" })
     } catch (error: any) {
         console.error("❌ Delete expense error:", error)
-        return NextResponse.json({ message: error.message || "Failed to delete expense" }, { status: 500 })
+        return NextResponse.json({ message: "Failed to delete expense" }, { status: 500 })
     }
 }
 
@@ -164,6 +164,6 @@ export async function POST(request: Request) {
     } catch (error: any) {
         console.error("❌ Create/Update expense error:", error)
         const status = error.message?.includes("Unauthorized") ? 401 : 500
-        return NextResponse.json({ message: error.message || "Failed to save expense" }, { status })
+        return NextResponse.json({ message: "Failed to save expense" }, { status })
     }
 }

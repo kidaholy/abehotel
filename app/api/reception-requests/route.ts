@@ -7,7 +7,14 @@ import { validateSession } from "@/lib/auth"
 export async function GET(request: Request) {
   try {
     const decoded = await validateSession(request)
-    await connectDB()
+    
+    try {
+      await connectDB()
+    } catch (dbError: any) {
+      // Database unreachable - return empty array with 200 status
+      console.warn("⚠️ Reception requests - DB unreachable, returning empty array")
+      return NextResponse.json([])
+    }
 
     let requests
     if (decoded.role === "admin") {
@@ -27,7 +34,7 @@ export async function GET(request: Request) {
     return NextResponse.json(requests.map(r => ({ ...r, _id: r._id?.toString() })))
   } catch (error: any) {
     const status = error.message?.includes("Unauthorized") ? 401 : 500
-    return NextResponse.json({ message: error.message || "Failed to get requests" }, { status })
+    return NextResponse.json({ message: "Failed to get requests" }, { status })
   }
 }
 
@@ -39,7 +46,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 })
     }
 
-    await connectDB()
+    try {
+      await connectDB()
+    } catch (dbError: any) {
+      // Database unreachable - return error with 500 status
+      console.warn("⚠️ Reception requests POST - DB unreachable")
+      return NextResponse.json({ message: "Failed to submit request" }, { status: 500 })
+    }
+
     const body = await request.json()
     const { guestName, faydaId, phone, idPhotoFront, idPhotoBack, photoUrl, floorId, roomNumber, roomPrice,
             inquiryType, checkIn, checkOut, checkInTime, checkOutTime, guests, paymentMethod, chequeNumber, paymentReference, transactionUrl, notes } = body
@@ -58,6 +72,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: "Request submitted", request: { ...doc.toObject(), _id: doc._id.toString() } })
   } catch (error: any) {
     const status = error.message?.includes("Unauthorized") ? 401 : 500
-    return NextResponse.json({ message: error.message || "Failed to submit request" }, { status })
+    return NextResponse.json({ message: "Failed to submit request" }, { status })
   }
 }

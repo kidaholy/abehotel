@@ -33,6 +33,6 @@ export async function POST(req: Request) {
         if (error.code === 11000) {
             return NextResponse.json({ message: "Room number already exists" }, { status: 400 })
         }
-        return NextResponse.json({ message: error.message || "Failed to create room" }, { status: 500 })
+        return NextResponse.json({ message: "Failed to create room" }, { status: 500 })
     }
 }

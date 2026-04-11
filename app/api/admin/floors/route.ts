@@ -41,7 +41,7 @@ export async function POST(request: Request) {
         const floor = await (Floor as any).create({ floorNumber, description, order: order || 0, isVIP: isVIP || false, type: type || 'standard' })
         return NextResponse.json(floor, { status: 201 })
     } catch (error: any) {
-        return NextResponse.json({ message: error.message || "Failed to create floor" }, { status: 500 })
+        return NextResponse.json({ message: "Failed to create floor" }, { status: 500 })
     }
 }
 
@@ -68,7 +68,7 @@ export async function PUT(request: Request) {
 
         return NextResponse.json(updatedFloor)
     } catch (error: any) {
-        return NextResponse.json({ message: error.message || "Failed to update floor" }, { status: 500 })
+        return NextResponse.json({ message: "Failed to update floor" }, { status: 500 })
     }
 }
 

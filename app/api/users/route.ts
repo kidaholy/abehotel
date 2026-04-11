@@ -30,7 +30,7 @@ export async function GET(request: Request) {
   } catch (error: any) {
     console.error("❌ Get users error:", error)
     const status = error.message?.includes("Unauthorized") ? 401 : 500
-    return NextResponse.json({ message: error.message || "Failed to get users" }, { status })
+    return NextResponse.json({ message: "Failed to get users" }, { status })
   }
 }
 
@@ -100,6 +100,6 @@ export async function POST(request: Request) {
   } catch (error: any) {
     console.error("❌ Create user error:", error)
     const status = error.message?.includes("Unauthorized") ? 401 : 500
-    return NextResponse.json({ message: error.message || "Failed to create user" }, { status })
+    return NextResponse.json({ message: "Failed to create user" }, { status })
   }
 }

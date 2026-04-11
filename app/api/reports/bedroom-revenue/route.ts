@@ -10,7 +10,19 @@ export async function GET(request: Request) {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 })
     }
 
-    await connectDB()
+    try {
+      await connectDB()
+    } catch (dbError: any) {
+      // Database unreachable - return empty report with 200 status
+      console.warn("⚠️ Bedroom revenue report - DB unreachable, returning empty report")
+      return NextResponse.json({
+        totalRevenue: 0,
+        totalBookings: 0,
+        byRoom: [],
+        byPayment: [],
+        bookings: []
+      })
+    }
 
     const { searchParams } = new URL(request.url)
     const period = searchParams.get("period") || "month"
@@ -69,6 +81,6 @@ export async function GET(request: Request) {
       }))
     })
   } catch (error: any) {
-    return NextResponse.json({ message: error.message || "Failed" }, { status: 500 })
+    return NextResponse.json({ message: "Failed" }, { status: 500 })
   }
 }

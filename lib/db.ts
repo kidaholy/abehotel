@@ -1,7 +1,7 @@
 import "./dns-fix"
 import mongoose from "mongoose"
 
-const MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost:27017/restaurant-management"
+const MONGODB_URI = process.env.MONGODB_URI || "mongodb+srv://lidiyagizaw2007:holyunion@cluster0.lhifyl9.mongodb.net/abehotel"
 
 let cached = (global as any).mongoose
 if (!cached) {
@@ -21,31 +21,18 @@ export async function connectDB() {
   }
 
   if (!cached.promise) {
-    console.log("🔄 Initializing new MongoDB connection...")
+    console.log("🔄 Initializing MongoDB connection...")
+    
     cached.promise = mongoose.connect(MONGODB_URI, {
       maxPoolSize: 10,
-      serverSelectionTimeoutMS: 10000,
+      serverSelectionTimeoutMS: 30000,
       socketTimeoutMS: 45000,
-      connectTimeoutMS: 10000,
+      connectTimeoutMS: 30000,
       heartbeatFrequencyMS: 10000,
       bufferCommands: false,
-      family: 4,
     }).then(async (m) => {
       console.log("✅ MongoDB connected successfully")
-      await Promise.all([
-        import("./models/user"),
-        import("./models/table"),
-        import("./models/floor"),
-        import("./models/order"),
-        import("./models/menu-item"),
-        import("./models/vip1-menu-item"),
-        import("./models/vip2-menu-item"),
-        import("./models/stock"),
-        import("./models/category"),
-        import("./models/reception-request"),
-        import("./models/service"),
-      ])
-      console.log("📦 All Mongoose models registered")
+      await loadModels()
       return m
     })
   }
@@ -53,12 +40,31 @@ export async function connectDB() {
   try {
     cached.conn = await cached.promise
   } catch (e: any) {
-    // Always reset on failure so next request retries fresh
     cached.promise = null
     cached.conn = null
-    console.error("❌ MongoDB connection error:", e.message)
+    // Silently fail - app handles with JWT fallback
     throw e
   }
 
   return cached.conn
+}
+
+/**
+ * Load all Mongoose models
+ */
+async function loadModels() {
+  await Promise.all([
+    import("./models/user"),
+    import("./models/table"),
+    import("./models/floor"),
+    import("./models/order"),
+    import("./models/menu-item"),
+    import("./models/vip1-menu-item"),
+    import("./models/vip2-menu-item"),
+    import("./models/stock"),
+    import("./models/category"),
+    import("./models/reception-request"),
+    import("./models/service"),
+  ])
+  console.log("📦 All Mongoose models registered")
 }

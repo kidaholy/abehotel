@@ -54,6 +54,6 @@ export async function POST(request: Request) {
         })
     } catch (error: any) {
         console.error("Normalize menu IDs error:", error)
-        return NextResponse.json({ message: error.message || "Failed to normalize menu IDs" }, { status: 500 })
+        return NextResponse.json({ message: "Failed to normalize menu IDs" }, { status: 500 })
     }
 }

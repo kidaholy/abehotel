@@ -60,6 +60,6 @@ export async function POST(request: Request) {
     } catch (error: any) {
         console.error("❌ Store transfer error:", error)
         const status = error.message?.includes("Unauthorized") ? 401 : 500
-        return NextResponse.json({ message: error.message || "Failed to transfer item" }, { status })
+        return NextResponse.json({ message: "Failed to transfer item" }, { status })
     }
 }

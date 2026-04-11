@@ -79,7 +79,7 @@ export async function GET(request: Request) {
     } catch (error: any) {
         console.error("❌ Get admin expenses error:", error)
         const status = error.message?.includes("Unauthorized") ? 401 : 500
-        return NextResponse.json({ message: error.message || "Failed to get expenses" }, { status })
+        return NextResponse.json({ message: "Failed to get expenses" }, { status })
     }
 }
 
@@ -241,7 +241,7 @@ export async function POST(request: Request) {
     } catch (error: any) {
         console.error("❌ Create/Update admin expense error:", error)
         const status = error.message?.includes("Unauthorized") ? 401 : 500
-        return NextResponse.json({ message: error.message || "Failed to save expense" }, { status })
+        return NextResponse.json({ message: "Failed to save expense" }, { status })
     }
 }
 
@@ -271,6 +271,6 @@ export async function DELETE(request: Request) {
     } catch (error: any) {
         console.error("❌ Delete admin expense error:", error)
         const status = error.message?.includes("Unauthorized") ? 401 : 500
-        return NextResponse.json({ message: error.message || "Failed to delete expense" }, { status })
+        return NextResponse.json({ message: "Failed to delete expense" }, { status })
     }
 }

@@ -374,6 +374,6 @@ export async function GET(request: Request) {
 
   } catch (error: any) {
     console.error("❌ Business metrics error:", error)
-    return NextResponse.json({ message: error.message || "Failed to fetch business metrics" }, { status: 500 })
+    return NextResponse.json({ message: "Failed to fetch business metrics" }, { status: 500 })
   }
 }

@@ -1,10 +1,31 @@
-const dns = require("dns");
+import dns from "dns";
 import https from "https";
 
 /**
  * DNS-over-HTTPS (DoH) fallback using Google DNS
  */
+
+// In-memory cache for DNS records to avoid redundant DoH calls
+const dnsCache: { [key: string]: { data: any, timestamp: number } } = {};
+const CACHE_TTL = 300000; // 5 minutes
+
+function getCached(key: string) {
+    const cached = dnsCache[key];
+    if (cached && (Date.now() - cached.timestamp < CACHE_TTL)) {
+        return cached.data;
+    }
+    return null;
+}
+
+function setCache(key: string, data: any) {
+    dnsCache[key] = { data, timestamp: Date.now() };
+}
+
 async function fetchDoH(name: string, type: string = 'A'): Promise<any[]> {
+    const cacheKey = `${name}:${type}`;
+    const cached = getCached(cacheKey);
+    if (cached) return cached;
+
     return new Promise((resolve, reject) => {
         // Use IP directly to avoid infinite recursion when dns.lookup is patched
         const url = `https://8.8.8.8/resolve?name=${name}&type=${type}`;
@@ -19,6 +40,7 @@ async function fetchDoH(name: string, type: string = 'A'): Promise<any[]> {
                 try {
                     const json = JSON.parse(data);
                     if (json.Status === 0 && json.Answer) {
+                        setCache(cacheKey, json.Answer);
                         resolve(json.Answer);
                     } else {
                         resolve([]);
@@ -47,35 +69,36 @@ function processSrvAnswers(answers: any[]): any[] {
 
 /**
  * Robust DNS Fix for Environments with Broken OS DNS
- * This utility:
- * 1. Sets Google DNS as the preferred resolver for Node.js `dns.resolve*` calls.
- * 2. Overrides the global `dns.lookup` used by MongoDB/Mongoose.
- * 3. Overrides `dns.resolveSrv` for MongoDB SRV resolution.
- * 4. Recursively follows CNAME chains.
- * 5. Extracts IP addresses from AWS `ec2-x-y-z-w` hostnames if resolution fails.
  */
 
 const originalLookup = dns.lookup;
 const originalResolve = dns.resolve;
-const originalResolve4 = dns.resolve4;
-const originalResolveCname = dns.resolveCname;
 const originalResolveSrv = dns.resolveSrv;
 const originalResolveTxt = dns.resolveTxt;
-const dnsPromises = dns.promises || (require('dns').promises);
+// @ts-ignore
+const dnsPromises = dns.promises || (dns.promises);
 const originalPromisesResolveSrv = dnsPromises.resolveSrv;
 const originalPromisesResolveTxt = dnsPromises.resolveTxt;
 
 // Use reliable public DNS to prevent 15 second UDP timeouts on unreachable local networks
 dns.setServers(['8.8.8.8', '1.1.1.1']);
 
+const FALLBACK_TIMEOUT = 500; // ms - reduced from 2000 for faster recovery
+
 async function recursiveHybridResolve(hostname: string): Promise<{ address: string, family: number }> {
+    const cacheKey = `${hostname}:LOOKUP`;
+    const cached = getCached(cacheKey);
+    if (cached) return cached;
+
     // 1. Try A record resolution via Google DNS
     try {
         const addresses = await new Promise<string[]>((resolve, reject) => {
             dns.resolve4(hostname, (err, data) => err ? reject(err) : resolve(data));
         });
         if (addresses && addresses.length > 0) {
-            return { address: addresses[0], family: 4 };
+            const res = { address: addresses[0], family: 4 };
+            setCache(cacheKey, res);
+            return res;
         }
     } catch (e) {
         // Fallback 1.5: Try DoH for A record
@@ -85,7 +108,9 @@ async function recursiveHybridResolve(hostname: string): Promise<{ address: stri
                 const ip = answers.find(a => a.type === 1)?.data;
                 if (ip) {
                     console.log(`🌐 DNS Fix: Resolved via DoH (A) ${hostname} -> ${ip}`);
-                    return { address: ip, family: 4 };
+                    const res = { address: ip, family: 4 };
+                    setCache(cacheKey, res);
+                    return res;
                 }
             }
         } catch (dohErr) {
@@ -93,13 +118,14 @@ async function recursiveHybridResolve(hostname: string): Promise<{ address: stri
         }
     }
 
-    // 2. AWS EC2 Pattern fallback (e.g. ec2-159-41-77-250.me-south-1.compute.amazonaws.com)
-    // Extract IP directly from hostname if it follows the EC2 convention
+    // 2. AWS EC2 Pattern fallback
     const awsMatch = hostname.match(/^ec2-([0-9-]+)\./);
     if (awsMatch) {
         const ip = awsMatch[1].replace(/-/g, '.');
         console.log(`🌐 DNS Fix: Extracted IP from AWS host ${hostname} -> ${ip}`);
-        return { address: ip, family: 4 };
+        const res = { address: ip, family: 4 };
+        setCache(cacheKey, res);
+        return res;
     }
 
     // 3. Try CNAME resolution and recurse
@@ -118,14 +144,14 @@ async function recursiveHybridResolve(hostname: string): Promise<{ address: stri
 }
 
 // Apply the global override
-// @ts-ignore - overriding internal node dns function
+// @ts-ignore
 dns.lookup = function (hostname: any, options: any, callback: any) {
     if (typeof options === 'function') {
         callback = options;
         options = {};
     }
 
-    console.log(`🌐 DNS Fix:lookup called for ${hostname}`);
+    if (!hostname) return originalLookup(hostname, options, callback);
 
     // Always use original lookup for localhost and DNS servers
     if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1' || hostname === '8.8.8.8' || hostname === '1.1.1.1' || hostname === 'dns.google') {
@@ -141,7 +167,6 @@ dns.lookup = function (hostname: any, options: any, callback: any) {
             }
         })
         .catch(() => {
-            // Final fallback to original OS lookup
             originalLookup(hostname, options, callback);
         });
 };
@@ -155,7 +180,6 @@ dns.resolve = function (hostname: string, typeOrCallback: any, callback: any) {
     } else if (typeof typeOrCallback === 'string') {
         type = typeOrCallback;
     }
-
     let called = false;
     const timeout = setTimeout(() => {
         if (called) return;
@@ -163,15 +187,29 @@ dns.resolve = function (hostname: string, typeOrCallback: any, callback: any) {
         fetchDoH(hostname, type)
             .then(answers => {
                 if (answers.length > 0) {
-                    const results = answers.map(a => a.data);
-                    console.log(`🌐 DNS Fix: Resolved via DoH (resolve:${type} - TIMEOUT FALLBACK) ${hostname}`);
-                    realCallback(null, results);
+                    let results: any[] = [];
+                    if (type === 'A') {
+                        results = answers.filter(a => a.type === 1).map(a => a.data);
+                    } else if (type === 'AAAA') {
+                        results = answers.filter(a => a.type === 28).map(a => a.data);
+                    } else if (type === 'TXT') {
+                        results = answers.filter(a => a.type === 16).map(a => [a.data.replace(/^"|"$/g, '')]);
+                    } else {
+                        results = answers.map(a => a.data);
+                    }
+                    
+                    if (results.length > 0) {
+                        console.log(`🌐 DNS Fix: Resolved via DoH (resolve:${type} - TIMEOUT FALLBACK) ${hostname}`);
+                        realCallback(null, results);
+                    } else {
+                        realCallback(new Error(`No ${type} records found via DoH`), []);
+                    }
                 } else {
                     realCallback(new Error(`DoH resolution failed for ${type}`), []);
                 }
             })
             .catch(dohErr => realCallback(dohErr, []));
-    }, 2000);
+    }, FALLBACK_TIMEOUT);
 
     originalResolve(hostname, type, (err, records) => {
         if (called) return;
@@ -181,19 +219,26 @@ dns.resolve = function (hostname: string, typeOrCallback: any, callback: any) {
             return realCallback(null, records);
         }
 
-        // Immediate fallback if error occurred before timeout
         fetchDoH(hostname, type)
             .then(answers => {
                 if (answers.length > 0) {
-                    const results = answers.map(a => {
-                        // For TXT records, DoH returns strings that might need to be split/wrapped
-                        if (type === 'TXT') {
-                            return [a.data.replace(/^"|"$/g, '')];
-                        }
-                        return a.data;
-                    });
-                    console.log(`🌐 DNS Fix: Resolved via DoH (resolve:${type} - ERROR FALLBACK) ${hostname}`);
-                    realCallback(null, results);
+                    let results: any[] = [];
+                    if (type === 'A') {
+                        results = answers.filter(a => a.type === 1).map(a => a.data);
+                    } else if (type === 'AAAA') {
+                        results = answers.filter(a => a.type === 28).map(a => a.data);
+                    } else if (type === 'TXT') {
+                        results = answers.filter(a => a.type === 16).map(a => [a.data.replace(/^"|"$/g, '')]);
+                    } else {
+                        results = answers.map(a => a.data);
+                    }
+
+                    if (results.length > 0) {
+                        console.log(`🌐 DNS Fix: Resolved via DoH (resolve:${type} - ERROR FALLBACK) ${hostname}`);
+                        realCallback(null, results);
+                    } else {
+                        realCallback(err || new Error(`No ${type} records found via DoH`), records);
+                    }
                 } else {
                     realCallback(err || new Error(`DoH resolution failed for ${type}`), records);
                 }
@@ -202,13 +247,11 @@ dns.resolve = function (hostname: string, typeOrCallback: any, callback: any) {
     });
 };
 
-// Override resolveTxt
 // @ts-ignore
 dns.resolveTxt = function (hostname: string, callback: any) {
     dns.resolve(hostname, 'TXT', callback);
 };
 
-// Override resolveSrv for MongoDB Atlas SRV resolution
 // @ts-ignore
 dns.resolve4 = function (hostname: string, callback: any) {
     dns.resolve(hostname, 'A', (err, results) => {
@@ -222,10 +265,8 @@ dns.resolveCname = function (hostname: string, callback: any) {
     dns.resolve(hostname, 'CNAME', callback);
 };
 
-// Override resolveSrv for MongoDB Atlas SRV resolution
 // @ts-ignore
 dns.resolveSrv = function (hostname: string, callback: any) {
-    console.log(`🌐 DNS Fix:resolveSrv called for ${hostname}`);
     let called = false;
     const timeout = setTimeout(() => {
         if (called) return;
@@ -241,7 +282,7 @@ dns.resolveSrv = function (hostname: string, callback: any) {
                 }
             })
             .catch(dohErr => callback(dohErr, []));
-    }, 2000);
+    }, FALLBACK_TIMEOUT);
 
     originalResolveSrv(hostname, (err, records) => {
         if (called) return;
@@ -251,7 +292,6 @@ dns.resolveSrv = function (hostname: string, callback: any) {
             return callback(null, records);
         }
 
-        // Immediate fallback
         fetchDoH(hostname, 'SRV')
             .then(answers => {
                 const srvRecords = processSrvAnswers(answers);
@@ -266,22 +306,26 @@ dns.resolveSrv = function (hostname: string, callback: any) {
     });
 };
 
-// Override dns.promises versions
 // @ts-ignore
 dnsPromises.resolveSrv = async function (hostname: string) {
-    console.log(`🌐 DNS Fix:promises.resolveSrv called for ${hostname}`);
+    const cacheKey = `${hostname}:SRV`;
+    const cached = getCached(cacheKey);
+    if (cached) return cached;
+
     try {
-        // Race original against a 2s timeout
-        return await Promise.race([
+        const res = await Promise.race([
             originalPromisesResolveSrv(hostname),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 2000))
+            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), FALLBACK_TIMEOUT))
         ]);
+        setCache(cacheKey, res);
+        return res;
     } catch (err) {
         const answers = await fetchDoH(hostname, 'SRV');
         const srvRecords = processSrvAnswers(answers);
 
         if (srvRecords.length > 0) {
             console.log(`🌐 DNS Fix: Resolved via DoH (promises.SRV) ${hostname} -> ${srvRecords.length} nodes`);
+            setCache(cacheKey, srvRecords);
             return srvRecords;
         }
         throw err;
@@ -290,17 +334,23 @@ dnsPromises.resolveSrv = async function (hostname: string) {
 
 // @ts-ignore
 dnsPromises.resolveTxt = async function (hostname: string) {
-    console.log(`🌐 DNS Fix:promises.resolveTxt called for ${hostname}`);
+    const cacheKey = `${hostname}:TXT`;
+    const cached = getCached(cacheKey);
+    if (cached) return cached;
+
     try {
-        return await Promise.race([
+        const res = await Promise.race([
             originalPromisesResolveTxt(hostname),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 2000))
+            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), FALLBACK_TIMEOUT))
         ]);
+        setCache(cacheKey, res);
+        return res;
     } catch (err) {
         const answers = await fetchDoH(hostname, 'TXT');
         const txtRecords = answers.filter(a => a.type === 16).map(a => [a.data.replace(/^"|"$/g, '')]);
         if (txtRecords.length > 0) {
             console.log(`🌐 DNS Fix: Resolved via DoH (promises.TXT) ${hostname}`);
+            setCache(cacheKey, txtRecords);
             return txtRecords;
         }
         throw err;
@@ -313,7 +363,6 @@ dnsPromises.lookup = async function (hostname: string, options: any) {
         dns.lookup(hostname, options, (err, address, family) => {
             if (err) reject(err);
             else {
-                // Return format depends on options.all
                 if (options && options.all) {
                     resolve([{ address, family: family || 4 }]);
                 } else {
@@ -324,4 +373,4 @@ dnsPromises.lookup = async function (hostname: string, options: any) {
     });
 };
 
-console.log("🚀 Robust DNS Fix initialized (Google DNS + Recursive CNAME Follower)");
+console.log("🚀 Robust DNS Fix optimized (with Caching and 500ms Fallback)");

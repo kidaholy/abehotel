@@ -37,7 +37,7 @@ export async function GET(request: Request) {
     } catch (error: any) {
         console.error("❌ Get fixed assets error:", error)
         const status = error.message?.includes("Unauthorized") ? 401 : 500
-        return NextResponse.json({ message: error.message || "Failed to get fixed assets" }, { status })
+        return NextResponse.json({ message: "Failed to get fixed assets" }, { status })
     }
 }
 
@@ -82,6 +82,6 @@ export async function POST(request: Request) {
     } catch (error: any) {
         console.error("❌ Create fixed asset error:", error)
         const status = error.message?.includes("Unauthorized") ? 401 : 500
-        return NextResponse.json({ message: error.message || "Failed to create fixed asset" }, { status })
+        return NextResponse.json({ message: "Failed to create fixed asset" }, { status })
     }
 }

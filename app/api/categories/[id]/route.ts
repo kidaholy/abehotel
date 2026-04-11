@@ -47,7 +47,7 @@ export async function DELETE(request: Request, context: any) {
         return NextResponse.json({ message: "Category deleted and items updated successfully" })
     } catch (error: any) {
         console.error("❌ Delete category error:", error)
-        return NextResponse.json({ message: error.message || "Failed to delete category" }, { status: 500 })
+        return NextResponse.json({ message: "Failed to delete category" }, { status: 500 })
     }
 }
 
@@ -100,6 +100,6 @@ export async function PUT(request: Request, context: any) {
         return NextResponse.json(updatedCategory)
     } catch (error: any) {
         console.error("❌ Update category error:", error)
-        return NextResponse.json({ message: error.message || "Failed to update category" }, { status: 500 })
+        return NextResponse.json({ message: "Failed to update category" }, { status: 500 })
     }
 }

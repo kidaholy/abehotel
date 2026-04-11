@@ -21,7 +21,7 @@ export async function PUT(req: Request, context: { params: Promise<{ id: string 
 
         return NextResponse.json(room)
     } catch (error: any) {
-        return NextResponse.json({ message: error.message || "Failed to update room" }, { status: 500 })
+        return NextResponse.json({ message: "Failed to update room" }, { status: 500 })
     }
 }
 
@@ -43,6 +43,6 @@ export async function DELETE(req: Request, context: { params: Promise<{ id: stri
 
         return NextResponse.json({ message: "Room deleted successfully" })
     } catch (error: any) {
-        return NextResponse.json({ message: error.message || "Failed to delete room" }, { status: 500 })
+        return NextResponse.json({ message: "Failed to delete room" }, { status: 500 })
     }
 }

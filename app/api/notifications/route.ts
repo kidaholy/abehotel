@@ -25,7 +25,7 @@ export async function GET(request: Request) {
     }
   } catch (error: any) {
     console.error("Get notifications error:", error)
-    return NextResponse.json({ message: error.message || "Failed to get notifications" }, { status: 500 })
+    return NextResponse.json({ message: "Failed to get notifications" }, { status: 500 })
   }
 }
 
@@ -41,7 +41,7 @@ export async function POST(request: Request) {
     return NextResponse.json(notification, { status: 201 })
   } catch (error: any) {
     console.error("Create notification error:", error)
-    return NextResponse.json({ message: error.message || "Failed to create notification" }, { status: 500 })
+    return NextResponse.json({ message: "Failed to create notification" }, { status: 500 })
   }
 }
 

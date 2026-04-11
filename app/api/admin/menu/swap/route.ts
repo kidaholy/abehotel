@@ -44,6 +44,6 @@ export async function POST(request: Request) {
         return NextResponse.json({ message: "IDs swapped successfully" })
     } catch (error: any) {
         console.error("Swap IDs error:", error)
-        return NextResponse.json({ message: error.message || "Failed to swap IDs" }, { status: 500 })
+        return NextResponse.json({ message: "Failed to swap IDs" }, { status: 500 })
     }
 }

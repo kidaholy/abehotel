@@ -43,7 +43,7 @@ export async function GET(request: Request) {
   } catch (error: any) {
     console.error("❌ Get menu items error:", error)
     const status = error.message?.includes("Unauthorized") ? 401 : 500
-    return NextResponse.json({ message: error.message || "Failed to get menu items" }, { status })
+    return NextResponse.json({ message: "Failed to get menu items" }, { status })
   }
 }
 
@@ -152,6 +152,6 @@ export async function POST(request: Request) {
   } catch (error: any) {
     console.error("❌ Create menu item error:", error)
     const status = error.message?.includes("Unauthorized") ? 401 : 500
-    return NextResponse.json({ message: error.message || "Failed to create menu item" }, { status })
+    return NextResponse.json({ message: "Failed to create menu item" }, { status })
   }
 }

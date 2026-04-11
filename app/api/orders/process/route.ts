@@ -152,7 +152,7 @@ export async function POST(request: Request) {
     } catch (error: any) {
         console.error("❌ Process order error:", error)
         return NextResponse.json({
-            message: error.message || "Failed to process order",
+            message: "Failed to process order",
             type: "server_error"
         }, { status: 500 })
     }
@@ -203,7 +203,7 @@ export async function GET(request: Request) {
     } catch (error: any) {
         console.error("❌ Check availability error:", error)
         return NextResponse.json({
-            message: error.message || "Failed to check availability"
+            message: "Failed to check availability"
         }, { status: 500 })
     }
 }

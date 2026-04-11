@@ -47,6 +47,6 @@ export async function PUT(request: Request, context: any) {
     return NextResponse.json({ message: `Request ${status}`, request: { ...updated.toObject(), _id: updated._id.toString() } })
   } catch (error: any) {
     const status = error.message?.includes("Unauthorized") ? 401 : 500
-    return NextResponse.json({ message: error.message || "Failed to update request" }, { status })
+    return NextResponse.json({ message: "Failed to update request" }, { status })
   }
 }

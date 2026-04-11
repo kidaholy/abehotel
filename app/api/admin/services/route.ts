@@ -11,7 +11,7 @@ export async function GET(request: Request) {
     const services = await Service.find({}).sort({ category: 1, name: 1 }).lean()
     return NextResponse.json(services.map(s => ({ ...s, _id: s._id?.toString() })))
   } catch (error: any) {
-    return NextResponse.json({ message: error.message || "Failed to get services" }, { status: 500 })
+    return NextResponse.json({ message: "Failed to get services" }, { status: 500 })
   }
 }
 
@@ -28,6 +28,6 @@ export async function POST(request: Request) {
     const service = await Service.create({ name, description, category, price, unit, isAvailable: isAvailable ?? true, icon: icon || "🛎️" })
     return NextResponse.json({ message: "Service created", service: { ...service.toObject(), _id: service._id.toString() } })
   } catch (error: any) {
-    return NextResponse.json({ message: error.message || "Failed to create service" }, { status: 500 })
+    return NextResponse.json({ message: "Failed to create service" }, { status: 500 })
   }
 }

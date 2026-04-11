@@ -33,7 +33,7 @@ export async function GET(request: Request, context: any) {
     })
   } catch (error: any) {
     console.error("❌ Get user error:", error)
-    return NextResponse.json({ message: error.message || "Failed to get user" }, { status: 500 })
+    return NextResponse.json({ message: "Failed to get user" }, { status: 500 })
   }
 }
 
@@ -242,7 +242,7 @@ export async function PUT(request: Request, context: any) {
     })
   } catch (error: any) {
     console.error("❌ Update user error:", error)
-    return NextResponse.json({ message: error.message || "Failed to update user" }, { status: 500 })
+    return NextResponse.json({ message: "Failed to update user" }, { status: 500 })
   }
 }
 
@@ -313,6 +313,6 @@ export async function DELETE(request: Request, context: any) {
     })
   } catch (error: any) {
     console.error("❌ Delete user error:", error)
-    return NextResponse.json({ message: error.message || "Failed to delete user" }, { status: 500 })
+    return NextResponse.json({ message: "Failed to delete user" }, { status: 500 })
   }
 }

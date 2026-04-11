@@ -14,7 +14,7 @@ export async function PUT(request: Request, context: any) {
     if (!updated) return NextResponse.json({ message: "Service not found" }, { status: 404 })
     return NextResponse.json({ message: "Service updated", service: { ...updated.toObject(), _id: updated._id.toString() } })
   } catch (error: any) {
-    return NextResponse.json({ message: error.message || "Failed to update service" }, { status: 500 })
+    return NextResponse.json({ message: "Failed to update service" }, { status: 500 })
   }
 }
 
@@ -28,6 +28,6 @@ export async function DELETE(request: Request, context: any) {
     if (!deleted) return NextResponse.json({ message: "Service not found" }, { status: 404 })
     return NextResponse.json({ message: "Service deleted" })
   } catch (error: any) {
-    return NextResponse.json({ message: error.message || "Failed to delete service" }, { status: 500 })
+    return NextResponse.json({ message: "Failed to delete service" }, { status: 500 })
   }
 }
