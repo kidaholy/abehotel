@@ -40,19 +40,19 @@ export async function GET(request: Request) {
     }
 
     const bookings = await ReceptionRequest.find({
-      status: "approved",
+      status: { $in: ["approved", "pending"] },
       inquiryType: { $in: ["check_in", "reservation"] },
       createdAt: { $gte: startDate },
     }).lean()
 
-    const totalRevenue = bookings.reduce((sum, b) => sum + (b.roomPrice || 0), 0)
+    const totalRevenue = bookings.reduce((sum, b) => sum + (Number(b.roomPrice) || 0), 0)
     const totalBookings = bookings.length
 
     const byRoom = bookings.reduce((acc: any, b) => {
       const key = b.roomNumber || "Unknown"
       if (!acc[key]) acc[key] = { roomNumber: key, bookings: 0, revenue: 0 }
       acc[key].bookings++
-      acc[key].revenue += b.roomPrice || 0
+      acc[key].revenue += Number(b.roomPrice) || 0
       return acc
     }, {})
 
@@ -60,7 +60,7 @@ export async function GET(request: Request) {
       const key = b.paymentMethod || "cash"
       if (!acc[key]) acc[key] = { method: key, count: 0, revenue: 0 }
       acc[key].count++
-      acc[key].revenue += b.roomPrice || 0
+      acc[key].revenue += Number(b.roomPrice) || 0
       return acc
     }, {})
 
