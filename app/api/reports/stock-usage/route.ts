@@ -176,7 +176,9 @@ export async function GET(request: Request) {
                                 continue;
                             }
                             const unit = normalizeUnit(ingredient.unit)
-                            const amount = (ingredient.quantityRequired || 0) * item.quantity
+                            // Handle both field names: 'quantityRequired' (MenuItem) and 'quantity' (VIP items)
+                            const perItemQuantity = ingredient.quantityRequired ?? (ingredient as any).quantity ?? 0
+                            const amount = perItemQuantity * item.quantity
 
                             if (!usageStats[unit]) usageStats[unit] = { unit: unit, total: 0, items: [] }
 

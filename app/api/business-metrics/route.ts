@@ -231,7 +231,9 @@ export async function GET(request: Request) {
               menuItem.recipe.forEach((ingredient: any) => {
                 const stockItem = allStock.find(s => s._id.toString() === ingredient.stockItemId?.toString())
                 if (stockItem) {
-                  const consumedAmount = (ingredient.quantityRequired || 0) * item.quantity
+                  // Handle both field names: 'quantityRequired' (MenuItem) and 'quantity' (VIP items)
+                  const perItemQuantity = ingredient.quantityRequired ?? (ingredient as any).quantity ?? 0
+                  const consumedAmount = perItemQuantity * item.quantity
                   const existing = stockConsumption.get(stockItem.name) || { consumed: 0, unit: stockItem.unit || '', cost: 0 }
                   existing.consumed += consumedAmount
                   existing.cost += consumedAmount * (stockItem.averagePurchasePrice || stockItem.unitCost || 0)

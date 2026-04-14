@@ -92,7 +92,9 @@ export async function GET(request: Request) {
                             menuData.recipe.forEach((ingredient: any) => {
                                 const stockItem = stockItems.find(s => s._id.toString() === ingredient.stockItemId?.toString())
                                 if (stockItem) {
-                                    const consumedAmount = (ingredient.quantityRequired || 0) * item.quantity
+                                    // Handle both field names: 'quantityRequired' (MenuItem) and 'quantity' (VIP items)
+                                    const perItemQuantity = ingredient.quantityRequired ?? (ingredient as any).quantity ?? 0
+                                    const consumedAmount = perItemQuantity * item.quantity
                                     const key = stockItem.name
 
                                     if (!stockConsumption[key]) {

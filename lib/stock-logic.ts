@@ -30,7 +30,9 @@ export async function calculateStockConsumption(items: any[]) {
             for (const ingredient of menuData.recipe) {
                 if (ingredient.stockItemId) {
                     const stockId = ingredient.stockItemId.toString()
-                    const consumptionAmount = (ingredient.quantity || 0) * orderItem.quantity
+                    // Handle both field names: 'quantityRequired' (MenuItem) and 'quantity' (VIP items)
+                    const perItemQuantity = ingredient.quantityRequired ?? (ingredient as any).quantity ?? 0
+                    const consumptionAmount = perItemQuantity * orderItem.quantity
                     stockConsumptionMap.set(stockId, (stockConsumptionMap.get(stockId) || 0) + consumptionAmount)
                 }
             }
