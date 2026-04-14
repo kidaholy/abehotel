@@ -571,13 +571,13 @@ export default function ReportsPage() {
                                                         <td className="p-4 text-gray-300 pl-8 flex items-center gap-2"><div className="w-1.5 h-4 bg-[#f3cf7a] rounded-full"></div> Food Revenue</td>
                                                         <td className="p-4 text-center"><span className="bg-[#b38822]/10 text-[#f3cf7a] border border-[#d4af37]/30 py-1 px-3 rounded-md text-[9px] font-black uppercase tracking-widest">BREAKDOWN</span></td>
                                                         <td className="p-4 text-right font-bold text-[#f3cf7a]">{foodRevenue.toLocaleString()} ETB</td>
-                                                        <td className="p-4 text-gray-500 text-xs text-medium">Portion from Food items</td>
+                                                        <td className="p-4 text-gray-500 text-xs text-medium">Revenue from Food items</td>
                                                     </tr>
                                                     <tr className="hover:bg-white/5 transition-colors">
                                                         <td className="p-4 text-gray-300 pl-8 flex items-center gap-2"><div className="w-1.5 h-4 bg-[#b38822] rounded-full"></div> Drinks Revenue</td>
                                                         <td className="p-4 text-center"><span className="bg-[#b38822]/10 text-[#f3cf7a] border border-[#d4af37]/30 py-1 px-3 rounded-md text-[9px] font-black uppercase tracking-widest">BREAKDOWN</span></td>
                                                         <td className="p-4 text-right font-bold text-[#b38822]">{drinksRevenue.toLocaleString()} ETB</td>
-                                                        <td className="p-4 text-gray-500 text-xs text-medium">Portion from Drinks items</td>
+                                                        <td className="p-4 text-gray-500 text-xs text-medium">Revenue from Drinks items</td>
                                                     </tr>
                                                     <tr className="hover:bg-white/5 transition-colors">
                                                         <td className="p-4 text-white flex items-center justify-between">
@@ -839,11 +839,9 @@ export default function ReportsPage() {
                                                         <th className="p-4">Item Name</th>
                                                         <th className="p-4 text-center text-[#d4af37]">Sell Price</th>
                                                         <th className="p-4 text-center">Remains</th>
-                                                        <th className="p-4 text-center text-purple-400">Sell Unit</th>
-                                                        <th className="p-4 text-center text-amber-500">Portions</th>
-                                                        <th className="p-4 text-center text-[#4ade80]">Total Inv.</th>
+                                                        <th className="p-4 text-center text-[#4ade80]">Investment</th>
                                                         <th className="p-4 text-center text-red-500">Usage</th>
-                                                        <th className="p-4 text-right text-blue-400">Potential</th>
+                                                        <th className="p-4 text-right text-blue-400">Potential Value</th>
                                                         <th className="p-4 text-center">Status</th>
                                                     </tr>
                                                 </thead>
@@ -853,16 +851,12 @@ export default function ReportsPage() {
                                                         .map((item: any, idx: number) => {
                                                             const costPrice = item.weightedAvgCost ?? item.averagePurchasePrice ?? 0
                                                             const sellingPrice = item.currentUnitCost ?? item.unitCost ?? 0
-                                                            const closingQuantity = item.closingStock ?? item.quantity ?? 0
+                                                            const remains = item.closingStock ?? item.quantity ?? 0
                                                             const consumedCount = item.consumed ?? 0
-                                                            const totalHandled = item.transferred ?? (closingQuantity + consumedCount)
-                                                            const remains = closingQuantity
+                                                            const totalHandled = item.transferred ?? (remains + consumedCount)
                                                             const totalPurchaseValue = item.transferredValue ?? (totalHandled * costPrice)
                                                             const isLow = item.isLowStock || (remains <= (item.minLimit || 5))
-                                                            const sellUnitEquivalent = item.sellUnitEquivalent || 1
-                                                            const portionsAvailable = sellUnitEquivalent > 0 ? remains / sellUnitEquivalent : 0
-                                                            const potentialRevenue = portionsAvailable * sellingPrice
-                                                            const consumedPortions = sellUnitEquivalent > 0 ? consumedCount / sellUnitEquivalent : consumedCount
+                                                            const potentialRevenue = remains * sellingPrice
                                                             return (
                                                                 <tr key={idx} className={`hover:bg-white/5 transition-colors ${isLow ? 'bg-red-950/20' : ''}`}>
                                                                     <td className="p-4">
@@ -871,33 +865,19 @@ export default function ReportsPage() {
                                                                     </td>
                                                                     <td className="p-4 text-center text-[#f3cf7a]">{Math.round(sellingPrice).toLocaleString()} <span className="text-[10px]">Br</span></td>
                                                                     <td className="p-4 text-center"><p className={`text-sm ${isLow ? 'text-red-500' : 'text-white'}`}>{remains} <span className="text-[10px] text-gray-500 uppercase tracking-widest">{item.unit}</span></p></td>
-                                                                    <td className="p-4 text-center text-purple-400">
-                                                                        {sellUnitEquivalent !== 1 ? (
-                                                                            <span>{sellUnitEquivalent} <span className="text-[10px] uppercase font-black tracking-tighter">{item.unit}/p</span></span>
-                                                                        ) : (
-                                                                            <span className="text-gray-500 text-[10px]">1:1</span>
-                                                                        )}
-                                                                    </td>
-                                                                    <td className="p-4 text-center text-amber-500">
-                                                                        {sellUnitEquivalent !== 1 ? (
-                                                                            <span>≈ {portionsAvailable.toFixed(1)} <span className="text-[10px]">p</span></span>
-                                                                        ) : (
-                                                                            <span className="text-gray-500 text-[10px]">-</span>
-                                                                        )}
-                                                                    </td>
                                                                     <td className="p-4 text-center text-[#4ade80]">
                                                                         {totalPurchaseValue.toLocaleString()} <span className="text-[10px]">Br</span>
                                                                         <div className="text-[9px] text-[#4ade80]/60 font-bold uppercase tracking-widest mt-1">@{Math.round(costPrice)} avg</div>
                                                                     </td>
                                                                     <td className="p-4 text-center text-red-400">
-                                                                        {sellUnitEquivalent !== 1 ? (
-                                                                            <span>{consumedPortions.toFixed(1)} <span className="text-[10px] text-red-500/60 uppercase font-bold tracking-widest">portions</span></span>
-                                                                        ) : (
-                                                                            <span>{consumedCount} <span className="text-[10px] text-red-500/60 uppercase font-bold tracking-widest">{item.unit}</span></span>
-                                                                        )}
+                                                                        {consumedCount} <span className="text-[10px] text-red-500/60 uppercase font-bold tracking-widest">{item.unit}</span>
                                                                     </td>
                                                                     <td className="p-4 text-right text-blue-400">{potentialRevenue.toLocaleString()} <span className="text-[10px]">Br</span></td>
-                                                                    <td className="p-4 text-center"><span className={`px-2 py-1 border rounded-md text-[9px] font-black uppercase tracking-widest ${isLow ? 'bg-red-950/30 text-red-500 border-red-500/30' : 'bg-[#1a2e20] text-[#4ade80] border-[#4ade80]/30'}`}>{isLow ? 'LOW' : 'OK'}</span></td>
+                                                                    <td className="p-4 text-center">
+                                                                        <span className={`px-2 py-1 border rounded-md text-[9px] font-black uppercase tracking-widest ${isLow ? 'bg-red-950/30 text-red-500 border-red-500/30' : 'bg-[#1a2e20] text-[#4ade80] border-[#4ade80]/30'}`}>
+                                                                            {isLow ? 'LOW' : 'OK'}
+                                                                        </span>
+                                                                    </td>
                                                                 </tr>
                                                             )
                                                         })}
@@ -910,15 +890,11 @@ export default function ReportsPage() {
                                             {(stockUsageData?.stockAnalysis || stockItems || [])
                                                 .filter((item: any) => item.openingStock > 0 || item.transferred > 0 || item.closingStock > 0 || item.consumed > 0 || item.quantity > 0)
                                                 .map((item: any, idx: number) => {
-                                                    const closingQuantity = item.closingStock ?? item.quantity ?? 0
+                                                    const remains = item.closingStock ?? item.quantity ?? 0
                                                     const consumedCount = item.consumed ?? 0
-                                                    const remains = closingQuantity
                                                     const isLow = item.isLowStock || (remains <= (item.minLimit || 5))
-                                                    const sellUnitEquivalent = item.sellUnitEquivalent || 1
-                                                    const portionsAvailable = sellUnitEquivalent > 0 ? remains / sellUnitEquivalent : 0
                                                     const sellingPrice = item.currentUnitCost ?? item.unitCost ?? 0
-                                                    const potentialRevenue = portionsAvailable * sellingPrice
-                                                    const consumedPortions = sellUnitEquivalent > 0 ? consumedCount / sellUnitEquivalent : consumedCount
+                                                    const potentialRevenue = remains * sellingPrice
                                                     return (
                                                         <div key={idx} className={`p-4 rounded-2xl border ${isLow ? 'bg-[#0f1110] border-red-500/30 shadow-[0_0_15px_rgba(239,68,68,0.1)]' : 'bg-[#0f1110] border-white/5 shadow-2xl'}`}>
                                                             <div className="flex justify-between items-start mb-3 border-b border-white/5 pb-3">
@@ -935,27 +911,9 @@ export default function ReportsPage() {
                                                                 </div>
                                                                 <div className="bg-[#151716] p-3 rounded-xl border border-white/5">
                                                                     <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest mb-1">Usage Count</p>
-                                                                    <p className="text-xl font-black text-white">
-                                                                        {sellUnitEquivalent !== 1 ? (
-                                                                            <span>{consumedPortions.toFixed(1)} <span className="text-[10px] text-gray-500 uppercase">portions</span></span>
-                                                                        ) : (
-                                                                            <span>{consumedCount} <span className="text-[10px] text-gray-500 uppercase">{item.unit}</span></span>
-                                                                        )}
-                                                                    </p>
+                                                                    <p className="text-xl font-black text-white">{consumedCount} <span className="text-[10px] text-gray-500 uppercase">{item.unit}</span></p>
                                                                 </div>
                                                             </div>
-                                                            {sellUnitEquivalent !== 1 && (
-                                                                <div className="grid grid-cols-2 gap-4 mt-3">
-                                                                    <div className="bg-[#151716] p-3 rounded-xl border border-purple-500/20">
-                                                                        <p className="text-[9px] font-bold text-purple-400 uppercase tracking-widest mb-1">Sell Unit</p>
-                                                                        <p className="text-lg font-black text-purple-400">{sellUnitEquivalent} <span className="text-[10px] text-purple-400/60 uppercase">{item.unit}/p</span></p>
-                                                                    </div>
-                                                                    <div className="bg-[#151716] p-3 rounded-xl border border-amber-500/20">
-                                                                        <p className="text-[9px] font-bold text-amber-500 uppercase tracking-widest mb-1">Portions</p>
-                                                                        <p className="text-lg font-black text-amber-500">≈ {portionsAvailable.toFixed(1)} <span className="text-[10px] text-amber-500/60 uppercase">p</span></p>
-                                                                    </div>
-                                                                </div>
-                                                            )}
                                                             <div className="flex justify-between items-center mt-4 pt-4 border-t border-white/5">
                                                                 <div>
                                                                     <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest mb-1">Potential Rev.</p>

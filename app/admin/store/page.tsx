@@ -616,7 +616,6 @@ export default function StorePage() {
                 unitCost: unitCost === "" ? undefined : Number(unitCost),
                 totalPurchaseCost: totalCost || undefined,
                 averagePurchasePrice: unitPurchasedPrice === "" ? undefined : Number(unitPurchasedPrice),
-                quantity: qty || undefined, // For API compatibility
             }
             
             console.log('🔍 Sending payload:', payload)

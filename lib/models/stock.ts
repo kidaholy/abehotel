@@ -72,7 +72,7 @@ const StockSchema = new Schema<IStock>(
         totalPurchased: { type: Number, default: 0, min: 0 },
         totalConsumed: { type: Number, default: 0, min: 0 },
         totalInvestment: { type: Number, default: 0, min: 0 },
-        sellUnitEquivalent: { type: Number, default: 1, min: 0 },
+        sellUnitEquivalent: { type: Number, default: 1, min: 0 }, // Internal usage only (defaults to 1 for 1:1 mapping)
         isVIP: { type: Boolean, default: false },
         vipLevel: { type: Number, enum: [1, 2], default: 1 },
     },

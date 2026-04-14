@@ -109,7 +109,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
         }
 
         // Regular update operation
-        const allowedUpdates = ['name', 'category', 'unit', 'unitType', 'minLimit', 'storeMinLimit', 'trackQuantity', 'showStatus', 'status', 'storeQuantity', 'totalInvestment', 'sellUnitEquivalent', 'isVIP', 'vipLevel']
+        const allowedUpdates = ['name', 'category', 'unit', 'unitType', 'minLimit', 'storeMinLimit', 'trackQuantity', 'showStatus', 'status', 'storeQuantity', 'totalInvestment', 'isVIP', 'vipLevel']
         const updateData: any = {}
 
         console.log('🔍 API received body:', body)
@@ -117,10 +117,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 
         for (const key of allowedUpdates) {
             if (body[key] !== undefined) {
-                if (key === 'sellUnitEquivalent') {
-                    updateData[key] = body[key] === "" ? 1 : Number(body[key].toString().replace(',', '.')) || 1
-                    console.log('🔍 API processed sellUnitEquivalent:', updateData[key])
-                } else {
+                if (true) {
                     updateData[key] = body[key]
                 }
             }
@@ -156,12 +153,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 
         Object.assign(stockItem, updateData)
 
-        // Explicitly set sellUnitEquivalent if present to ensure Mongoose tracks it
-        if (updateData.sellUnitEquivalent !== undefined) {
-            console.log('🔍 Setting sellUnitEquivalent on stockItem:', updateData.sellUnitEquivalent)
-            stockItem.sellUnitEquivalent = updateData.sellUnitEquivalent
-            stockItem.markModified('sellUnitEquivalent')
-        }
+        stockItem.sellUnitEquivalent = 1
 
         await stockItem.save()
         

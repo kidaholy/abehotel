@@ -301,7 +301,7 @@ export async function GET(request: Request) {
                 averagePurchasePrice: stock.averagePurchasePrice || 0,
                 totalLifetimeInvestment: stock.totalInvestment || 0,
                 totalLifetimePurchased: stock.totalPurchased || 0,
-                sellUnitEquivalent: stock.sellUnitEquivalent || 1,
+                sellUnitEquivalent: 1,
                 openingValue: openingStock * currentUnitCost,
                 purchaseValue: purchaseData.totalCost,
                 transferredValue: transferred * currentUnitCost,

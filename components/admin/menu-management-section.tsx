@@ -27,7 +27,8 @@ import {
   Package,
   Pencil,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Check
 } from "lucide-react"
 
 interface MenuItem {
@@ -1023,7 +1024,7 @@ export function MenuManagementSection({
                                 setFormData({
                                   ...formData,
                                   stockItemId: stockId,
-                                  stockConsumption: stock ? (stock.sellUnitEquivalent || 1).toString() : "1.0"
+                                  stockConsumption: "1.0"
                                 });
                               }}
                               className="w-full bg-[#0f1110] border border-white/5 rounded-2xl px-5 py-3.5 text-sm font-bold text-white outline-none focus:border-[#d4af37]/50 appearance-none cursor-pointer shadow-inner"

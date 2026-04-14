@@ -373,14 +373,6 @@ export function CartSidebar({
       {/* Summary */}
       <div className={`p-4 border-t border-white/5 bg-[#0f1110]/50 space-y-3`}>
         <div className="space-y-3 bg-[#151716] p-5 rounded-3xl border border-white/5 shadow-2xl">
-          <div className="flex justify-between items-center text-sm">
-            <span className="text-gray-500 font-bold uppercase tracking-widest text-[10px]">{t("cashier.subtotal")}</span>
-            <span className="font-playfair font-bold text-white">{subtotal.toFixed(0)} <span className="text-[10px] text-gray-500 italic">{t("common.currencyBr")}</span></span>
-          </div>
-          <div className="flex justify-between items-center text-sm">
-            <span className="text-gray-500 font-bold uppercase tracking-widest text-[10px]">{t("cashier.tax")} ({(vatRate * 100).toFixed(0)}%)</span>
-            <span className="font-playfair font-bold text-white">{tax.toFixed(0)} <span className="text-[10px] text-gray-500 italic">{t("common.currencyBr")}</span></span>
-          </div>
           <div className="border-t border-white/10 pt-3 flex justify-between items-center">
             <span className="font-black text-gray-400 uppercase tracking-widest text-xs">{t("cashier.total")}</span>
             <div className="text-right">

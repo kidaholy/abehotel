@@ -118,7 +118,7 @@ export async function POST(request: Request) {
             totalPurchased: Number(body.storeQuantity || body.quantity) || 0,
             totalConsumed: 0,
             totalInvestment: body.totalPurchaseCost || 0,
-            sellUnitEquivalent: body.sellUnitEquivalent === undefined || body.sellUnitEquivalent === "" ? 1 : Number(body.sellUnitEquivalent.toString().replace(',', '.')) || 1,
+            sellUnitEquivalent: 1, // Fixed to 1 since portions are removed
             isVIP: body.isVIP || false,
             vipLevel: body.vipLevel || 1
         }
