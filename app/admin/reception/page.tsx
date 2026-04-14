@@ -27,9 +27,11 @@ const PAYMENT_LABELS: Record<string, string> = {
 }
 
 const STATUS_STYLES: Record<string, string> = {
-  pending:  "bg-yellow-900/30 text-yellow-400 border-yellow-500/30",
-  approved: "bg-emerald-900/30 text-emerald-400 border-emerald-500/30",
-  denied:   "bg-red-900/30 text-red-400 border-red-500/30",
+  pending:   "bg-yellow-900/30 text-yellow-400 border-yellow-500/30",
+  guests:    "bg-emerald-900/30 text-emerald-400 border-emerald-500/30",
+  rejected:  "bg-red-900/30 text-red-400 border-red-500/30",
+  check_in:  "bg-blue-900/30 text-blue-400 border-blue-500/30",
+  check_out: "bg-purple-900/30 text-purple-400 border-purple-500/30",
 }
 
 export default function AdminReceptionPage() {
@@ -38,10 +40,11 @@ export default function AdminReceptionPage() {
 
   const [requests, setRequests] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState<"all" | "pending" | "approved" | "denied">("pending")
+  const [filter, setFilter] = useState<"all" | "pending" | "guests" | "rejected" | "check_in" | "check_out">("pending")
   const [selected, setSelected] = useState<any | null>(null)
   const [reviewNote, setReviewNote] = useState("")
   const [actioning, setActioning] = useState(false)
+  const [activeTab, setActiveTab] = useState<"requests" | "guests" | "check_in" | "check_out">("requests")
 
   const fetchRequests = useCallback(async () => {
     try {
@@ -54,17 +57,17 @@ export default function AdminReceptionPage() {
 
   useEffect(() => { if (token) fetchRequests() }, [token, fetchRequests])
 
-  const handleAction = async (id: string, status: "approved" | "denied") => {
-    const label = status === "approved" ? "Approve" : "Deny"
+  const handleAction = async (id: string, status: "guests" | "rejected" | "check_in" | "check_out") => {
+    const label = status === "guests" ? "Accept" : status === "rejected" ? "Reject" : status === "check_in" ? "Check In" : "Check Out"
     const confirmed = await confirm({
       title: `${label} Request`,
       message: `Are you sure you want to ${label.toLowerCase()} this request?`,
-      type: status === "approved" ? "success" : "danger",
+      type: status === "guests" || status === "check_in" ? "success" : "danger",
       confirmText: label,
       cancelText: "Cancel",
     })
     if (!confirmed) return
-
+    
     setActioning(true)
     try {
       const res = await fetch(`/api/reception-requests/${id}`, {
@@ -73,7 +76,7 @@ export default function AdminReceptionPage() {
         body: JSON.stringify({ status, reviewNote }),
       })
       if (res.ok) {
-        notify({ title: `Request ${label}d`, message: `The request has been ${status}.`, type: status === "approved" ? "success" : "error" })
+        notify({ title: "Success", message: `The request has been updated to ${status}.`, type: "success" })
         setSelected(null)
         setReviewNote("")
         fetchRequests()
@@ -90,9 +93,15 @@ export default function AdminReceptionPage() {
   const counts = {
     all: requests.length,
     pending: requests.filter(r => r.status === "pending").length,
-    approved: requests.filter(r => r.status === "approved").length,
-    denied: requests.filter(r => r.status === "denied").length,
+    guests: requests.filter(r => r.status === "guests").length,
+    rejected: requests.filter(r => r.status === "rejected").length,
+    check_in: requests.filter(r => r.status === "check_in").length,
+    check_out: requests.filter(r => r.status === "check_out").length,
   }
+
+  const guestsList = requests.filter(r => r.status === "guests")
+  const checkInList = requests.filter(r => r.status === "check_in")
+  const checkOutList = requests.filter(r => r.status === "check_out")
 
   return (
     <ProtectedRoute requiredRoles={["admin"]}>
@@ -116,22 +125,21 @@ export default function AdminReceptionPage() {
             </button>
           </div>
 
-          {/* Filter Tabs */}
-          <div className="flex gap-2 bg-[#151716] p-1.5 rounded-xl border border-white/5 w-fit">
-            {(["pending", "approved", "denied", "all"] as const).map(f => (
-              <button key={f} onClick={() => setFilter(f)}
+          {/* Tab Navigation */}
+          <div className="flex gap-2 bg-[#151716] p-1.5 rounded-xl border border-white/5 w-fit overflow-x-auto">
+            {[
+              { id: "requests", label: "Requests", icon: <MessageSquare size={12} /> },
+              { id: "guests", label: "Guests", icon: <Users size={12} /> },
+              { id: "check_in", label: "Check In", icon: <Hotel size={12} /> },
+              { id: "check_out", label: "Check Out", icon: <Key size={12} /> },
+            ].map(tab => (
+              <button key={tab.id} onClick={() => setActiveTab(tab.id as any)}
                 className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${
-                  filter === f
-                    ? f === "pending"  ? "bg-yellow-900/40 text-yellow-400 border border-yellow-500/30"
-                    : f === "approved" ? "bg-emerald-900/40 text-emerald-400 border border-emerald-500/30"
-                    : f === "denied"   ? "bg-red-900/40 text-red-400 border border-red-500/30"
-                    : "bg-[#d4af37]/10 text-[#f3cf7a] border border-[#d4af37]/30"
+                  activeTab === tab.id
+                    ? "bg-[#d4af37]/10 text-[#f3cf7a] border border-[#d4af37]/30"
                     : "text-gray-500 hover:text-gray-300"
                 }`}>
-                {f === "pending" && <Clock size={11} />}
-                {f === "approved" && <CheckCircle2 size={11} />}
-                {f === "denied" && <XCircle size={11} />}
-                {f} <span className="opacity-60">({counts[f]})</span>
+                {tab.icon} {tab.label}
               </button>
             ))}
           </div>
@@ -141,32 +149,136 @@ export default function AdminReceptionPage() {
             <div className="flex items-center justify-center py-32">
               <RefreshCw className="h-8 w-8 animate-spin text-[#d4af37]" />
             </div>
-          ) : filtered.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-32 text-gray-600">
-              <ConciergeBell size={48} className="mb-4 opacity-30" />
-              <p className="text-[10px] font-black uppercase tracking-widest">No {filter} requests</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              {filtered.map(r => {
-                const type = INQUIRY_TYPES[r.inquiryType]
-                return (
-                  <div key={r._id} className="bg-[#151716] rounded-xl border border-white/5 hover:border-white/10 transition-all p-5 flex flex-col gap-3">
+          ) : activeTab === "requests" ? (
+            <>
+              {/* Filter Tabs for Requests */}
+              <div className="flex gap-2 bg-[#151716] p-1.5 rounded-xl border border-white/5 w-fit overflow-x-auto">
+                {(["pending", "guests", "rejected", "check_in", "check_out", "all"] as const).map(f => (
+                  <button key={f} onClick={() => setFilter(f)}
+                    className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 whitespace-nowrap ${
+                      filter === f
+                        ? f === "pending"   ? "bg-yellow-900/40 text-yellow-400 border border-yellow-500/30"
+                        : f === "guests"    ? "bg-emerald-900/40 text-emerald-400 border border-emerald-500/30"
+                        : f === "rejected"  ? "bg-red-900/40 text-red-400 border border-red-500/30"
+                        : f === "check_in"  ? "bg-blue-900/40 text-blue-400 border border-blue-500/30"
+                        : f === "check_out" ? "bg-purple-900/40 text-purple-400 border border-purple-500/30"
+                        : "bg-[#d4af37]/10 text-[#f3cf7a] border border-[#d4af37]/30"
+                        : "text-gray-500 hover:text-gray-300"
+                    }`}>
+                    {f === "pending" && <Clock size={11} />}
+                    {f === "guests" && <Users size={11} />}
+                    {f === "rejected" && <XCircle size={11} />}
+                    {f === "check_in" && <Hotel size={11} />}
+                    {f === "check_out" && <Key size={11} />}
+                    {f} <span className="opacity-60">({counts[f]})</span>
+                  </button>
+                ))}
+              </div>
+
+              {filtered.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-32 text-gray-600">
+                  <ConciergeBell size={48} className="mb-4 opacity-30" />
+                  <p className="text-[10px] font-black uppercase tracking-widest">No {filter} requests</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                  {filtered.map(r => {
+                    const type = INQUIRY_TYPES[r.inquiryType]
+                    return (
+                      <div key={r._id} className="bg-[#151716] rounded-xl border border-white/5 hover:border-white/10 transition-all p-5 flex flex-col gap-3">
+                        {/* Top row */}
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex items-center gap-2 text-[#d4af37]">
+                            {type?.icon ?? <MessageSquare size={14} />}
+                            <span className="font-black text-white text-sm">{r.guestName}</span>
+                          </div>
+                          <span className={`text-[9px] font-black px-2.5 py-1 rounded-full uppercase border shrink-0 ${STATUS_STYLES[r.status] || STATUS_STYLES.pending}`}>
+                            {r.status}
+                          </span>
+                        </div>
+
+                        {/* Type badge */}
+                        <span className="text-[9px] font-black uppercase tracking-widest text-gray-500 bg-[#0f1110] border border-white/5 px-2 py-1 rounded w-fit">
+                          {type?.label || r.inquiryType}
+                        </span>
+
+                        {/* Details */}
+                        <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-gray-500 font-bold">
+                          {r.faydaId    && <span className="flex items-center gap-1"><IdCard size={10} /> {r.faydaId}</span>}
+                          {r.phone      && <span className="flex items-center gap-1"><Phone size={10} /> {r.phone}</span>}
+                          {r.roomNumber && <span className="flex items-center gap-1"><DoorOpen size={10} /> Room {r.roomNumber}</span>}
+                          {r.roomPrice  && <span className="flex items-center gap-1"><Banknote size={10} /> {r.roomPrice} ETB</span>}
+                          {r.guests     && <span className="flex items-center gap-1"><Users size={10} /> {r.guests} guest{parseInt(r.guests) > 1 ? "s" : ""}</span>}
+                          {r.checkIn    && <span className="flex items-center gap-1"><Calendar size={10} /> {r.checkIn}{r.checkInTime ? ` ${r.checkInTime}` : ""} → {r.checkOut || "?"}{r.checkOutTime ? ` ${r.checkOutTime}` : ""}</span>}
+                          {r.paymentMethod && <span className="flex items-center gap-1">
+                            {r.paymentMethod === "cash" ? <Banknote size={10} /> : r.paymentMethod === "telebirr" || r.paymentMethod === "cheque" ? <CreditCard size={10} /> : <Smartphone size={10} />}
+                            {PAYMENT_LABELS[r.paymentMethod] || r.paymentMethod}
+                          </span>}
+                          {r.chequeNumber && <span className="text-yellow-400">Ref #{r.chequeNumber || r.paymentReference}</span>}
+                        </div>
+
+                        {r.notes && <p className="text-[11px] text-gray-500 bg-[#0f1110] rounded-lg p-2 border border-white/5 italic">"{r.notes}"</p>}
+                        {r.reviewNote && <p className="text-[11px] text-blue-400 bg-blue-900/20 rounded-lg p-2 border border-blue-500/20">↩ {r.reviewNote}</p>}
+
+                        <p className="text-[9px] text-gray-600 mt-auto">{new Date(r.createdAt).toLocaleString()}</p>
+
+                        {/* Actions */}
+                        <div className="flex gap-2 pt-1">
+                          <button onClick={() => { setSelected(r); setReviewNote(r.reviewNote || "") }}
+                            className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-[#0f1110] border border-white/10 rounded-lg text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-white hover:border-white/20 transition-all">
+                            <Eye size={12} /> Review
+                          </button>
+                          {r.status === "pending" && (
+                            <>
+                              <button onClick={() => handleAction(r._id, "guests")}
+                                className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-emerald-900/30 border border-emerald-500/30 rounded-lg text-[10px] font-black uppercase tracking-widest text-emerald-400 hover:bg-emerald-900/50 transition-all">
+                                <CheckCircle2 size={12} /> Accept
+                              </button>
+                              <button onClick={() => handleAction(r._id, "rejected")}
+                                className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-red-900/30 border border-red-500/30 rounded-lg text-[10px] font-black uppercase tracking-widest text-red-400 hover:bg-red-900/50 transition-all">
+                                <XCircle size={12} /> Reject
+                              </button>
+                            </>
+                          )}
+                          {r.status === "guests" && r.inquiryType === "check_in" && (
+                            <button onClick={() => handleAction(r._id, "check_in")}
+                              className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-blue-900/30 border border-blue-500/30 rounded-lg text-[10px] font-black uppercase tracking-widest text-blue-400 hover:bg-blue-900/50 transition-all">
+                              <Hotel size={12} /> Check In
+                            </button>
+                          )}
+                          {r.status === "guests" && r.inquiryType === "check_out" && (
+                            <button onClick={() => handleAction(r._id, "check_out")}
+                              className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-purple-900/30 border border-purple-500/30 rounded-lg text-[10px] font-black uppercase tracking-widest text-purple-400 hover:bg-purple-900/50 transition-all">
+                              <Key size={12} /> Check Out
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </>
+          ) : activeTab === "guests" ? (
+            guestsList.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-32 text-gray-600">
+                <Users size={48} className="mb-4 opacity-30" />
+                <p className="text-[10px] font-black uppercase tracking-widest">No guests checked in</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                {guestsList.map(r => (
+                  <div key={r._id} className="bg-[#151716] rounded-xl border border-emerald-500/30 hover:border-emerald-500/50 transition-all p-5 flex flex-col gap-3">
                     {/* Top row */}
                     <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-center gap-2 text-[#d4af37]">
-                        {type?.icon ?? <MessageSquare size={14} />}
+                      <div className="flex items-center gap-2 text-emerald-400">
+                        <Users size={14} />
                         <span className="font-black text-white text-sm">{r.guestName}</span>
                       </div>
-                      <span className={`text-[9px] font-black px-2.5 py-1 rounded-full uppercase border shrink-0 ${STATUS_STYLES[r.status] || STATUS_STYLES.pending}`}>
-                        {r.status}
+                      <span className="text-[9px] font-black px-2.5 py-1 rounded-full uppercase border bg-emerald-900/40 text-emerald-400 border-emerald-500/30 shrink-0">
+                        Guest
                       </span>
                     </div>
-
-                    {/* Type badge */}
-                    <span className="text-[9px] font-black uppercase tracking-widest text-gray-500 bg-[#0f1110] border border-white/5 px-2 py-1 rounded w-fit">
-                      {type?.label || r.inquiryType}
-                    </span>
 
                     {/* Details */}
                     <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-gray-500 font-bold">
@@ -175,41 +287,145 @@ export default function AdminReceptionPage() {
                       {r.roomNumber && <span className="flex items-center gap-1"><DoorOpen size={10} /> Room {r.roomNumber}</span>}
                       {r.roomPrice  && <span className="flex items-center gap-1"><Banknote size={10} /> {r.roomPrice} ETB</span>}
                       {r.guests     && <span className="flex items-center gap-1"><Users size={10} /> {r.guests} guest{parseInt(r.guests) > 1 ? "s" : ""}</span>}
-                      {r.checkIn    && <span className="flex items-center gap-1"><Calendar size={10} /> {r.checkIn}{r.checkInTime ? ` ${r.checkInTime}` : ""} → {r.checkOut || "?"}{r.checkOutTime ? ` ${r.checkOutTime}` : ""}</span>}
+                      {r.checkIn    && <span className="flex items-center gap-1"><Calendar size={10} /> Check-in: {r.checkIn}{r.checkInTime ? ` ${r.checkInTime}` : ""}</span>}
+                      {r.checkOut   && <span className="flex items-center gap-1"><Calendar size={10} /> Check-out: {r.checkOut}{r.checkOutTime ? ` ${r.checkOutTime}` : ""}</span>}
                       {r.paymentMethod && <span className="flex items-center gap-1">
                         {r.paymentMethod === "cash" ? <Banknote size={10} /> : r.paymentMethod === "telebirr" || r.paymentMethod === "cheque" ? <CreditCard size={10} /> : <Smartphone size={10} />}
                         {PAYMENT_LABELS[r.paymentMethod] || r.paymentMethod}
                       </span>}
-                      {r.chequeNumber && <span className="text-yellow-400">Ref #{r.chequeNumber || r.paymentReference}</span>}
                     </div>
 
                     {r.notes && <p className="text-[11px] text-gray-500 bg-[#0f1110] rounded-lg p-2 border border-white/5 italic">"{r.notes}"</p>}
-                    {r.reviewNote && <p className="text-[11px] text-blue-400 bg-blue-900/20 rounded-lg p-2 border border-blue-500/20">↩ {r.reviewNote}</p>}
 
                     <p className="text-[9px] text-gray-600 mt-auto">{new Date(r.createdAt).toLocaleString()}</p>
 
-                    {/* Actions */}
+                    {/* Action Buttons */}
+                    <div className="flex gap-2 pt-1">
+                      <button onClick={() => { setSelected(r); setReviewNote(r.reviewNote || "") }}
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-emerald-900/30 border border-emerald-500/30 rounded-lg text-[10px] font-black uppercase tracking-widest text-emerald-400 hover:bg-emerald-900/50 transition-all">
+                        <Eye size={12} /> Details
+                      </button>
+                      <button onClick={() => handleAction(r._id, "check_out")}
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-purple-900/30 border border-purple-500/30 rounded-lg text-[10px] font-black uppercase tracking-widest text-purple-400 hover:bg-purple-900/50 transition-all">
+                        <Key size={12} /> Checkout
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )
+          ) : activeTab === "check_in" ? (
+            checkInList.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-32 text-gray-600">
+                <Hotel size={48} className="mb-4 opacity-30" />
+                <p className="text-[10px] font-black uppercase tracking-widest">No check-ins</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                {checkInList.map(r => (
+                  <div key={r._id} className="bg-[#151716] rounded-xl border border-blue-500/30 hover:border-blue-500/50 transition-all p-5 flex flex-col gap-3">
+                    {/* Top row */}
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2 text-blue-400">
+                        <Hotel size={14} />
+                        <span className="font-black text-white text-sm">{r.guestName}</span>
+                      </div>
+                      <span className="text-[9px] font-black px-2.5 py-1 rounded-full uppercase border bg-blue-900/40 text-blue-400 border-blue-500/30 shrink-0">
+                        Check In
+                      </span>
+                    </div>
+
+                    {/* Details */}
+                    <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-gray-500 font-bold">
+                      {r.faydaId    && <span className="flex items-center gap-1"><IdCard size={10} /> {r.faydaId}</span>}
+                      {r.phone      && <span className="flex items-center gap-1"><Phone size={10} /> {r.phone}</span>}
+                      {r.roomNumber && <span className="flex items-center gap-1"><DoorOpen size={10} /> Room {r.roomNumber}</span>}
+                      {r.roomPrice  && <span className="flex items-center gap-1"><Banknote size={10} /> {r.roomPrice} ETB</span>}
+                      {r.guests     && <span className="flex items-center gap-1"><Users size={10} /> {r.guests} guest{parseInt(r.guests) > 1 ? "s" : ""}</span>}
+                      {r.checkIn    && <span className="flex items-center gap-1"><Calendar size={10} /> Check-in: {r.checkIn}{r.checkInTime ? ` ${r.checkInTime}` : ""}</span>}
+                      {r.checkOut   && <span className="flex items-center gap-1"><Calendar size={10} /> Check-out: {r.checkOut}{r.checkOutTime ? ` ${r.checkOutTime}` : ""}</span>}
+                      {r.paymentMethod && <span className="flex items-center gap-1">
+                        {r.paymentMethod === "cash" ? <Banknote size={10} /> : r.paymentMethod === "telebirr" || r.paymentMethod === "cheque" ? <CreditCard size={10} /> : <Smartphone size={10} />}
+                        {PAYMENT_LABELS[r.paymentMethod] || r.paymentMethod}
+                      </span>}
+                    </div>
+
+                    {r.notes && <p className="text-[11px] text-gray-500 bg-[#0f1110] rounded-lg p-2 border border-white/5 italic">"{r.notes}"</p>}
+
+                    <p className="text-[9px] text-gray-600 mt-auto">{new Date(r.createdAt).toLocaleString()}</p>
+
+                    {/* View Details Button */}
+                    <button onClick={() => { setSelected(r); setReviewNote(r.reviewNote || "") }}
+                      className="w-full flex items-center justify-center gap-1.5 py-2 bg-blue-900/30 border border-blue-500/30 rounded-lg text-[10px] font-black uppercase tracking-widest text-blue-400 hover:bg-blue-900/50 transition-all">
+                      <Eye size={12} /> View Details
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )
+          ) : activeTab === "check_out" ? (
+            checkOutList.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-32 text-gray-600">
+                <Key size={48} className="mb-4 opacity-30" />
+                <p className="text-[10px] font-black uppercase tracking-widest">No check-outs</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                {checkOutList.map(r => (
+                  <div key={r._id} className="bg-[#151716] rounded-xl border border-purple-500/30 hover:border-purple-500/50 transition-all p-5 flex flex-col gap-3">
+                    {/* Top row */}
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2 text-purple-400">
+                        <Key size={14} />
+                        <span className="font-black text-white text-sm">{r.guestName}</span>
+                      </div>
+                      <span className="text-[9px] font-black px-2.5 py-1 rounded-full uppercase border bg-purple-900/40 text-purple-400 border-purple-500/30 shrink-0">
+                        Check Out
+                      </span>
+                    </div>
+
+                    {/* Details */}
+                    <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-gray-500 font-bold">
+                      {r.faydaId    && <span className="flex items-center gap-1"><IdCard size={10} /> {r.faydaId}</span>}
+                      {r.phone      && <span className="flex items-center gap-1"><Phone size={10} /> {r.phone}</span>}
+                      {r.roomNumber && <span className="flex items-center gap-1"><DoorOpen size={10} /> Room {r.roomNumber}</span>}
+                      {r.roomPrice  && <span className="flex items-center gap-1"><Banknote size={10} /> {r.roomPrice} ETB</span>}
+                      {r.guests     && <span className="flex items-center gap-1"><Users size={10} /> {r.guests} guest{parseInt(r.guests) > 1 ? "s" : ""}</span>}
+                      {r.checkIn    && <span className="flex items-center gap-1"><Calendar size={10} /> Check-in: {r.checkIn}{r.checkInTime ? ` ${r.checkInTime}` : ""}</span>}
+                      {r.checkOut   && <span className="flex items-center gap-1"><Calendar size={10} /> Check-out: {r.checkOut}{r.checkOutTime ? ` ${r.checkOutTime}` : ""}</span>}
+                      {r.paymentMethod && <span className="flex items-center gap-1">
+                        {r.paymentMethod === "cash" ? <Banknote size={10} /> : r.paymentMethod === "telebirr" || r.paymentMethod === "cheque" ? <CreditCard size={10} /> : <Smartphone size={10} />}
+                        {PAYMENT_LABELS[r.paymentMethod] || r.paymentMethod}
+                      </span>}
+                    </div>
+
+                    {r.notes && <p className="text-[11px] text-gray-500 bg-[#0f1110] rounded-lg p-2 border border-white/5 italic">"{r.notes}"</p>}
+
+                    <p className="text-[9px] text-gray-600 mt-auto">{new Date(r.createdAt).toLocaleString()}</p>
+
+                    {/* Action Buttons */}
                     <div className="flex gap-2 pt-1">
                       <button onClick={() => { setSelected(r); setReviewNote(r.reviewNote || "") }}
                         className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-[#0f1110] border border-white/10 rounded-lg text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-white hover:border-white/20 transition-all">
                         <Eye size={12} /> Review
                       </button>
-                      {r.status === "pending" && (
-                        <>
-                          <button onClick={() => handleAction(r._id, "approved")}
-                            className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-emerald-900/30 border border-emerald-500/30 rounded-lg text-[10px] font-black uppercase tracking-widest text-emerald-400 hover:bg-emerald-900/50 transition-all">
-                            <CheckCircle2 size={12} /> Approve
-                          </button>
-                          <button onClick={() => handleAction(r._id, "denied")}
-                            className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-red-900/30 border border-red-500/30 rounded-lg text-[10px] font-black uppercase tracking-widest text-red-400 hover:bg-red-900/50 transition-all">
-                            <XCircle size={12} /> Deny
-                          </button>
-                        </>
-                      )}
+                      <button onClick={() => handleAction(r._id, "guests")}
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-emerald-900/30 border border-emerald-500/30 rounded-lg text-[10px] font-black uppercase tracking-widest text-emerald-400 hover:bg-emerald-900/50 transition-all">
+                        <CheckCircle2 size={12} /> Approve
+                      </button>
+                      <button onClick={() => handleAction(r._id, "guests")}
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-red-900/30 border border-red-500/30 rounded-lg text-[10px] font-black uppercase tracking-widest text-red-400 hover:bg-red-900/50 transition-all">
+                        <XCircle size={12} /> Deny
+                      </button>
                     </div>
                   </div>
-                )
-              })}
+                ))}
+              </div>
+            )
+          ) : (
+            <div className="flex flex-col items-center justify-center py-32 text-gray-600">
+              <MessageSquare size={48} className="mb-4 opacity-30" />
+              <p className="text-[10px] font-black uppercase tracking-widest">No data</p>
             </div>
           )}
         </div>
@@ -312,17 +528,29 @@ export default function AdminReceptionPage() {
                 {/* Action Buttons */}
                 {selected.status === "pending" && (
                   <div className="flex gap-3 pt-2">
-                    <button onClick={() => handleAction(selected._id, "denied")} disabled={actioning}
+                    <button onClick={() => handleAction(selected._id, "rejected")} disabled={actioning}
+                      className="flex-1 flex items-center justify-center gap-2 py-3 bg-red-900/30 border border-red-500/30 rounded-xl text-[10px] font-black uppercase tracking-widest text-red-400 hover:bg-red-900/50 transition-all disabled:opacity-50">
+                      <XCircle size={14} /> Reject
+                    </button>
+                    <button onClick={() => handleAction(selected._id, "guests")} disabled={actioning}
+                      className="flex-[2] flex items-center justify-center gap-2 py-3 bg-gradient-to-b from-[#f3cf7a] to-[#b38822] text-[#2a1708] border border-[#f5db8b] rounded-xl text-[10px] font-black uppercase tracking-widest shadow-[0_4px_15px_rgba(212,175,55,0.2)] hover:shadow-[0_4px_25px_rgba(212,175,55,0.4)] transition-all disabled:opacity-50">
+                      <CheckCircle2 size={14} /> Accept
+                    </button>
+                  </div>
+                )}
+                {selected.status === "check_out" && (
+                  <div className="flex gap-3 pt-2">
+                    <button onClick={() => handleAction(selected._id, "guests")} disabled={actioning}
                       className="flex-1 flex items-center justify-center gap-2 py-3 bg-red-900/30 border border-red-500/30 rounded-xl text-[10px] font-black uppercase tracking-widest text-red-400 hover:bg-red-900/50 transition-all disabled:opacity-50">
                       <XCircle size={14} /> Deny
                     </button>
-                    <button onClick={() => handleAction(selected._id, "approved")} disabled={actioning}
+                    <button onClick={() => handleAction(selected._id, "check_out")} disabled={actioning}
                       className="flex-[2] flex items-center justify-center gap-2 py-3 bg-gradient-to-b from-[#f3cf7a] to-[#b38822] text-[#2a1708] border border-[#f5db8b] rounded-xl text-[10px] font-black uppercase tracking-widest shadow-[0_4px_15px_rgba(212,175,55,0.2)] hover:shadow-[0_4px_25px_rgba(212,175,55,0.4)] transition-all disabled:opacity-50">
                       <CheckCircle2 size={14} /> Approve
                     </button>
                   </div>
                 )}
-                {selected.status !== "pending" && (
+                {selected.status !== "pending" && selected.status !== "check_out" && (
                   <div className={`p-3 rounded-xl border text-center text-[10px] font-black uppercase tracking-widest ${STATUS_STYLES[selected.status]}`}>
                     This request has been {selected.status}
                   </div>

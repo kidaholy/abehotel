@@ -29,9 +29,11 @@ const PAYMENT_METHODS = [
 ]
 
 const STATUS_STYLES: Record<string, string> = {
-  pending:  "bg-yellow-900/30 text-yellow-400 border-yellow-500/30",
-  approved: "bg-emerald-900/30 text-emerald-400 border-emerald-500/30",
-  denied:   "bg-red-900/30 text-red-400 border-red-500/30",
+  pending:   "bg-yellow-900/30 text-yellow-400 border-yellow-500/30",
+  guests:    "bg-emerald-900/30 text-emerald-400 border-emerald-500/30",
+  rejected:  "bg-red-900/30 text-red-400 border-red-500/30",
+  check_in:  "bg-blue-900/30 text-blue-400 border-blue-500/30",
+  check_out: "bg-purple-900/30 text-purple-400 border-purple-500/30",
 }
 
 interface Room  { _id: string; roomNumber: string; floorId: any; price: number; type: string }
@@ -56,13 +58,16 @@ function SubmissionCard({ s }: { s: any }) {
     { value: "cheque",         label: "Cheque" },
   ]
   const STATUS_STYLES: Record<string, string> = {
-    pending: "bg-yellow-900/30 text-yellow-400 border-yellow-500/30",
-    denied:  "bg-red-900/30 text-red-400 border-red-500/30",
+    pending:   "bg-yellow-900/30 text-yellow-400 border-yellow-500/30",
+    guests:    "bg-emerald-900/30 text-emerald-400 border-emerald-500/30",
+    rejected:  "bg-red-900/30 text-red-400 border-red-500/30",
+    check_in:  "bg-blue-900/30 text-blue-400 border-blue-500/30",
+    check_out: "bg-purple-900/30 text-purple-400 border-purple-500/30",
   }
   const type = INQUIRY_TYPES.find(t => t.value === s.inquiryType)
   const pm   = PAYMENT_METHODS.find(p => p.value === s.paymentMethod)
   return (
-    <div className={`bg-[#0f1110] rounded-xl p-4 border transition-all ${s.status === "denied" ? "border-red-500/10" : "border-white/5 hover:border-white/10"}`}>
+    <div className={`bg-[#0f1110] rounded-xl p-4 border transition-all ${s.status === "rejected" ? "border-red-500/10" : "border-white/5 hover:border-white/10"}`}>
       <div className="flex items-start justify-between gap-2 mb-2">
         <span className="font-black text-white text-sm">{s.guestName}</span>
         <span className={`text-[9px] font-black px-2.5 py-1 rounded-full uppercase border shrink-0 ${STATUS_STYLES[s.status] || STATUS_STYLES.pending}`}>
@@ -93,7 +98,7 @@ export default function ReceptionDashboard() {
   const [submitting, setSubmitting] = useState(false)
   const [submissions, setSubmissions] = useState<any[]>([])
   const [loadingSubmissions, setLoadingSubmissions] = useState(true)
-  const [rightTab, setRightTab] = useState<"submissions" | "guests" | "denied">("guests")
+  const [rightTab, setRightTab] = useState<"submissions" | "guests" | "rejected" | "check_in" | "check_out">("guests")
   const [extendGuest, setExtendGuest] = useState<any | null>(null)
   const [newCheckOut, setNewCheckOut] = useState("")
   const [extending, setExtending] = useState(false)
@@ -528,18 +533,26 @@ export default function ReceptionDashboard() {
 
                 {/* Tab bar */}
                 <div className="flex items-center justify-between mb-5">
-                  <div className="flex gap-1 bg-[#0f1110] border border-white/5 p-1 rounded-xl">
+                  <div className="flex gap-1 bg-[#0f1110] border border-white/5 p-1 rounded-xl overflow-x-auto">
                     <button onClick={() => setRightTab("guests")}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${rightTab === "guests" ? "bg-emerald-900/40 text-emerald-400 border border-emerald-500/30" : "text-gray-500 hover:text-gray-300"}`}>
-                      <Users size={11} /> Guests ({submissions.filter(s => s.status === "approved").length})
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${rightTab === "guests" ? "bg-emerald-900/40 text-emerald-400 border border-emerald-500/30" : "text-gray-500 hover:text-gray-300"}`}>
+                      <Users size={11} /> Guests ({submissions.filter(s => s.status === "guests" && s.inquiryType !== "check_in" && s.inquiryType !== "check_out").length})
+                    </button>
+                    <button onClick={() => setRightTab("check_in")}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${rightTab === "check_in" ? "bg-blue-900/40 text-blue-400 border border-blue-500/30" : "text-gray-500 hover:text-gray-300"}`}>
+                      <Hotel size={11} /> Check-In ({submissions.filter(s => s.status === "check_in" || (s.status === "guests" && s.inquiryType === "check_in")).length})
+                    </button>
+                    <button onClick={() => setRightTab("check_out")}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${rightTab === "check_out" ? "bg-purple-900/40 text-purple-400 border border-purple-500/30" : "text-gray-500 hover:text-gray-300"}`}>
+                      <Key size={11} /> Check-Out ({submissions.filter(s => s.status === "check_out" || (s.status === "guests" && s.inquiryType === "check_out")).length})
                     </button>
                     <button onClick={() => setRightTab("submissions")}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${rightTab === "submissions" ? "bg-yellow-900/40 text-yellow-400 border border-yellow-500/30" : "text-gray-500 hover:text-gray-300"}`}>
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${rightTab === "submissions" ? "bg-yellow-900/40 text-yellow-400 border border-yellow-500/30" : "text-gray-500 hover:text-gray-300"}`}>
                       <ClipboardList size={11} /> Pending ({submissions.filter(s => s.status === "pending").length})
                     </button>
-                    <button onClick={() => setRightTab("denied")}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${rightTab === "denied" ? "bg-red-900/40 text-red-400 border border-red-500/30" : "text-gray-500 hover:text-gray-300"}`}>
-                      <XCircle size={11} /> Rejected ({submissions.filter(s => s.status === "denied").length})
+                    <button onClick={() => setRightTab("rejected")}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px) font-black uppercase tracking-widest transition-all whitespace-nowrap ${rightTab === "rejected" ? "bg-red-900/40 text-red-400 border border-red-500/30" : "text-gray-500 hover:text-gray-300"}`}>
+                      <XCircle size={11} /> Rejected ({submissions.filter(s => s.status === "rejected").length})
                     </button>
                   </div>
                   <button onClick={fetchSubmissions} className="text-gray-500 hover:text-[#d4af37] transition-colors">
@@ -554,13 +567,13 @@ export default function ReceptionDashboard() {
                 ) : (
                   <div className="overflow-y-auto flex-1 space-y-3 pr-1">
 
-                    {/* ── GUESTS TAB: approved check-ins ── */}
+                    {/* ── GUESTS TAB ── */}
                     {rightTab === "guests" && (() => {
-                      const guests = submissions.filter(s => s.status === "approved")
+                      const guests = submissions.filter(s => s.status === "guests" && s.inquiryType !== "check_in" && s.inquiryType !== "check_out")
                       if (guests.length === 0) return (
                         <div className="flex flex-col items-center justify-center py-16 text-center">
                           <Users size={40} className="text-gray-700 mb-3" />
-                          <p className="text-gray-600 text-[10px] font-black uppercase tracking-widest">No approved guests yet</p>
+                          <p className="text-gray-600 text-[10px] font-black uppercase tracking-widest">No guests yet</p>
                         </div>
                       )
                       return guests.map((s: any) => {
@@ -594,7 +607,9 @@ export default function ReceptionDashboard() {
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center justify-between gap-2">
                                 <span className="font-black text-white text-sm truncate">{s.guestName}</span>
-                                <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-emerald-900/30 text-emerald-400 border border-emerald-500/30 shrink-0">Checked In</span>
+                                <span className={`text-[9px] font-black px-2 py-0.5 rounded-full border shrink-0 ${STATUS_STYLES[s.status] || STATUS_STYLES.guests}`}>
+                                  {s.status === "guests" ? "Checked In" : s.status === "check_in" ? "Checking In" : s.status === "check_out" ? "Checking Out" : s.status}
+                                </span>
                               </div>
                               <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1 text-[10px] text-gray-500 font-bold">
                                 {s.roomNumber && <span className="flex items-center gap-1"><DoorOpen size={10} /> Room {s.roomNumber}</span>}
@@ -649,6 +664,38 @@ export default function ReceptionDashboard() {
                       })
                     })()}
 
+                    {/* ── CHECK-IN TAB ── */}
+                    {rightTab === "check_in" && (() => {
+                      const checkIns = submissions.filter(s => s.status === "check_in" || (s.status === "guests" && s.inquiryType === "check_in"))
+                      if (checkIns.length === 0) return (
+                        <div className="flex flex-col items-center justify-center py-16 text-center">
+                          <Hotel size={40} className="text-gray-700 mb-3" />
+                          <p className="text-gray-600 text-[10px] font-black uppercase tracking-widest">No guests checking in</p>
+                        </div>
+                      )
+                      return (
+                        <div className="space-y-3">
+                          {checkIns.map((s: any) => <SubmissionCard key={s._id} s={s} />)}
+                        </div>
+                      )
+                    })()}
+
+                    {/* ── CHECK-OUT TAB ── */}
+                    {rightTab === "check_out" && (() => {
+                      const checkOuts = submissions.filter(s => s.status === "check_out" || (s.status === "guests" && s.inquiryType === "check_out"))
+                      if (checkOuts.length === 0) return (
+                        <div className="flex flex-col items-center justify-center py-16 text-center">
+                          <Key size={40} className="text-gray-700 mb-3" />
+                          <p className="text-gray-600 text-[10px] font-black uppercase tracking-widest">No guests checking out</p>
+                        </div>
+                      )
+                      return (
+                        <div className="space-y-3">
+                          {checkOuts.map((s: any) => <SubmissionCard key={s._id} s={s} />)}
+                        </div>
+                      )
+                    })()}
+
                     {/* ── SUBMISSIONS TAB: pending only ── */}
                     {rightTab === "submissions" && (() => {
                       const pending = submissions.filter(s => s.status === "pending")
@@ -669,10 +716,10 @@ export default function ReceptionDashboard() {
                       )
                     })()}
 
-                    {/* ── DENIED TAB ── */}
-                    {rightTab === "denied" && (() => {
-                      const denied = submissions.filter(s => s.status === "denied")
-                      if (denied.length === 0) return (
+                    {/* ── REJECTED TAB ── */}
+                    {rightTab === "rejected" && (() => {
+                      const rejected = submissions.filter(s => s.status === "rejected")
+                      if (rejected.length === 0) return (
                         <div className="flex flex-col items-center justify-center py-16 text-center">
                           <XCircle size={40} className="text-gray-700 mb-3" />
                           <p className="text-gray-600 text-[10px] font-black uppercase tracking-widest">No rejected requests</p>
@@ -682,9 +729,9 @@ export default function ReceptionDashboard() {
                         <div className="space-y-2">
                           <p className="text-[9px] font-black uppercase tracking-widest text-red-400 mb-2 flex items-center gap-1.5">
                             <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                            Rejected by Admin ({denied.length})
+                            Rejected by Admin ({rejected.length})
                           </p>
-                          {denied.map((s: any) => <SubmissionCard key={s._id} s={s} />)}
+                          {rejected.map((s: any) => <SubmissionCard key={s._id} s={s} />)}
                         </div>
                       )
                     })()}

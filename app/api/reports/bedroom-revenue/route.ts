@@ -40,7 +40,7 @@ export async function GET(request: Request) {
     }
 
     const bookings = await ReceptionRequest.find({
-      status: { $in: ["approved", "pending"] },
+      status: { $in: ["pending", "guests", "check_in", "check_out"] },
       inquiryType: { $in: ["check_in", "reservation"] },
       createdAt: { $gte: startDate },
     }).lean()

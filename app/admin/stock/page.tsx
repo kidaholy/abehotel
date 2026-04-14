@@ -60,7 +60,6 @@ export default function StockInventoryPage() {
         unitCost: "",
         trackQuantity: true,
         showStatus: true,
-        sellUnitEquivalent: "1"
     })
 
     const { token } = useAuth()
@@ -132,7 +131,6 @@ export default function StockInventoryPage() {
                     quantity: stockFormData.quantity === "" ? undefined : Number(stockFormData.quantity),
                     minLimit: stockFormData.minLimit === "" ? undefined : Number(stockFormData.minLimit),
                     unitCost: stockFormData.unitCost === "" ? undefined : Number(stockFormData.unitCost),
-                    sellUnitEquivalent: stockFormData.sellUnitEquivalent === "" || stockFormData.sellUnitEquivalent === undefined ? 1 : Number(stockFormData.sellUnitEquivalent.toString().replace(',', '.')) || 1
                 }),
             })
 
@@ -184,7 +182,6 @@ export default function StockInventoryPage() {
             unitCost: item.unitCost?.toString() || "",
             trackQuantity: item.trackQuantity,
             showStatus: item.showStatus,
-            sellUnitEquivalent: item.sellUnitEquivalent?.toString() || "1"
         })
         setShowStockForm(true)
     }
@@ -200,7 +197,6 @@ export default function StockInventoryPage() {
             unitCost: "",
             trackQuantity: true,
             showStatus: true,
-            sellUnitEquivalent: "1"
         })
         setEditingStock(null)
         setShowStockForm(false)
@@ -414,11 +410,6 @@ export default function StockInventoryPage() {
                                                                     </span>
                                                                     <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{item.unit}</span>
                                                                 </div>
-                                                                {item.sellUnitEquivalent && item.sellUnitEquivalent > 0 && item.sellUnitEquivalent !== 1 && (
-                                                                    <p className="text-[9px] font-bold uppercase tracking-widest text-[#d4af37] mt-1">
-                                                                        ≈ {((item.quantity || 0) / item.sellUnitEquivalent).toFixed(1)} Portions
-                                                                    </p>
-                                                                )}
                                                             </td>
                                                             <td className="py-5">
                                                                 {isOut ? (
@@ -430,9 +421,9 @@ export default function StockInventoryPage() {
                                                                 )}
                                                             </td>
                                                             <td className="py-5 text-right pr-6">
-                                                                <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                                    <button onClick={() => handleEditStock(item)} className="p-2 text-gray-400 hover:text-[#f3cf7a] hover:bg-[#1a1c1b] border border-transparent hover:border-[#d4af37]/30 rounded-lg transition-all"><Edit2 size={16} /></button>
-                                                                    <button onClick={() => deleteStockItem(item._id)} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-950/50 border border-transparent hover:border-red-500/30 rounded-lg transition-all"><Trash2 size={16} /></button>
+                                                                <div className="flex justify-end gap-2">
+                                                                    <button onClick={() => handleEditStock(item)} className="p-2 text-[#f3cf7a] hover:text-[#f3cf7a] hover:bg-[#1a1c1b] border border-[#d4af37]/30 hover:border-[#d4af37]/50 rounded-lg transition-all"><Edit2 size={16} /></button>
+                                                                    <button onClick={() => deleteStockItem(item._id)} className="p-2 text-red-500 hover:text-red-400 hover:bg-red-950/50 border border-red-500/30 hover:border-red-500/50 rounded-lg transition-all"><Trash2 size={16} /></button>
                                                                 </div>
                                                             </td>
                                                         </tr>
@@ -467,10 +458,6 @@ export default function StockInventoryPage() {
                                             <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1 block">Alert Limit</label>
                                             <input type="number" step="any" value={stockFormData.minLimit} onChange={e => setStockFormData({ ...stockFormData, minLimit: e.target.value })} className="w-full p-4 bg-[#0f1110] border border-white/10 rounded-xl font-bold text-white outline-none focus:border-[#d4af37]/50 focus:ring-1 focus:ring-[#d4af37]/50 transition-all" />
                                         </div>
-                                    </div>
-                                    <div>
-                                        <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1 block">Sell Unit Equivalent ({stockFormData.unit}/portion)</label>
-                                        <input type="number" step="any" placeholder="e.g. 0.46" value={stockFormData.sellUnitEquivalent} onChange={e => setStockFormData({ ...stockFormData, sellUnitEquivalent: e.target.value })} className="w-full p-4 bg-[#0f1110] border border-white/10 rounded-xl font-bold outline-none text-[#d4af37] focus:border-[#d4af37]/50 focus:ring-1 focus:ring-[#d4af37]/50 transition-all" />
                                     </div>
                                     <div className="flex gap-4 pt-6">
                                         <button type="button" onClick={resetStockForm} className="flex-1 py-4 font-bold text-[10px] uppercase tracking-widest text-gray-500 hover:text-white transition-colors bg-[#0f1110] rounded-xl border border-white/5 hover:border-white/20">Cancel</button>

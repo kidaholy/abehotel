@@ -22,7 +22,7 @@ export interface IReceptionRequest {
   paymentReference?: string
   transactionUrl?: string
   notes?: string
-  status: "pending" | "approved" | "denied"
+  status: "pending" | "guests" | "rejected" | "check_in" | "check_out"
   submittedBy?: string
   reviewedBy?: string
   reviewNote?: string
@@ -52,7 +52,7 @@ const receptionRequestSchema = new Schema<IReceptionRequest>(
     paymentReference: { type: String },
     transactionUrl: { type: String },
     notes: { type: String },
-    status: { type: String, enum: ["pending", "approved", "denied"], default: "pending" },
+    status: { type: String, enum: ["pending", "guests", "rejected", "check_in", "check_out"], default: "pending" },
     submittedBy: { type: String },
     reviewedBy: { type: String },
     reviewNote: { type: String },

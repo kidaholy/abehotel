@@ -16,9 +16,11 @@ const PM_LABELS: Record<string, { label: string; icon: any }> = {
 }
 
 const STATUS_STYLES: Record<string, string> = {
-  pending:  "bg-yellow-900/30 text-yellow-400 border-yellow-500/30",
-  approved: "bg-emerald-900/30 text-emerald-400 border-emerald-500/30",
-  denied:   "bg-red-900/30 text-red-400 border-red-500/30",
+  pending:   "bg-yellow-900/30 text-yellow-400 border-yellow-500/30",
+  guests:    "bg-emerald-900/30 text-emerald-400 border-emerald-500/30",
+  rejected:  "bg-red-900/30 text-red-400 border-red-500/30",
+  check_in:  "bg-blue-900/30 text-blue-400 border-blue-500/30",
+  check_out: "bg-purple-900/30 text-purple-400 border-purple-500/30",
 }
 
 export default function BedroomRevenuePage() {
@@ -54,7 +56,7 @@ export default function BedroomRevenuePage() {
               </div>
               <div>
                 <h1 className="text-2xl font-playfair italic font-bold text-[#f3cf7a]">Bedroom Revenue</h1>
-                <p className="text-gray-500 text-[10px] uppercase font-bold tracking-widest mt-0.5">Approved bookings · {period}</p>
+                <p className="text-gray-500 text-[10px] uppercase font-bold tracking-widest mt-0.5">Bookings · {period}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -146,9 +148,9 @@ export default function BedroomRevenuePage() {
 
               {/* Booking List */}
               <div className="bg-[#151716] rounded-xl p-6 border border-white/5">
-                <h2 className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-4">All Approved Bookings</h2>
+                <h2 className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-4">All Bookings</h2>
                 {(data.bookings || []).length === 0 ? (
-                  <p className="text-gray-600 text-sm text-center py-8">No approved bookings for this period</p>
+                  <p className="text-gray-600 text-sm text-center py-8">No bookings for this period</p>
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">

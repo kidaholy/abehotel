@@ -181,11 +181,10 @@ export default function StorePage() {
         unit: "kg",
         minLimit: "",
         storeMinLimit: "",
-        totalPurchaseCost: "",
+        unitPurchasedPrice: "",
         unitCost: "",
         trackQuantity: true,
         showStatus: true,
-        sellUnitEquivalent: "1"
     })
 
     const { t } = useLanguage()
@@ -603,21 +602,24 @@ export default function StorePage() {
             const url = editingStock ? `/api/stock/${editingStock._id}` : "/api/stock"
             const method = editingStock ? "PUT" : "POST"
 
-            const { quantity, minLimit, storeMinLimit, unitCost, totalPurchaseCost, sellUnitEquivalent, ...rest } = stockFormData
+            const { quantity, minLimit, storeMinLimit, unitCost, unitPurchasedPrice, ...rest } = stockFormData
+            
+            const qty = quantity === "" ? 0 : Number(quantity)
+            const unitPrice = unitPurchasedPrice === "" ? 0 : Number(unitPurchasedPrice)
+            const totalCost = qty * unitPrice // Calculate total cost from quantity and unit price
             
             const payload = {
                 ...rest,
-                storeQuantity: quantity === "" ? undefined : Number(quantity),
+                storeQuantity: qty || undefined,
                 minLimit: minLimit === "" ? undefined : Number(minLimit),
                 storeMinLimit: storeMinLimit === "" ? undefined : Number(storeMinLimit),
                 unitCost: unitCost === "" ? undefined : Number(unitCost),
-                totalPurchaseCost: totalPurchaseCost === "" ? undefined : Number(totalPurchaseCost),
-                sellUnitEquivalent: sellUnitEquivalent === "" || sellUnitEquivalent === undefined ? 1 : Number(sellUnitEquivalent.toString().replace(',', '.')) || 1
+                totalPurchaseCost: totalCost || undefined,
+                averagePurchasePrice: unitPurchasedPrice === "" ? undefined : Number(unitPurchasedPrice),
+                quantity: qty || undefined, // For API compatibility
             }
             
             console.log('🔍 Sending payload:', payload)
-            console.log('🔍 sellUnitEquivalent from form:', sellUnitEquivalent)
-            console.log('🔍 sellUnitEquivalent in payload:', payload.sellUnitEquivalent)
             
             const response = await fetch(url, {
                 method,
@@ -856,11 +858,10 @@ export default function StorePage() {
             unit: item.unit,
             minLimit: item.minLimit?.toString() || "",
             storeMinLimit: item.storeMinLimit?.toString() || "",
-            totalPurchaseCost: item.totalInvestment?.toString() || "",
+            unitPurchasedPrice: (item.averagePurchasePrice || 0).toString() || "",
             unitCost: item.unitCost?.toString() || "",
             trackQuantity: item.trackQuantity,
             showStatus: item.showStatus,
-            sellUnitEquivalent: item.sellUnitEquivalent?.toString() || "1"
         })
         setShowStockForm(true)
     }
@@ -876,11 +877,10 @@ export default function StorePage() {
             unit: "kg",
             minLimit: "",
             storeMinLimit: "",
-            totalPurchaseCost: "",
+            unitPurchasedPrice: "",
             unitCost: "",
             trackQuantity: true,
             showStatus: true,
-            sellUnitEquivalent: "1"
         })
         setEditingStock(null)
         setShowStockForm(false)
@@ -945,9 +945,6 @@ export default function StorePage() {
             const activeQty = item.quantity ?? 0
             const totalStoreValue = storeQty * costPrice
             const isLow = item.isLowStoreStock || ((storeQty <= (item.storeMinLimit || 5)) && storeQty > 0)
-            const sellUnit = item.sellUnitEquivalent && item.sellUnitEquivalent > 0 && item.sellUnitEquivalent !== 1
-                ? `1 ${item.unit} = ${item.sellUnitEquivalent} portions`
-                : "-"
             return {
                 "Item Name": item.name,
                 "Category": item.category,
@@ -956,7 +953,6 @@ export default function StorePage() {
                 "In Store": storeQty,
                 "Active in Stock": activeQty,
                 "Total Store Value (Br)": Math.round(totalStoreValue),
-                "Sell Unit": sellUnit,
                 "Min Limit (POS)": item.minLimit ?? "-",
                 "Store Min Limit": item.storeMinLimit ?? "-",
                 "Status": isLow ? "Low Stock" : storeQty === 0 ? "Empty" : "OK"
@@ -1023,11 +1019,21 @@ export default function StorePage() {
     }
 
     const totalStats = {
-        storeValue: stockItems.reduce((sum, item) => sum + ((item.storeQuantity || 0) * (item.averagePurchasePrice || item.unitCost || 0)), 0),
+        storeValue: stockItems.filter(item => (item.storeQuantity ?? 0) > 0).reduce((sum, item) => {
+            const storeQty = item.storeQuantity ?? 0
+            const unitPrice = item.averagePurchasePrice ?? 0
+            const itemValue = storeQty * unitPrice
+            if (itemValue > 0) {
+                console.log(`📦 ${item.name}: ${storeQty} × ${unitPrice} = ${itemValue}`)
+            }
+            return sum + itemValue
+        }, 0),
+        totalStoreInvestment: stockItems.filter(item => (item.storeQuantity ?? 0) > 0).reduce((sum, item) => sum + (item.totalInvestment || 0), 0),
         totalItems: stockItems.length,
         fixedAssetValue: fixedAssets.reduce((sum, a) => sum + (a.totalValue || 0), 0),
         fixedAssetCount: fixedAssets.length
     }
+    console.log(`💰 Total Store Value: ${totalStats.storeValue}, Total Items: ${totalStats.totalItems}`)
 
     return (
         <ProtectedRoute requiredRoles={["admin", "store_keeper"]}>
@@ -1051,10 +1057,10 @@ export default function StorePage() {
                                 </h2>
                                 <div className="space-y-6 relative z-10">
                                     <div>
-                                        <p className="text-4xl font-playfair italic text-[#f3cf7a]">{totalStats.storeValue.toLocaleString()} <span className="text-xs font-sans not-italic text-gray-400 uppercase tracking-widest">ETB</span></p>
+                                        <p className="text-4xl font-playfair italic text-[#f3cf7a]">{totalStats.totalStoreInvestment.toLocaleString()} <span className="text-xs font-sans not-italic text-gray-400 uppercase tracking-widest">ETB</span></p>
                                         <p className="text-[10px] font-light uppercase tracking-widest text-gray-400 mt-1">Value of Bulk Storage</p>
                                     </div>
-                                    <div className="pt-6 border-t border-white/5">
+                                    <div className="pt-4 border-t border-white/5">
                                         <p className="text-xl font-bold text-white">{totalStats.totalItems}</p>
                                         <p className="text-[10px] font-light uppercase tracking-widest text-gray-500">Total SKU Templates</p>
                                     </div>
@@ -1065,6 +1071,18 @@ export default function StorePage() {
                                     <div className="pt-4 border-t border-white/5">
                                         <p className="text-xl font-bold text-white">{operationalExpenses.reduce((sum, e) => sum + e.amount, 0).toLocaleString()} <span className="text-xs text-gray-500 uppercase tracking-widest">ETB</span></p>
                                         <p className="text-[10px] font-light uppercase tracking-widest text-gray-500">Operational Expenses (This Month)</p>
+                                    </div>
+                                    
+                                    {/* DEBUG: Show items contributing to store value */}
+                                    <div className="pt-4 border-t border-white/5 bg-[#0f1110] p-3 rounded-lg">
+                                        <p className="text-[9px] font-bold uppercase tracking-widest text-gray-500 mb-2">DEBUG: Items in Store Value</p>
+                                        <div className="space-y-1 text-[8px] text-gray-400">
+                                            {stockItems.filter(item => (item.storeQuantity ?? 0) > 0).map(item => (
+                                                <div key={item._id} className="flex justify-between">
+                                                    <span>{item.name}: {item.storeQuantity} × {item.averagePurchasePrice} = {(item.storeQuantity * item.averagePurchasePrice).toFixed(2)}</span>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
                                 </div>
                             </motion.div>
@@ -1211,17 +1229,11 @@ export default function StorePage() {
                                                                 {(item.storeQuantity || 0).toLocaleString()}
                                                                 <span className="text-[10px] font-bold text-gray-500 ml-1 uppercase">{item.unit}</span>
                                                             </p>
-                                                            {item.sellUnitEquivalent && item.sellUnitEquivalent > 0 && item.sellUnitEquivalent !== 1 && (
-                                                                <p className="text-[10px] font-bold uppercase tracking-widest text-[#d4af37]">
-                                                                    ≈ {((item.storeQuantity || 0) / item.sellUnitEquivalent).toFixed(1)} Portions
-                                                                </p>
-                                                            )}
                                                         </td>
                                                         <td className="py-5">
                                                             {(item.quantity || 0) > 0 ? (
                                                                 <span className="text-[9px] font-bold uppercase tracking-widest text-emerald-400 bg-[#1a2e20] px-2.5 py-1 rounded-lg border border-[#4ade80]/30 shadow-sm">
                                                                     {(item.quantity || 0).toLocaleString()} {item.unit} Active
-                                                                    {item.sellUnitEquivalent && item.sellUnitEquivalent > 0 && item.sellUnitEquivalent !== 1 && ` (${((item.quantity || 0) / item.sellUnitEquivalent).toFixed(1)} Portions)`}
                                                                 </span>
                                                             ) : (
                                                                 <span className="text-[9px] font-bold uppercase tracking-widest text-gray-500 bg-[#0f1110] px-2.5 py-1 rounded-lg border border-white/10 shadow-sm">
@@ -1693,8 +1705,8 @@ export default function StorePage() {
                                             <input type="number" step="any" placeholder="0.00" value={stockFormData.quantity} onChange={e => setStockFormData({ ...stockFormData, quantity: e.target.value })} className="w-full p-4 bg-[#0f1110] border border-white/10 rounded-xl font-bold text-white focus:border-[#d4af37]/50 transition-all" />
                                         </div>
                                         <div>
-                                            <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1 block ml-1">Total Cost</label>
-                                            <input type="number" step="any" placeholder="0.00" value={stockFormData.totalPurchaseCost} onChange={e => setStockFormData({ ...stockFormData, totalPurchaseCost: e.target.value })} className="w-full p-4 bg-[#0f1110] border border-white/10 rounded-xl font-bold text-[#f3cf7a] focus:border-[#d4af37]/50 transition-all" />
+                                            <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1 block ml-1">Unit Purchased Price</label>
+                                            <input type="number" step="any" placeholder="0.00" value={stockFormData.unitPurchasedPrice} onChange={e => setStockFormData({ ...stockFormData, unitPurchasedPrice: e.target.value })} className="w-full p-4 bg-[#0f1110] border border-white/10 rounded-xl font-bold text-[#f3cf7a] focus:border-[#d4af37]/50 transition-all" />
                                         </div>
                                         <div>
                                             <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1 block ml-1">Store Alert Limit</label>
@@ -1703,12 +1715,8 @@ export default function StorePage() {
                                     </div>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 block ml-1">Selling Price (Unit Cost)</label>
+                                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 block ml-1">Selling Price</label>
                                             <input type="number" step="any" placeholder="0.00" value={stockFormData.unitCost} onChange={e => setStockFormData({ ...stockFormData, unitCost: e.target.value })} className="w-full p-4 bg-[#0f1110] border border-white/10 rounded-xl font-bold text-[#d4af37] focus:border-[#d4af37]/50 transition-all" />
-                                        </div>
-                                        <div>
-                                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 block ml-1">Sell Unit Equiv ({stockFormData.unit}/portion)</label>
-                                            <input type="number" step="any" placeholder="e.g. 0.46" value={stockFormData.sellUnitEquivalent} onChange={e => setStockFormData({ ...stockFormData, sellUnitEquivalent: e.target.value })} className="w-full p-4 bg-[#0f1110] border border-white/10 rounded-xl font-bold text-white focus:border-[#d4af37]/50 transition-all" />
                                         </div>
                                     </div>
 
@@ -1735,7 +1743,7 @@ export default function StorePage() {
                                         <input type="number" step="any" placeholder="0.00" value={restockAmount} onChange={e => setRestockAmount(e.target.value)} className="w-full p-4 bg-[#0f1110] border border-white/10 rounded-xl font-bold text-white focus:border-[#d4af37]/50 transition-all" required />
                                     </div>
                                     <div className="space-y-1">
-                                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Total Cost (ETB)</label>
+                                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Unit Purchased Price (ETB)</label>
                                         <input type="number" step="any" placeholder="0.00" value={newTotalCost} onChange={e => setNewTotalCost(e.target.value)} className="w-full p-4 bg-[#0f1110] border border-white/10 rounded-xl font-black text-xl text-[#f3cf7a] focus:border-[#d4af37]/50 transition-all" required />
                                     </div>
                                     <div className="flex gap-3 pt-4">
