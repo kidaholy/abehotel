@@ -206,9 +206,11 @@ export default function ReportsPage() {
             "Items (Qty)": o.items.reduce((acc: number, i: any) => acc + (i.quantity || 0), 0),
             "Total Payment": `${o.totalAmount.toLocaleString()} ETB`,
             "Status": o.status,
-            "Date/Time": new Date(o.createdAt).toLocaleString()
+            "Date/Time": new Date(o.createdAt).toLocaleString(),
+            "Cashier": o.createdBy?.name || "Unknown",
+            "Floor": o.floorNumber || "Global"
         }))
-        ReportExporter.exportToWord({ title: "Order History Report", period: timeRange, headers: ["Item Names", "Table", "Items (Qty)", "Total Payment", "Status", "Date/Time"], data, metadata: { companyName: settings.app_name || "Prime Addis" } })
+        ReportExporter.exportToWord({ title: "Order History Report", period: timeRange, headers: ["Item Names", "Table", "Items (Qty)", "Total Payment", "Status", "Date/Time", "Cashier", "Floor"], data, metadata: { companyName: settings.app_name || "Prime Addis" } })
     }
 
     const exportCategoryCSV = (mainCat: 'Food' | 'Drinks') => {
@@ -254,7 +256,9 @@ export default function ReportsPage() {
                         "Category": item.category || "-",
                         "Qty": qty,
                         "Unit Price": price,
-                        "Total": (qty * price)
+                        "Total": (qty * price),
+                        "Cashier": order.createdBy?.name || "Unknown",
+                        "Floor": order.floorNumber || "Global"
                     })
                 }
             })
@@ -270,7 +274,7 @@ export default function ReportsPage() {
         ReportExporter.exportToCSV({
             title: `${mainCat} Sales Report`,
             period: timeRange,
-            headers: ["Date", "Time", "Order#", "Table", "Item", "Category", "Qty", "Unit Price", "Total"],
+            headers: ["Date", "Time", "Order#", "Table", "Item", "Category", "Qty", "Unit Price", "Total", "Cashier", "Floor"],
             data: flattenedData
         })
     }
@@ -293,7 +297,9 @@ export default function ReportsPage() {
                     "Category": item.category || "-",
                     "Qty": qty,
                     "Unit Price": price,
-                    "Total": (qty * price)
+                    "Total": (qty * price),
+                    "Cashier": order.createdBy?.name || "Unknown",
+                    "Floor": order.floorNumber || "Global"
                 })
             })
         })
@@ -308,7 +314,7 @@ export default function ReportsPage() {
         ReportExporter.exportToCSV({
             title: "All Sales Report",
             period: timeRange,
-            headers: ["Date", "Time", "Order#", "Table", "Item", "Category", "Qty", "Unit Price", "Total"],
+            headers: ["Date", "Time", "Order#", "Table", "Item", "Category", "Qty", "Unit Price", "Total", "Cashier", "Floor"],
             data: flattenedData
         })
     }

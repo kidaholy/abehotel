@@ -16,16 +16,44 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ message: "Forbidden - Admin access required" }, { status: 403 })
     }
 
+    const { searchParams } = new URL(request.url)
+    const isPermanent = searchParams.get('permanent') === 'true'
+
     await connectDB()
 
+    if (isPermanent) {
+      // PERMANENT DELETE (Emptying Trash)
+      const deletedOrders = await (Order as any).find({ isDeleted: true }).lean()
+      
+      if (deletedOrders.length === 0) {
+        return NextResponse.json({ message: "No deleted orders to permanently remove" }, { status: 400 })
+      }
+
+      const result = await (Order as any).deleteMany({ isDeleted: true })
+
+      try {
+        addNotification(
+          "warning",
+          `💥 Admin permanently deleted all records in the Trash (${result.deletedCount} orders).`,
+          "admin"
+        )
+      } catch (e) {}
+
+      return NextResponse.json({
+        message: `Successfully permanently deleted ${result.deletedCount} orders`,
+        deletedCount: result.deletedCount
+      })
+    }
+
+    // SOFT DELETE (Moving to History)
     // 🔗 BUSINESS LOGIC: To restore stock correctly, we find all orders that are NOT already cancelled
     // and NOT already deleted
-    const activeOrders = await Order.find({ 
+    const activeOrders = await (Order as any).find({ 
       status: { $ne: "cancelled" },
       isDeleted: { $ne: true }
     }).lean()
 
-    const orderCount = await Order.countDocuments({ isDeleted: { $ne: true } })
+    const orderCount = await (Order as any).countDocuments({ isDeleted: { $ne: true } })
 
     if (orderCount === 0 && activeOrders.length === 0) {
       return NextResponse.json({ message: "No active orders to delete" }, { status: 400 })
@@ -46,7 +74,7 @@ export async function DELETE(request: Request) {
     }
 
     // Soft delete all orders
-    const result = await Order.updateMany({ isDeleted: { $ne: true } }, { isDeleted: true, status: "cancelled" })
+    const result = await (Order as any).updateMany({ isDeleted: { $ne: true } }, { isDeleted: true, status: "cancelled" })
 
     // Send notification about bulk deletion
     try {

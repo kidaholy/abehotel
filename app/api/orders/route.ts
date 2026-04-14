@@ -72,7 +72,10 @@ export async function GET(request: Request) {
     }
 
     // RBAC: Filter by floor for display and cashier users
-    if (decoded.role === 'display' || decoded.role === 'cashier') {
+    if (decoded.role === 'cashier') {
+      // Cashiers only see their own orders, not other cashiers' on the same floor
+      query.createdBy = decoded.id
+    } else if (decoded.role === 'display') {
       if (decoded.floorId) {
         // Find all table numbers for this floor to include orders that might be missing floorId
         const floorTables = await Table.find({ floorId: decoded.floorId }, { tableNumber: 1 }).lean() as any[]
@@ -80,15 +83,11 @@ export async function GET(request: Request) {
 
         query.$or = [
           { floorId: decoded.floorId },
-          { tableNumber: { $in: tableNumbers } },
-          { createdBy: decoded.id } // Always allow seeing their own orders
+          { tableNumber: { $in: tableNumbers } }
         ]
-      } else if (decoded.role === 'display') {
+      } else {
         // Force no results if role is display but no floor is assigned
         query.floorId = new mongoose.Types.ObjectId()
-      } else if (decoded.role === 'cashier') {
-        // Cashiers without an assigned floor only see their own orders
-        query.createdBy = decoded.id
       }
     }
 
@@ -116,7 +115,7 @@ export async function GET(request: Request) {
       query["items.mainCategory"] = mainCategory
     }
 
-    let orderQuery = Order.find(query).sort({ createdAt: -1 })
+    let orderQuery = Order.find(query).populate('createdBy', 'name').sort({ createdAt: -1 })
 
     if (limit) {
       orderQuery = orderQuery.limit(Number(limit))

@@ -248,6 +248,46 @@ export default function AdminOrdersPage() {
     }
   }
 
+  const handleBulkDeletePermanently = async () => {
+    const deletedCount = orders.filter(o => o.isDeleted || o.status === 'cancelled').length
+    if (deletedCount === 0) {
+      notify({ title: "Empty Trash", message: "There are no deleted orders to clear.", type: "warning" })
+      return
+    }
+
+    const confirmed = await confirm({
+      title: "Empty Trash Permanently",
+      message: `Are you sure you want to permanently delete ALL ${deletedCount} deleted orders?\n\nThis action CANNOT be undone. Data will be completely erased from the database.`,
+      type: "danger",
+      confirmText: "Yes, Empty Trash",
+      cancelText: "Cancel"
+    })
+
+    if (!confirmed) return
+
+    setBulkDeleting(true)
+    try {
+      const response = await fetch("/api/orders/bulk-delete?permanent=true", {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        setOrders(prevOrders => prevOrders.filter(o => !o.isDeleted && o.status !== 'cancelled'))
+        notify({ title: "Trash Emptied", message: `Successfully permanently deleted ${result.deletedCount} orders.`, type: "success" })
+      } else {
+        const error = await response.json()
+        notify({ title: "Delete Failed", message: error.message || "Failed to permanently delete orders", type: "error" })
+      }
+    } catch (error) {
+      console.error("Failed to permanently bulk delete orders:", error)
+      notify({ title: "Error", message: "Failed to permanently delete orders. Please try again.", type: "error" })
+    } finally {
+      setBulkDeleting(false)
+    }
+  }
+
   const handleBulkServeOrders = async () => {
     const activeCount = orders.filter(o => !o.isDeleted && o.status !== 'cancelled' && o.status !== 'served' && o.status !== 'completed').length
     if (activeCount === 0) {
@@ -626,9 +666,9 @@ export default function AdminOrdersPage() {
                           )}
                         </button>
                         <button
-                          onClick={handleBulkDeleteOrders}
+                          onClick={filter === 'deleted' ? handleBulkDeletePermanently : handleBulkDeleteOrders}
                           disabled={bulkDeleting || bulkServing}
-                          className="w-full sm:w-auto bg-[#1a0f0f] border border-red-900/50 hover:bg-red-950/80 disabled:opacity-50 text-red-500 px-6 py-3 rounded-xl font-bold transition-all shadow-lg hover:shadow-red-900/20 transform hover:scale-105 disabled:transform-none flex items-center justify-center gap-2 whitespace-nowrap"
+                          className={`w-full sm:w-auto ${filter === 'deleted' ? 'bg-[#2a0f0f] border-red-500/50 hover:bg-red-900 shadow-[0_0_15px_rgba(239,68,68,0.2)] text-red-400' : 'bg-[#1a0f0f] border-red-900/50 hover:bg-red-950/80 hover:shadow-red-900/20 text-red-500'} disabled:opacity-50 border px-6 py-3 rounded-xl font-bold transition-all shadow-lg transform hover:scale-105 disabled:transform-none flex items-center justify-center gap-2 whitespace-nowrap`}
                         >
                           {bulkDeleting ? (
                             <>
@@ -638,7 +678,9 @@ export default function AdminOrdersPage() {
                           ) : (
                             <>
                               <span>🗑️</span>
-                              <span className="text-[10px] tracking-widest uppercase">{t("adminOrders.deleteAllOrders")}</span>
+                              <span className="text-[10px] tracking-widest uppercase">
+                                {filter === 'deleted' ? 'Empty Trash' : t("adminOrders.deleteAllOrders")}
+                              </span>
                             </>
                           )}
                         </button>
