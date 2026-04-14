@@ -17,7 +17,7 @@ interface OrderItem {
   name: string
   quantity: number
   specialInstructions?: string
-  status: "pending" | "preparing" | "ready" | "served" | "cancelled"
+  status: "pending" | "preparing" | "ready" | "served" | "completed" | "cancelled"
   category?: string
   menuTier?: 'standard' | 'vip1' | 'vip2'
 }
@@ -114,7 +114,11 @@ export default function KitchenDisplayPage() {
         const activeOrders = data.filter((order: Order) =>
           order.status !== "completed" && order.status !== "cancelled" &&
           !pendingUpdates.current.has(order._id) &&
-          order.items.some(item => (item as any).mainCategory === "Food")
+          order.items.some(item => (item as any).mainCategory === "Food" && 
+            item.status !== "completed" && 
+            item.status !== "served" && 
+            item.status !== "cancelled"
+          )
         ).map((order: Order) => ({
           ...order,
           items: order.items.filter(item => (item as any).mainCategory === "Food")
