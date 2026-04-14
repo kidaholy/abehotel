@@ -9,6 +9,7 @@ import { ConfirmationCard, NotificationCard } from "@/components/confirmation-ca
 import { useConfirmation } from "@/hooks/use-confirmation"
 import { RefreshCw, Clock, ChefHat, Maximize2, Minimize2 } from 'lucide-react'
 import { Card, CardContent } from "@/components/ui/card"
+import { getSyncedTime } from "@/lib/time-sync"
 
 interface OrderItem {
   menuItemId: string
@@ -415,7 +416,7 @@ function OrderCard({
   t: (key: string) => string
 }) {
   const createdTime = new Date(order.createdAt)
-  const elapsedMinutes = Math.floor((Date.now() - createdTime.getTime()) / 60000)
+  const elapsedMinutes = Math.floor((getSyncedTime().getTime() - createdTime.getTime()) / 60000)
 
   const borderColors = {
     orange: "border-l-[#d4af37]",

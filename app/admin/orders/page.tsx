@@ -90,8 +90,6 @@ export default function AdminOrdersPage() {
 
     if (range === 'custom' && selectedDate) {
       startDate = selectedDate
-    } else if (range === 'today') {
-      startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate())
     } else if (range === 'week') {
       startDate = new Date(now)
       startDate.setDate(now.getDate() - 7)
@@ -106,7 +104,9 @@ export default function AdminOrdersPage() {
       startDate.setHours(0, 0, 0, 0)
     }
 
-    if (startDate) {
+    if (range === 'today') {
+      url += `?period=today`
+    } else if (startDate) {
       const ISO_START = new Date(startDate)
       ISO_START.setHours(0, 0, 0, 0)
       url += `?startDate=${ISO_START.toISOString()}`

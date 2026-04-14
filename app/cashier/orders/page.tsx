@@ -55,9 +55,7 @@ export default function CashierOrdersPage() {
 
   const fetchOrders = async () => {
     try {
-      const today = new Date()
-      today.setHours(0, 0, 0, 0)
-      const response = await fetch(`/api/orders?startDate=${today.toISOString()}`, {
+      const response = await fetch(`/api/orders?period=today`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (response.ok) setOrders(await response.json())

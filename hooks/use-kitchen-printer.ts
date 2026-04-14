@@ -11,6 +11,7 @@ import {
   detectPrinter,
   detectAnyUSBPrinter
 } from '@/lib/pos-printer'
+import { getSyncedTime } from '@/lib/time-sync'
 
 interface PrinterStatus {
   id: string
@@ -197,12 +198,12 @@ export function useKitchenPrinter(): UsePrinterReturn {
   }
 }
 
-// Helper function to convert order data to KitchenOrder format
 export function convertToKitchenOrder(orderData: any): KitchenOrder {
+  const t = getSyncedTime();
   return {
     orderId: orderData._id || orderData.id,
-    orderNumber: orderData.orderNumber || `ORD-${Date.now()}`,
-    timestamp: new Date(orderData.createdAt || Date.now()),
+    orderNumber: orderData.orderNumber || `ORD-${t.getTime()}`,
+    timestamp: new Date(orderData.createdAt || t.getTime()),
     customerName: orderData.customerName,
     tableNumber: orderData.tableNumber,
     orderType: orderData.orderType || 'dine-in',

@@ -1,5 +1,6 @@
 // Universal POS Printer Library for Kitchen Orders
 // Supports multiple cash register and POS systems
+import { getSyncedTime } from './time-sync'
 
 export interface PrinterConfig {
   type: 'thermal' | 'impact' | 'laser' | 'inkjet'
@@ -218,7 +219,9 @@ export class UniversalPOSPrinter {
     receipt += ESC_POS.ALIGN_LEFT
     receipt += ESC_POS.BOLD_ON
     receipt += `Order #: ${order.orderNumber}\n`
-    receipt += `Time: ${order.timestamp.toLocaleTimeString()}\n`
+    
+    // Force standard 24h format to prevent system locale from corrupting the printout
+    receipt += `Time: ${order.timestamp.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}\n`
     receipt += `Type: ${order.orderType.toUpperCase()}\n`
     
     if (order.tableNumber) {
@@ -283,7 +286,16 @@ export class UniversalPOSPrinter {
     // Footer
     receipt += this.generateLine(this.config.paperWidth || 48)
     receipt += ESC_POS.ALIGN_CENTER
-    receipt += `Printed: ${new Date().toLocaleString()}\n`
+    
+    // Force standard 24h format using Synced Time
+    const printTimeStr = getSyncedTime().toLocaleString('en-GB', { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric', 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    })
+    receipt += `Printed: ${printTimeStr}\n`
     receipt += ESC_POS.FEED_LINE
     receipt += ESC_POS.FEED_LINE
     

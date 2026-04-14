@@ -12,6 +12,7 @@ import { calculateStockConsumption, applyStockAdjustment } from "@/lib/stock-log
 import { validateSession } from "@/lib/auth"
 import Floor from "@/lib/models/floor"
 import Table from "@/lib/models/table"
+import { getSyncedTime, getStartOfTodayUTC3 } from "@/lib/time-sync"
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-this-in-production"
 
@@ -46,6 +47,7 @@ export async function GET(request: Request) {
     const limit = searchParams.get('limit')
     const includeDeleted = searchParams.get('includeDeleted') === 'true'
     const mainCategory = searchParams.get('mainCategory') // 'Food' or 'Drinks'
+    const period = searchParams.get('period')
 
     const decoded = await validateSession(request)
     // console.log("📋 User fetching orders:", decoded.email || decoded.id)
@@ -60,7 +62,10 @@ export async function GET(request: Request) {
 
     let query: any = includeDeleted ? {} : { isDeleted: { $ne: true } }
 
-    if (startDate || endDate) {
+    if (period === 'today') {
+      const todayStart = getStartOfTodayUTC3()
+      query.createdAt = { $gte: todayStart }
+    } else if (startDate || endDate) {
       query.createdAt = {}
       if (startDate) query.createdAt.$gte = new Date(startDate)
       if (endDate) query.createdAt.$lte = new Date(endDate)
@@ -289,7 +294,8 @@ export async function POST(request: Request) {
         const foodItems = linkedMenuItems.filter(m => m.mainCategory?.toLowerCase() !== "drinks")
         if (foodItems.length === 0) return 0
         return Math.max(...foodItems.map(m => m.preparationTime || 10))
-      })() || 10
+      })() || 10,
+      createdAt: getSyncedTime()
     }
 
     // 🔥 RETRY LOOP: Handle rare race conditions for duplicate orderNumber
