@@ -13,7 +13,8 @@ import { format } from "date-fns"
 import {
   RefreshCw, Hotel, Key, Utensils, Megaphone, Calendar, MessageSquare,
   ConciergeBell, ClipboardList, DoorOpen, Users, CheckCircle2,
-  Phone, Upload, X, CreditCard, Banknote, Smartphone, IdCard, Link2, FileText, XCircle
+  Phone, Upload, X, CreditCard, Banknote, Smartphone, IdCard, Link2, FileText, XCircle,
+  Search
 } from "lucide-react"
 
 const INQUIRY_TYPES = [
@@ -44,6 +45,98 @@ const EMPTY_FORM = {
   inquiryType: "", checkIn: "", checkOut: "", checkInTime: "", checkOutTime: "",
   guests: "1", paymentMethod: "cash", chequeNumber: "", notes: "",
   idPhotoFront: "", idPhotoBack: "", roomPrice: "", paymentReference: "", transactionUrl: "", photoUrl: "",
+}
+
+function GuestCard({ s, rooms, token, notify, fetchSubmissions, setExtendGuest, setNewCheckOut }: { s: any; rooms: any[]; token: string | null; notify: any; fetchSubmissions: () => void; setExtendGuest: (s: any) => void; setNewCheckOut: (d: string) => void }) {
+  const STATUS_STYLES: Record<string, string> = {
+    pending:   "bg-yellow-900/30 text-yellow-400 border-yellow-500/30",
+    guests:    "bg-emerald-900/30 text-emerald-400 border-emerald-500/30",
+    rejected:  "bg-red-900/30 text-red-400 border-red-500/30",
+    check_in:  "bg-blue-900/30 text-blue-400 border-blue-500/30",
+    check_out: "bg-purple-900/30 text-purple-400 border-purple-500/30",
+  }
+
+  const calcGuestDuration = () => {
+    if (!s.checkIn || !s.checkOut) return null
+    const inDate  = new Date(`${s.checkIn}T${s.checkInTime || "12:00"}`)
+    const outDate = new Date(`${s.checkOut}T${s.checkOutTime || "12:00"}`)
+    const diffMs  = outDate.getTime() - inDate.getTime()
+    if (diffMs <= 0) return null
+    const nights = Math.ceil(diffMs / (1000 * 60 * 60 * 24))
+    const savedPrice = parseFloat(s.roomPrice || "0")
+    const roomFromList = rooms.find(r => r.roomNumber === s.roomNumber)
+    const pricePerNight = savedPrice > 0 ? savedPrice : (roomFromList?.price || 0)
+    const total = nights * pricePerNight
+    return { nights, total, pricePerNight }
+  }
+  const gd = calcGuestDuration()
+
+  return (
+    <div key={s._id} className="bg-[#0f1110] rounded-xl p-4 border border-emerald-500/10 hover:border-emerald-500/20 transition-all">
+      <div className="flex items-start gap-3">
+        {s.photoUrl ? (
+          <img src={s.photoUrl} alt={s.guestName} className="w-12 h-12 rounded-xl object-cover border border-white/10 shrink-0" />
+        ) : (
+          <div className="w-12 h-12 rounded-xl bg-emerald-900/30 border border-emerald-500/20 flex items-center justify-center shrink-0">
+            <Users size={20} className="text-emerald-400" />
+          </div>
+        )}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between gap-2">
+            <span className="font-black text-white text-sm truncate">{s.guestName}</span>
+            <span className={`text-[9px] font-black px-2 py-0.5 rounded-full border shrink-0 ${STATUS_STYLES[s.status] || STATUS_STYLES.guests}`}>
+              {s.status === "guests" ? "Checked In" : s.status === "check_in" ? "Checking In" : s.status === "check_out" ? "Checking Out" : s.status}
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1 text-[10px] text-gray-500 font-bold">
+            {s.roomNumber && <span className="flex items-center gap-1"><DoorOpen size={10} /> Room {s.roomNumber}</span>}
+            {s.phone      && <span className="flex items-center gap-1"><Phone size={10} /> {s.phone}</span>}
+            {s.faydaId    && <span className="flex items-center gap-1"><IdCard size={10} /> {s.faydaId}</span>}
+            {s.checkIn    && <span className="flex items-center gap-1"><Calendar size={10} /> {s.checkIn}{s.checkInTime ? ` ${s.checkInTime}` : ""} → {s.checkOut || "?"}{s.checkOutTime ? ` ${s.checkOutTime}` : ""}</span>}
+            {s.guests     && <span className="flex items-center gap-1"><Users size={10} /> {s.guests} guest{parseInt(s.guests) > 1 ? "s" : ""}</span>}
+          </div>
+
+          {gd && (
+            <div className="mt-2 grid grid-cols-3 gap-2">
+              <div className="bg-[#151716] rounded-lg p-2 text-center border border-white/5">
+                <p className="text-sm font-black text-white">{gd.nights}</p>
+                <p className="text-[8px] font-black uppercase tracking-widest text-gray-600">Night{gd.nights !== 1 ? "s" : ""}</p>
+              </div>
+              <div className="bg-[#151716] rounded-lg p-2 text-center border border-white/5">
+                <p className="text-sm font-black text-[#f3cf7a]">{gd.pricePerNight.toLocaleString()}</p>
+                <p className="text-[8px] font-black uppercase tracking-widest text-gray-600">ETB/Night</p>
+              </div>
+              <div className="bg-[#d4af37]/10 rounded-lg p-2 text-center border border-[#d4af37]/20">
+                <p className="text-sm font-black text-[#f3cf7a]">{gd.total.toLocaleString()}</p>
+                <p className="text-[8px] font-black uppercase tracking-widest text-[#d4af37]/60">Total ETB</p>
+              </div>
+            </div>
+          )}
+
+          {s.reviewNote && <p className="mt-1.5 text-[10px] text-blue-400 bg-blue-900/20 rounded-lg px-2 py-1 border border-blue-500/20">↩ {s.reviewNote}</p>}
+          <div className="mt-2 flex gap-2">
+            <button type="button"
+              onClick={() => { setExtendGuest(s); setNewCheckOut(s.checkOut || "") }}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-[#d4af37]/10 border border-[#d4af37]/30 rounded-lg text-[10px] font-black uppercase tracking-widest text-[#f3cf7a] hover:bg-[#d4af37]/20 transition-all">
+              <Calendar size={11} /> Extend Stay
+            </button>
+            <button type="button"
+              onClick={async () => {
+                const res = await fetch(`/api/reception-requests/${s._id}`, {
+                  method: "PUT",
+                  headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                  body: JSON.stringify({ status: "pending", reviewNote: "Check-out requested by reception" }),
+                })
+                if (res.ok) { notify({ title: "Check-Out Requested", message: `${s.guestName} check-out sent for admin approval.`, type: "success" }); fetchSubmissions() }
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-red-900/20 border border-red-500/20 rounded-lg text-[10px] font-black uppercase tracking-widest text-red-400 hover:bg-red-900/30 transition-all">
+              <Key size={11} /> Check Out
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 function SubmissionCard({ s }: { s: any }) {
@@ -99,6 +192,7 @@ export default function ReceptionDashboard() {
   const [submissions, setSubmissions] = useState<any[]>([])
   const [loadingSubmissions, setLoadingSubmissions] = useState(true)
   const [rightTab, setRightTab] = useState<"submissions" | "guests" | "rejected" | "check_in" | "check_out">("guests")
+  const [searchQuery, setSearchQuery] = useState("")
   const [extendGuest, setExtendGuest] = useState<any | null>(null)
   const [newCheckOut, setNewCheckOut] = useState("")
   const [extending, setExtending] = useState(false)
@@ -228,6 +322,17 @@ export default function ReceptionDashboard() {
 
   // shared input class — dark theme
   const ic = "w-full bg-[#0f1110] border border-white/10 text-white rounded-xl px-4 py-3 text-sm font-medium outline-none focus:border-[#d4af37]/50 focus:ring-0 transition-all placeholder:text-gray-600"
+
+  const filteredSubmissions = submissions.filter(s => {
+    if (!searchQuery) return true
+    const q = searchQuery.toLowerCase()
+    return (
+      s.guestName?.toLowerCase().includes(q) ||
+      s.phone?.toLowerCase().includes(q) ||
+      s.faydaId?.toLowerCase().includes(q) ||
+      s.roomNumber?.toLowerCase().includes(q)
+    )
+  })
 
   return (
     <ProtectedRoute requiredRoles={["reception", "admin"]}>
@@ -529,35 +634,49 @@ export default function ReceptionDashboard() {
 
             {/* ── SUBMISSIONS ── */}
             <div className="lg:col-span-5">
-              <div className="bg-[#151716] rounded-xl shadow-2xl border border-white/5 p-6 h-full flex flex-col">
+              <div className="bg-[#151716] rounded-xl shadow-2xl border border-white/5 p-6 h-full flex flex-col font-bold">
 
-                {/* Tab bar */}
-                <div className="flex items-center justify-between mb-5">
-                  <div className="flex gap-1 bg-[#0f1110] border border-white/5 p-1 rounded-xl overflow-x-auto">
-                    <button onClick={() => setRightTab("guests")}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${rightTab === "guests" ? "bg-emerald-900/40 text-emerald-400 border border-emerald-500/30" : "text-gray-500 hover:text-gray-300"}`}>
-                      <Users size={11} /> Guests ({submissions.filter(s => s.status === "guests" && s.inquiryType !== "check_in" && s.inquiryType !== "check_out").length})
-                    </button>
-                    <button onClick={() => setRightTab("check_in")}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${rightTab === "check_in" ? "bg-blue-900/40 text-blue-400 border border-blue-500/30" : "text-gray-500 hover:text-gray-300"}`}>
-                      <Hotel size={11} /> Check-In ({submissions.filter(s => s.status === "check_in" || (s.status === "guests" && s.inquiryType === "check_in")).length})
-                    </button>
-                    <button onClick={() => setRightTab("check_out")}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${rightTab === "check_out" ? "bg-purple-900/40 text-purple-400 border border-purple-500/30" : "text-gray-500 hover:text-gray-300"}`}>
-                      <Key size={11} /> Check-Out ({submissions.filter(s => s.status === "check_out" || (s.status === "guests" && s.inquiryType === "check_out")).length})
-                    </button>
-                    <button onClick={() => setRightTab("submissions")}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${rightTab === "submissions" ? "bg-yellow-900/40 text-yellow-400 border border-yellow-500/30" : "text-gray-500 hover:text-gray-300"}`}>
-                      <ClipboardList size={11} /> Pending ({submissions.filter(s => s.status === "pending").length})
-                    </button>
-                    <button onClick={() => setRightTab("rejected")}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px) font-black uppercase tracking-widest transition-all whitespace-nowrap ${rightTab === "rejected" ? "bg-red-900/40 text-red-400 border border-red-500/30" : "text-gray-500 hover:text-gray-300"}`}>
-                      <XCircle size={11} /> Rejected ({submissions.filter(s => s.status === "rejected").length})
+                {/* Search & Tabs */}
+                <div className="mb-6 space-y-4">
+                  <div className="relative">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
+                    <input 
+                      type="text"
+                      value={searchQuery}
+                      onChange={e => setSearchQuery(e.target.value)}
+                      placeholder="Search guests by name, phone, room or ID..."
+                      className="w-full bg-[#0f1110] border border-white/5 rounded-2xl pl-12 pr-4 py-3.5 text-xs font-bold uppercase tracking-widest text-[#f3cf7a] outline-none focus:border-[#d4af37]/30 transition-all placeholder:text-gray-700"
+                    />
+                  </div>
+
+                  {/* Tab bar */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex gap-1 bg-[#0f1110] border border-white/5 p-1 rounded-xl overflow-x-auto">
+                      <button onClick={() => setRightTab("guests")}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${rightTab === "guests" ? "bg-emerald-900/40 text-emerald-400 border border-emerald-500/30" : "text-gray-500 hover:text-gray-300"}`}>
+                        <Users size={11} /> Guests ({filteredSubmissions.length})
+                      </button>
+                      <button onClick={() => setRightTab("check_in")}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${rightTab === "check_in" ? "bg-blue-900/40 text-blue-400 border border-blue-500/30" : "text-gray-500 hover:text-gray-300"}`}>
+                        <Hotel size={11} /> Check-In ({filteredSubmissions.filter(s => s.status === "check_in" || (s.status === "guests" && s.inquiryType === "check_in")).length})
+                      </button>
+                      <button onClick={() => setRightTab("check_out")}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${rightTab === "check_out" ? "bg-purple-900/40 text-purple-400 border border-purple-500/30" : "text-gray-500 hover:text-gray-300"}`}>
+                        <Key size={11} /> Check-Out ({filteredSubmissions.filter(s => s.status === "check_out" || (s.status === "guests" && s.inquiryType === "check_out")).length})
+                      </button>
+                      <button onClick={() => setRightTab("submissions")}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${rightTab === "submissions" ? "bg-yellow-900/40 text-yellow-400 border border-yellow-500/30" : "text-gray-500 hover:text-gray-300"}`}>
+                        <ClipboardList size={11} /> Pending ({filteredSubmissions.filter(s => s.status === "pending").length})
+                      </button>
+                      <button onClick={() => setRightTab("rejected")}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${rightTab === "rejected" ? "bg-red-900/40 text-red-400 border border-red-500/30" : "text-gray-500 hover:text-gray-300"}`}>
+                        <XCircle size={11} /> Rejected ({filteredSubmissions.filter(s => s.status === "rejected").length})
+                      </button>
+                    </div>
+                    <button onClick={fetchSubmissions} className="text-gray-500 hover:text-[#d4af37] transition-colors ml-2">
+                      <RefreshCw className={`w-4 h-4 ${loadingSubmissions ? "animate-spin" : ""}`} />
                     </button>
                   </div>
-                  <button onClick={fetchSubmissions} className="text-gray-500 hover:text-[#d4af37] transition-colors">
-                    <RefreshCw className={`w-4 h-4 ${loadingSubmissions ? "animate-spin" : ""}`} />
-                  </button>
                 </div>
 
                 {loadingSubmissions ? (
@@ -569,140 +688,99 @@ export default function ReceptionDashboard() {
 
                     {/* ── GUESTS TAB ── */}
                     {rightTab === "guests" && (() => {
-                      const guests = submissions.filter(s => s.status === "guests" && s.inquiryType !== "check_in" && s.inquiryType !== "check_out")
-                      if (guests.length === 0) return (
+                      if (filteredSubmissions.length === 0) return (
                         <div className="flex flex-col items-center justify-center py-16 text-center">
                           <Users size={40} className="text-gray-700 mb-3" />
-                          <p className="text-gray-600 text-[10px] font-black uppercase tracking-widest">No guests yet</p>
+                          <p className="text-gray-600 text-[10px] font-black uppercase tracking-widest">{searchQuery ? "No matches found" : "No guest records"}</p>
                         </div>
                       )
-                      return guests.map((s: any) => {
-                        // Calculate duration for this guest
-                        const calcGuestDuration = () => {
-                          if (!s.checkIn || !s.checkOut) return null
-                          const inDate  = new Date(`${s.checkIn}T${s.checkInTime || "12:00"}`)
-                          const outDate = new Date(`${s.checkOut}T${s.checkOutTime || "12:00"}`)
-                          const diffMs  = outDate.getTime() - inDate.getTime()
-                          if (diffMs <= 0) return null
-                          const nights = Math.ceil(diffMs / (1000 * 60 * 60 * 24))
-                          // Use saved roomPrice, fallback to rooms list
-                          const savedPrice = parseFloat(s.roomPrice || "0")
-                          const roomFromList = rooms.find(r => r.roomNumber === s.roomNumber)
-                          const pricePerNight = savedPrice > 0 ? savedPrice : (roomFromList?.price || 0)
-                          const total = nights * pricePerNight
-                          return { nights, total, pricePerNight }
-                        }
-                        const gd = calcGuestDuration()
-
-                        return (
-                        <div key={s._id} className="bg-[#0f1110] rounded-xl p-4 border border-emerald-500/10 hover:border-emerald-500/20 transition-all">
-                          <div className="flex items-start gap-3">
-                            {s.photoUrl ? (
-                              <img src={s.photoUrl} alt={s.guestName} className="w-12 h-12 rounded-xl object-cover border border-white/10 shrink-0" />
-                            ) : (
-                              <div className="w-12 h-12 rounded-xl bg-emerald-900/30 border border-emerald-500/20 flex items-center justify-center shrink-0">
-                                <Users size={20} className="text-emerald-400" />
-                              </div>
-                            )}
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center justify-between gap-2">
-                                <span className="font-black text-white text-sm truncate">{s.guestName}</span>
-                                <span className={`text-[9px] font-black px-2 py-0.5 rounded-full border shrink-0 ${STATUS_STYLES[s.status] || STATUS_STYLES.guests}`}>
-                                  {s.status === "guests" ? "Checked In" : s.status === "check_in" ? "Checking In" : s.status === "check_out" ? "Checking Out" : s.status}
-                                </span>
-                              </div>
-                              <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1 text-[10px] text-gray-500 font-bold">
-                                {s.roomNumber && <span className="flex items-center gap-1"><DoorOpen size={10} /> Room {s.roomNumber}</span>}
-                                {s.phone      && <span className="flex items-center gap-1"><Phone size={10} /> {s.phone}</span>}
-                                {s.faydaId    && <span className="flex items-center gap-1"><IdCard size={10} /> {s.faydaId}</span>}
-                                {s.checkIn    && <span className="flex items-center gap-1"><Calendar size={10} /> {s.checkIn}{s.checkInTime ? ` ${s.checkInTime}` : ""} → {s.checkOut || "?"}{s.checkOutTime ? ` ${s.checkOutTime}` : ""}</span>}
-                                {s.guests     && <span className="flex items-center gap-1"><Users size={10} /> {s.guests} guest{parseInt(s.guests) > 1 ? "s" : ""}</span>}
-                              </div>
-
-                              {/* Duration & Payment Summary */}
-                              {gd && (
-                                <div className="mt-2 grid grid-cols-3 gap-2">
-                                  <div className="bg-[#151716] rounded-lg p-2 text-center border border-white/5">
-                                    <p className="text-sm font-black text-white">{gd.nights}</p>
-                                    <p className="text-[8px] font-black uppercase tracking-widest text-gray-600">Night{gd.nights !== 1 ? "s" : ""}</p>
-                                  </div>
-                                  <div className="bg-[#151716] rounded-lg p-2 text-center border border-white/5">
-                                    <p className="text-sm font-black text-[#f3cf7a]">{gd.pricePerNight.toLocaleString()}</p>
-                                    <p className="text-[8px] font-black uppercase tracking-widest text-gray-600">ETB/Night</p>
-                                  </div>
-                                  <div className="bg-[#d4af37]/10 rounded-lg p-2 text-center border border-[#d4af37]/20">
-                                    <p className="text-sm font-black text-[#f3cf7a]">{gd.total.toLocaleString()}</p>
-                                    <p className="text-[8px] font-black uppercase tracking-widest text-[#d4af37]/60">Total ETB</p>
-                                  </div>
-                                </div>
-                              )}
-
-                              {s.reviewNote && <p className="mt-1.5 text-[10px] text-blue-400 bg-blue-900/20 rounded-lg px-2 py-1 border border-blue-500/20">↩ {s.reviewNote}</p>}
-                              <div className="mt-2 flex gap-2">
-                                <button type="button"
-                                  onClick={() => { setExtendGuest(s); setNewCheckOut(s.checkOut || "") }}
-                                  className="flex items-center gap-1.5 px-3 py-1.5 bg-[#d4af37]/10 border border-[#d4af37]/30 rounded-lg text-[10px] font-black uppercase tracking-widest text-[#f3cf7a] hover:bg-[#d4af37]/20 transition-all">
-                                  <Calendar size={11} /> Extend Stay
-                                </button>
-                                <button type="button"
-                                  onClick={async () => {
-                                    const res = await fetch(`/api/reception-requests/${s._id}`, {
-                                      method: "PUT",
-                                      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-                                      body: JSON.stringify({ status: "pending", reviewNote: "Check-out requested by reception" }),
-                                    })
-                                    if (res.ok) { notify({ title: "Check-Out Requested", message: `${s.guestName} check-out sent for admin approval.`, type: "success" }); fetchSubmissions() }
-                                  }}
-                                  className="flex items-center gap-1.5 px-3 py-1.5 bg-red-900/20 border border-red-500/20 rounded-lg text-[10px] font-black uppercase tracking-widest text-red-400 hover:bg-red-900/30 transition-all">
-                                  <Key size={11} /> Check Out
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
+                      return filteredSubmissions.map((s: any) => (
+                        s.status === "guests" ? (
+                          <GuestCard 
+                            key={s._id} 
+                            s={s} 
+                            rooms={rooms} 
+                            token={token} 
+                            notify={notify} 
+                            fetchSubmissions={fetchSubmissions}
+                            setExtendGuest={setExtendGuest}
+                            setNewCheckOut={setNewCheckOut}
+                          />
+                        ) : (
+                          <SubmissionCard key={s._id} s={s} />
                         )
-                      })
+                      ))
                     })()}
 
                     {/* ── CHECK-IN TAB ── */}
                     {rightTab === "check_in" && (() => {
-                      const checkIns = submissions.filter(s => s.status === "check_in" || (s.status === "guests" && s.inquiryType === "check_in"))
+                      const checkIns = filteredSubmissions.filter(s => s.status === "check_in" || (s.status === "guests" && s.inquiryType === "check_in"))
                       if (checkIns.length === 0) return (
                         <div className="flex flex-col items-center justify-center py-16 text-center">
                           <Hotel size={40} className="text-gray-700 mb-3" />
-                          <p className="text-gray-600 text-[10px] font-black uppercase tracking-widest">No guests checking in</p>
+                          <p className="text-gray-600 text-[10px] font-black uppercase tracking-widest">{searchQuery ? "No matches found" : "No guests checking in"}</p>
                         </div>
                       )
                       return (
                         <div className="space-y-3">
-                          {checkIns.map((s: any) => <SubmissionCard key={s._id} s={s} />)}
+                          {checkIns.map((s: any) => (
+                            s.status === "guests" ? (
+                              <GuestCard 
+                                key={s._id} 
+                                s={s} 
+                                rooms={rooms} 
+                                token={token} 
+                                notify={notify} 
+                                fetchSubmissions={fetchSubmissions}
+                                setExtendGuest={setExtendGuest}
+                                setNewCheckOut={setNewCheckOut}
+                              />
+                            ) : (
+                              <SubmissionCard key={s._id} s={s} />
+                            )
+                          ))}
                         </div>
                       )
                     })()}
 
                     {/* ── CHECK-OUT TAB ── */}
                     {rightTab === "check_out" && (() => {
-                      const checkOuts = submissions.filter(s => s.status === "check_out" || (s.status === "guests" && s.inquiryType === "check_out"))
+                      const checkOuts = filteredSubmissions.filter(s => s.status === "check_out" || (s.status === "guests" && s.inquiryType === "check_out"))
                       if (checkOuts.length === 0) return (
                         <div className="flex flex-col items-center justify-center py-16 text-center">
                           <Key size={40} className="text-gray-700 mb-3" />
-                          <p className="text-gray-600 text-[10px] font-black uppercase tracking-widest">No guests checking out</p>
+                          <p className="text-gray-600 text-[10px] font-black uppercase tracking-widest">{searchQuery ? "No matches found" : "No guests checking out"}</p>
                         </div>
                       )
                       return (
                         <div className="space-y-3">
-                          {checkOuts.map((s: any) => <SubmissionCard key={s._id} s={s} />)}
+                          {checkOuts.map((s: any) => (
+                            s.status === "guests" ? (
+                              <GuestCard 
+                                key={s._id} 
+                                s={s} 
+                                rooms={rooms} 
+                                token={token} 
+                                notify={notify} 
+                                fetchSubmissions={fetchSubmissions}
+                                setExtendGuest={setExtendGuest}
+                                setNewCheckOut={setNewCheckOut}
+                              />
+                            ) : (
+                              <SubmissionCard key={s._id} s={s} />
+                            )
+                          ))}
                         </div>
                       )
                     })()}
 
                     {/* ── SUBMISSIONS TAB: pending only ── */}
                     {rightTab === "submissions" && (() => {
-                      const pending = submissions.filter(s => s.status === "pending")
+                      const pending = filteredSubmissions.filter(s => s.status === "pending")
                       if (pending.length === 0) return (
                         <div className="flex flex-col items-center justify-center py-16 text-center">
                           <ClipboardList size={40} className="text-gray-700 mb-3" />
-                          <p className="text-gray-600 text-[10px] font-black uppercase tracking-widest">No pending requests</p>
+                          <p className="text-gray-600 text-[10px] font-black uppercase tracking-widest">{searchQuery ? "No matches found" : "No pending requests"}</p>
                         </div>
                       )
                       return (
@@ -718,11 +796,11 @@ export default function ReceptionDashboard() {
 
                     {/* ── REJECTED TAB ── */}
                     {rightTab === "rejected" && (() => {
-                      const rejected = submissions.filter(s => s.status === "rejected")
+                      const rejected = filteredSubmissions.filter(s => s.status === "rejected")
                       if (rejected.length === 0) return (
                         <div className="flex flex-col items-center justify-center py-16 text-center">
                           <XCircle size={40} className="text-gray-700 mb-3" />
-                          <p className="text-gray-600 text-[10px] font-black uppercase tracking-widest">No rejected requests</p>
+                          <p className="text-gray-600 text-[10px] font-black uppercase tracking-widest">{searchQuery ? "No matches found" : "No rejected requests"}</p>
                         </div>
                       )
                       return (
