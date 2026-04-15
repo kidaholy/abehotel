@@ -9,6 +9,7 @@ export interface IFloor extends Document {
     type: 'standard' | 'vip'
     status?: string
     roomServiceCashierId?: mongoose.Types.ObjectId | string
+    roomServiceMenuTier?: 'standard' | 'vip1' | 'vip2'
     createdAt: Date
     updatedAt: Date
 }
@@ -23,6 +24,7 @@ const FloorSchema = new Schema<IFloor>(
         type: { type: String, enum: ['standard', 'vip'], default: 'standard' },
         status: { type: String, default: "active" },
         roomServiceCashierId: { type: Schema.Types.ObjectId, ref: "User" },
+        roomServiceMenuTier: { type: String, enum: ['standard', 'vip1', 'vip2'], default: 'standard' },
     },
     { timestamps: true }
 )

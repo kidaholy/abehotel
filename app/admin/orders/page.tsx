@@ -820,7 +820,7 @@ export default function AdminOrdersPage() {
                             <div className="flex items-center gap-2 mb-1">
                               <h3 className="text-xl font-playfair italic text-[#f3cf7a]">#{order.orderNumber}</h3>
                               {order.floorNumber && (
-                                <span className="bg-[#1a1c1b] text-[#f3cf7a] border border-[#d4af37]/20 px-2 py-0.5 rounded text-[10px] font-black tracking-widest uppercase">B#{order.floorNumber}</span>
+                                <span className="bg-[#1a1c1b] text-[#f3cf7a] border border-[#d4af37]/20 px-2 py-0.5 rounded text-[10px] font-black tracking-widest uppercase">FLOOR #{order.floorNumber}</span>
                               )}
                               <span className="bg-[#1a1c1b] text-gray-400 border border-white/10 px-2 py-0.5 rounded text-[10px] font-black tracking-widest uppercase">{order.tableNumber}</span>
                             </div>

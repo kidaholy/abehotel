@@ -39,13 +39,20 @@ export async function POST(request: Request) {
         if (!(await verifyAdmin(request))) return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
 
         await connectDB()
-        const { floorNumber, description, order, isVIP, type } = await request.json()
+        const { floorNumber, description, order, isVIP, type, roomServiceMenuTier } = await request.json()
 
         if (!floorNumber) {
             return NextResponse.json({ message: "Floor Number is required" }, { status: 400 })
         }
 
-        const floor = await (Floor as any).create({ floorNumber, description, order: order || 0, isVIP: isVIP || false, type: type || 'standard' })
+        const floor = await (Floor as any).create({ 
+            floorNumber, 
+            description, 
+            order: order || 0, 
+            isVIP: isVIP || false, 
+            type: type || 'standard',
+            roomServiceMenuTier: roomServiceMenuTier || 'standard'
+        })
         return NextResponse.json(floor, { status: 201 })
     } catch (error: any) {
         return NextResponse.json({ message: "Failed to create floor" }, { status: 500 })
@@ -65,7 +72,7 @@ export async function PUT(request: Request) {
         }
 
         const updateObj: any = {}
-        const fields = ['floorNumber', 'description', 'order', 'isActive', 'isVIP', 'type', 'roomServiceCashierId']
+        const fields = ['floorNumber', 'description', 'order', 'isActive', 'isVIP', 'type', 'roomServiceCashierId', 'roomServiceMenuTier']
         fields.forEach(f => {
             if (body[f] !== undefined) updateObj[f] = body[f]
         })

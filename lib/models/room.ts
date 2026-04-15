@@ -10,6 +10,7 @@ export interface IRoom extends Document {
     status: 'available' | 'occupied' | 'maintenance' | 'dirty'
     isActive: boolean
     description?: string
+    roomServiceMenuTier?: 'standard' | 'vip1' | 'vip2'
     createdAt: Date
     updatedAt: Date
 }
@@ -33,6 +34,7 @@ const RoomSchema = new Schema<IRoom>(
         },
         isActive: { type: Boolean, default: true },
         description: { type: String },
+        roomServiceMenuTier: { type: String, enum: ['standard', 'vip1', 'vip2'], default: 'standard' },
     },
     { timestamps: true }
 )

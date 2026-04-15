@@ -48,7 +48,7 @@ export default function RoomServicePage({ params }: { params: Promise<{ roomNumb
   useEffect(() => {
     async function fetchMenu() {
       try {
-        const res = await fetch("/api/room-service/menu")
+        const res = await fetch(`/api/room-service/menu?roomNumber=${roomNumber}`)
         if (res.ok) {
           const data = await res.json()
           setMenuItems(data)
@@ -60,7 +60,7 @@ export default function RoomServicePage({ params }: { params: Promise<{ roomNumb
       }
     }
     fetchMenu()
-  }, [])
+  }, [roomNumber])
 
   const filteredMenu = useMemo(() => {
     if (activeCategory === 'All') return menuItems
