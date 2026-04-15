@@ -29,6 +29,9 @@ export default function Sidebar({ role, userName }: SidebarProps) {
       { label: "Kitchen", href: "/chef" },
       { label: "Orders", href: "/chef/orders" },
     ],
+    bar: [
+      { label: "Bar Display", href: "/bar" },
+    ],
     reception: [
       { label: "Dashboard", href: "/reception" },
     ],

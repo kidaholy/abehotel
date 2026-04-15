@@ -242,8 +242,14 @@ export async function POST(request: Request) {
     let nextOrderNumber = maxOrderNumber + 1;
 
     // Lookup floor
-    let floorId = body.floorId || (decoded.role === 'cashier' ? decoded.floorId : undefined)
+    let floorId = body.floorId || (tableData ? (tableData as any).floorId : undefined) || (decoded.role === 'cashier' ? decoded.floorId : undefined)
     let floorNumber = body.floorNumber || ""
+    
+    // Explicitly check for room service/guest app scenario
+    if (!floorId && tableNumber && !isBuyAndGo) {
+       const table = await Table.findOne({ tableNumber }).lean() as any
+       if (table) floorId = table.floorId
+    }
 
     if (floorId && !floorNumber) {
       // Fetch floor number if we don't have it yet
@@ -265,8 +271,8 @@ export async function POST(request: Request) {
           category: menu?.category,
           mainCategory: menu?.mainCategory,
           menuTier: item.menuTier || (vip1Ids.has(item.menuItemId) ? 'vip1' : vip2Ids.has(item.menuItemId) ? 'vip2' : 'standard'),
-          preparationTime: isDrink ? 0 : (menu?.preparationTime || 0),
-          status: isBuyAndGo ? "completed" : isDrink ? "served" : "pending",
+          preparationTime: isDrink ? (menu?.preparationTime || 2) : (menu?.preparationTime || 0),
+          status: isBuyAndGo ? "completed" : "pending",
           modifiers: item.modifiers || [],
           notes: item.notes || ""
         }
@@ -278,10 +284,7 @@ export async function POST(request: Request) {
       totalAmount,
       subtotal: subtotal || totalAmount,
       tax: tax || 0,
-      status: isBuyAndGo ? "completed" : items.every((item: any) => {
-        const menu = linkedMenuItems.find(m => m._id.toString() === item.menuItemId)
-        return menu?.mainCategory?.toLowerCase() === "drinks"
-      }) ? "served" : "preparing",
+      status: isBuyAndGo ? "completed" : "preparing",
       paymentMethod: paymentMethod || "cash",
       customerName: customerName || `Table ${tableNumber}`,
       tableNumber,

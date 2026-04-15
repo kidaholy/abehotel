@@ -28,7 +28,18 @@ export async function GET(request: Request) {
       .sort({ createdAt: -1 })
       .lean()
 
-    const serialized = orders.map((o: any) => ({ ...o, _id: o._id.toString() }))
+    const floorMap = new Map()
+    const floors = await Floor.find({}).lean() as any[]
+    floors.forEach(f => floorMap.set(f._id.toString(), f.floorNumber))
+
+    const serialized = orders.map((o: any) => {
+      let floorNumber = o.floorNumber || floorMap.get(o.floorId?.toString()) || ""
+      return { 
+        ...o, 
+        _id: o._id.toString(),
+        floorNumber
+      }
+    })
     return NextResponse.json(serialized)
   } catch (error: any) {
     console.error("❌ Get room orders error:", error)

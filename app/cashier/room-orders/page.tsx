@@ -120,11 +120,20 @@ export default function RoomOrdersPage() {
                   <div key={order._id} className="bg-[#151716] rounded-2xl border border-white/10 overflow-hidden shadow-xl flex flex-col">
                     <div className="bg-[#1a1c1b] p-4 border-b border-white/5 flex items-start justify-between">
                       <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <ConciergeBell size={14} className="text-[#d4af37]" />
-                          <h3 className="text-lg font-black text-white">{order.tableNumber}</h3>
+                        <div className="flex flex-wrap items-center gap-2 mb-1">
+                          <div className="bg-[#d4af37]/10 p-1.5 rounded-lg border border-[#d4af37]/20">
+                            <ConciergeBell size={16} className="text-[#d4af37]" />
+                          </div>
+                          <div>
+                            <h3 className="text-xl font-black text-white">{order.tableNumber}</h3>
+                            {order.floorNumber && (
+                              <p className="text-[9px] font-black text-[#f3cf7a] bg-[#d4af37]/10 px-2 py-0.5 rounded border border-[#d4af37]/20 uppercase tracking-widest mt-0.5 shadow-sm">
+                                Floor #{order.floorNumber}
+                              </p>
+                            )}
+                          </div>
                         </div>
-                        <p className="text-[10px] uppercase font-bold tracking-widest text-gray-500 flex items-center gap-1">
+                        <p className="text-[10px] uppercase font-bold tracking-widest text-gray-500 flex items-center gap-1 mt-2">
                           <Clock size={10} /> {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </p>
                       </div>

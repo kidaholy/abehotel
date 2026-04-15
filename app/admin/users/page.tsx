@@ -10,7 +10,7 @@ import { useConfirmation } from "@/hooks/use-confirmation"
 import {
   Users, ShieldCheck, ChefHat, Monitor, Package, ConciergeBell, Coffee,
   MapPin, LogIn, LogOut, Eye, EyeOff, Pencil, Trash2, Plus, Loader2,
-  UtensilsCrossed, Check, RefreshCw, X
+  UtensilsCrossed, Check, RefreshCw, X, Beer
 } from "lucide-react"
 
 interface User {
@@ -19,7 +19,7 @@ interface User {
   email: string
   password: string
   plainPassword?: string
-  role: "admin" | "chef" | "cashier" | "display" | "store_keeper" | "reception"
+  role: "admin" | "chef" | "bar" | "cashier" | "display" | "store_keeper" | "reception"
   isActive: boolean
   floorId?: string
   assignedCategories?: string[]
@@ -42,7 +42,7 @@ export default function AdminUsersPage() {
     name: "",
     email: "",
     password: "",
-    role: "cashier" as "admin" | "chef" | "cashier" | "display" | "store_keeper" | "reception",
+    role: "cashier" as "admin" | "chef" | "bar" | "cashier" | "display" | "store_keeper" | "reception",
     floorId: "",
     assignedCategories: [] as string[],
   })
@@ -307,6 +307,8 @@ export default function AdminUsersPage() {
                         ? { color: "bg-[#f3cf7a]/20 text-[#f3cf7a] border border-[#f3cf7a]/30", label: "Admin" }
                         : u.role === "chef"
                           ? { color: "bg-orange-500/20 text-orange-400 border border-orange-500/30", label: "Chef" }
+                        : u.role === "bar"
+                          ? { color: "bg-blue-500/20 text-blue-400 border border-blue-500/30", label: "Bar" }
                           : u.role === "display"
                             ? { color: "bg-purple-500/20 text-purple-400 border border-purple-500/30", label: "Display" } :
                             u.role === "store_keeper" ? { color: "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30", label: "Store Keeper" } :
@@ -324,12 +326,13 @@ export default function AdminUsersPage() {
                           <div className="w-14 h-14 md:w-16 md:h-16 bg-[#151716] border border-white/5 rounded-2xl flex items-center justify-center mb-4 shadow-sm group-hover:scale-110 transition-transform text-[#d4af37]">
                             {u.role === "admin"        ? <ShieldCheck size={28} /> :
                              u.role === "chef"         ? <ChefHat size={28} /> :
+                             u.role === "bar"          ? <Beer size={28} /> :
                              u.role === "display"      ? <Monitor size={28} /> :
                              u.role === "store_keeper" ? <Package size={28} /> :
                              u.role === "reception"    ? <ConciergeBell size={28} /> :
                                                          <Coffee size={28} />}
                           </div>
-                          {u.role === "chef" && u.assignedCategories && u.assignedCategories.length > 0 && (
+                          {(u.role === "chef" || u.role === "bar") && u.assignedCategories && u.assignedCategories.length > 0 && (
                             <div className="mb-3 flex flex-wrap gap-1.5 pt-1">
                               {u.assignedCategories.map(cat => (
                                 <span key={cat} className="text-[9px] font-bold uppercase tracking-widest text-orange-400 bg-orange-500/10 px-2.5 py-1 rounded-lg border border-orange-500/20 shadow-sm flex items-center gap-1">
@@ -443,7 +446,7 @@ export default function AdminUsersPage() {
                   <div className="space-y-2">
                     <label className="text-[10px] font-light uppercase tracking-widest text-gray-400 ml-2">{t("adminUsers.accessLevel")}</label>
                     <div className="flex flex-wrap gap-2">
-                      {["cashier", "chef", "admin", "display", "store_keeper", "reception"].map(r => (
+                      {["cashier", "chef", "bar", "admin", "display", "store_keeper", "reception"].map(r => (
                         <button
                           key={r}
                           type="button"
@@ -494,7 +497,7 @@ export default function AdminUsersPage() {
                     </div>
                   </div>
 
-                  {formData.role === "chef" && (
+                  {(formData.role === "chef" || formData.role === "bar") && (
                     <div className="space-y-3 animate-fade-in bg-[#0f1110] p-6 rounded-[2.5rem] border border-white/5">
                       <div className="flex justify-between items-center px-1">
                         <label className="text-[9px] font-black uppercase tracking-widest text-[#f3cf7a]">Kitchen Assignments</label>
