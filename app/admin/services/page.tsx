@@ -10,6 +10,7 @@ import { useConfirmation } from "@/hooks/use-confirmation"
 import { TransactionPreview } from "@/components/transaction-preview"
 import { MenuManagementSection, CategoryManager } from "@/components/admin/menu-management-section"
 import { QRCodeSVG } from "qrcode.react"
+import { format, isToday, isThisWeek, isThisMonth, isThisYear, isSameDay } from "date-fns"
 import { 
   Plus, 
   Trash2, 
@@ -120,6 +121,9 @@ export default function AdminServicesPage() {
   const [receptionRequests, setReceptionRequests] = useState<any[]>([])
   const [receptionLoading, setReceptionLoading] = useState(false)
   const [receptionFilter, setReceptionFilter] = useState<"all"|"pending"|"guests"|"check_in"|"rejected"|"check_out">("pending")
+  const [receptionDateFilter, setReceptionDateFilter] = useState<"all" | "today" | "week" | "month" | "year" | "custom">("all")
+  const [customReceptionDate, setCustomReceptionDate] = useState("")
+  const [receptionSearchQuery, setReceptionSearchQuery] = useState("")
   const [selectedRequest, setSelectedRequest] = useState<any | null>(null)
   const [reviewNote, setReviewNote] = useState("")
   const [actioning, setActioning] = useState(false)
@@ -625,10 +629,66 @@ export default function AdminServicesPage() {
 
                     {activeTab === "reception" && (
                       <div className="space-y-5">
+                        
+                        {/* Search & Date Filters */}
+                        <div className="flex flex-col md:flex-row gap-4">
+                          <div className="relative flex-1">
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
+                            <input 
+                              type="text"
+                              value={receptionSearchQuery}
+                              onChange={e => setReceptionSearchQuery(e.target.value)}
+                              placeholder="Search guests by name, phone, room or ID..."
+                              className="w-full bg-[#151716] border border-white/5 rounded-2xl pl-12 pr-4 py-3.5 text-xs font-bold uppercase tracking-widest text-[#f3cf7a] outline-none focus:border-[#d4af37]/30 transition-all placeholder:text-gray-700"
+                            />
+                          </div>
+                          <div className="flex items-center gap-1 bg-[#151716] border border-white/5 p-1 rounded-xl w-full md:w-auto overflow-x-auto text-[10px] uppercase font-black tracking-widest text-gray-500 shrink-0">
+                             <button onClick={() => setReceptionDateFilter("all")} className={`px-3 py-2 rounded-lg transition-all ${receptionDateFilter === "all" ? "bg-[#d4af37]/10 text-[#f3cf7a]" : "hover:text-gray-300"}`}>All Time</button>
+                             <button onClick={() => setReceptionDateFilter("today")} className={`px-3 py-2 rounded-lg transition-all ${receptionDateFilter === "today" ? "bg-[#d4af37]/10 text-[#f3cf7a]" : "hover:text-gray-300"}`}>Today</button>
+                             <button onClick={() => setReceptionDateFilter("week")} className={`px-3 py-2 rounded-lg transition-all ${receptionDateFilter === "week" ? "bg-[#d4af37]/10 text-[#f3cf7a]" : "hover:text-gray-300"}`}>Week</button>
+                             <button onClick={() => setReceptionDateFilter("year")} className={`px-3 py-2 rounded-lg transition-all ${receptionDateFilter === "year" ? "bg-[#d4af37]/10 text-[#f3cf7a]" : "hover:text-gray-300"}`}>Year</button>
+                             <div className="relative flex items-center">
+                                <input type="date" value={customReceptionDate} onChange={e => { setCustomReceptionDate(e.target.value); setReceptionDateFilter("custom"); }} 
+                                       className="opacity-0 absolute inset-0 w-full h-full cursor-pointer [color-scheme:dark]" />
+                                <button className={`px-3 py-2 rounded-lg transition-all flex items-center gap-1 ${receptionDateFilter === "custom" ? "bg-[#d4af37]/10 text-[#f3cf7a]" : "hover:text-gray-300"}`}>
+                                   <Calendar size={12} /> {receptionDateFilter === "custom" && customReceptionDate ? customReceptionDate : "Pick Date"}
+                                </button>
+                             </div>
+                          </div>
+                        </div>
+
                         {/* Filter tabs */}
                         <div className="flex gap-2 flex-wrap">
                           {(["all","pending","check_in","rejected","check_out"] as const).map(f => {
-                            const count = f === "all" ? receptionRequests.length : receptionRequests.filter(r => {
+                            const count = f === "all" ? 
+                              receptionRequests.filter(r => {
+                                if (receptionSearchQuery) {
+                                  const q = receptionSearchQuery.toLowerCase()
+                                  if (!(r.guestName?.toLowerCase().includes(q) || r.phone?.toLowerCase().includes(q) || r.faydaId?.toLowerCase().includes(q) || r.roomNumber?.toLowerCase().includes(q))) return false;
+                                }
+                                if (receptionDateFilter !== "all" && r.createdAt) {
+                                  const d = new Date(r.createdAt)
+                                  if (receptionDateFilter === "today" && !isToday(d)) return false;
+                                  if (receptionDateFilter === "week" && !isThisWeek(d)) return false;
+                                  if (receptionDateFilter === "month" && !isThisMonth(d)) return false;
+                                  if (receptionDateFilter === "year" && !isThisYear(d)) return false;
+                                  if (receptionDateFilter === "custom" && customReceptionDate && !isSameDay(d, new Date(customReceptionDate))) return false;
+                                }
+                                return true;
+                              }).length : 
+                              receptionRequests.filter(r => {
+                              if (receptionSearchQuery) {
+                                const q = receptionSearchQuery.toLowerCase()
+                                if (!(r.guestName?.toLowerCase().includes(q) || r.phone?.toLowerCase().includes(q) || r.faydaId?.toLowerCase().includes(q) || r.roomNumber?.toLowerCase().includes(q))) return false;
+                              }
+                              if (receptionDateFilter !== "all" && r.createdAt) {
+                                const d = new Date(r.createdAt)
+                                if (receptionDateFilter === "today" && !isToday(d)) return false;
+                                if (receptionDateFilter === "week" && !isThisWeek(d)) return false;
+                                if (receptionDateFilter === "month" && !isThisMonth(d)) return false;
+                                if (receptionDateFilter === "year" && !isThisYear(d)) return false;
+                                if (receptionDateFilter === "custom" && customReceptionDate && !isSameDay(d, new Date(customReceptionDate))) return false;
+                              }
                               if (f === "pending") return r.status === "pending" || !["guests", "check_in", "check_out", "rejected"].includes(r.status)
                               return r.status === f
                             }).length
@@ -660,6 +720,18 @@ export default function AdminServicesPage() {
                         {receptionLoading ? (
                           <div className="flex items-center justify-center py-24"><RefreshCw className="h-8 w-8 animate-spin text-[#d4af37]" /></div>
                         ) : receptionRequests.filter(r => {
+                          if (receptionSearchQuery) {
+                            const q = receptionSearchQuery.toLowerCase()
+                            if (!(r.guestName?.toLowerCase().includes(q) || r.phone?.toLowerCase().includes(q) || r.faydaId?.toLowerCase().includes(q) || r.roomNumber?.toLowerCase().includes(q))) return false;
+                          }
+                          if (receptionDateFilter !== "all" && r.createdAt) {
+                            const d = new Date(r.createdAt)
+                            if (receptionDateFilter === "today" && !isToday(d)) return false;
+                            if (receptionDateFilter === "week" && !isThisWeek(d)) return false;
+                            if (receptionDateFilter === "month" && !isThisMonth(d)) return false;
+                            if (receptionDateFilter === "year" && !isThisYear(d)) return false;
+                            if (receptionDateFilter === "custom" && customReceptionDate && !isSameDay(d, new Date(customReceptionDate))) return false;
+                          }
                           if (receptionFilter === "all") return true
                           if (receptionFilter === "pending") return r.status === "pending" || !["guests", "check_in", "check_out", "rejected"].includes(r.status)
                           return r.status === receptionFilter
@@ -671,6 +743,18 @@ export default function AdminServicesPage() {
                         ) : (
                           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                             {receptionRequests.filter(r => {
+                              if (receptionSearchQuery) {
+                                const q = receptionSearchQuery.toLowerCase()
+                                if (!(r.guestName?.toLowerCase().includes(q) || r.phone?.toLowerCase().includes(q) || r.faydaId?.toLowerCase().includes(q) || r.roomNumber?.toLowerCase().includes(q))) return false;
+                              }
+                              if (receptionDateFilter !== "all" && r.createdAt) {
+                                const d = new Date(r.createdAt)
+                                if (receptionDateFilter === "today" && !isToday(d)) return false;
+                                if (receptionDateFilter === "week" && !isThisWeek(d)) return false;
+                                if (receptionDateFilter === "month" && !isThisMonth(d)) return false;
+                                if (receptionDateFilter === "year" && !isThisYear(d)) return false;
+                                if (receptionDateFilter === "custom" && customReceptionDate && !isSameDay(d, new Date(customReceptionDate))) return false;
+                              }
                               if (receptionFilter === "all") return true
                               if (receptionFilter === "pending") return r.status === "pending" || !["guests", "check_in", "check_out", "rejected"].includes(r.status)
                               return r.status === receptionFilter

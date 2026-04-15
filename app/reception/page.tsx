@@ -9,7 +9,7 @@ import { useConfirmation } from "@/hooks/use-confirmation"
 import { TransactionPreview as TxPreview } from "@/components/transaction-preview"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar as CalendarPicker } from "@/components/ui/calendar"
-import { format } from "date-fns"
+import { format, isToday, isThisWeek, isThisMonth, isThisYear, isSameDay } from "date-fns"
 import {
   RefreshCw, Hotel, Key, Utensils, Megaphone, Calendar, MessageSquare,
   ConciergeBell, ClipboardList, DoorOpen, Users, CheckCircle2, Clock,
@@ -305,7 +305,10 @@ export default function ReceptionDashboard() {
   const [submissions, setSubmissions] = useState<any[]>([])
   const [loadingSubmissions, setLoadingSubmissions] = useState(true)
   const [rightTab, setRightTab] = useState<"submissions" | "guests" | "rejected" | "check_in" | "check_out">("guests")
+  const [viewMode, setViewMode] = useState<"form" | "status">("form")
   const [searchQuery, setSearchQuery] = useState("")
+  const [dateFilter, setDateFilter] = useState<"all" | "today" | "week" | "month" | "year" | "custom">("all")
+  const [customDate, setCustomDate] = useState("")
   const [extendGuest, setExtendGuest] = useState<any | null>(null)
   const [newCheckOut, setNewCheckOut] = useState("")
   const [extending, setExtending] = useState(false)
@@ -441,14 +444,28 @@ export default function ReceptionDashboard() {
   const ic = "w-full bg-[#0f1110] border border-white/10 text-white rounded-xl px-4 py-3 text-sm font-medium outline-none focus:border-[#d4af37]/50 focus:ring-0 transition-all placeholder:text-gray-600"
 
   const filteredSubmissions = submissions.filter(s => {
-    if (!searchQuery) return true
-    const q = searchQuery.toLowerCase()
-    return (
-      s.guestName?.toLowerCase().includes(q) ||
-      s.phone?.toLowerCase().includes(q) ||
-      s.faydaId?.toLowerCase().includes(q) ||
-      s.roomNumber?.toLowerCase().includes(q)
-    )
+    let matchText = true;
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase()
+      matchText = Boolean(
+        s.guestName?.toLowerCase().includes(q) ||
+        s.phone?.toLowerCase().includes(q) ||
+        s.faydaId?.toLowerCase().includes(q) ||
+        s.roomNumber?.toLowerCase().includes(q)
+      )
+    }
+
+    let matchDate = true;
+    if (dateFilter !== "all" && s.createdAt) {
+      const d = new Date(s.createdAt)
+      if (dateFilter === "today"  && !isToday(d)) matchDate = false
+      if (dateFilter === "week"   && !isThisWeek(d)) matchDate = false
+      if (dateFilter === "month"  && !isThisMonth(d)) matchDate = false
+      if (dateFilter === "year"   && !isThisYear(d)) matchDate = false
+      if (dateFilter === "custom" && customDate && !isSameDay(d, new Date(customDate))) matchDate = false
+    }
+
+    return matchText && matchDate;
   })
 
   return (
@@ -457,28 +474,51 @@ export default function ReceptionDashboard() {
         <div className="max-w-7xl mx-auto space-y-6">
           <BentoNavbar />
 
-          {/* Header */}
-          <div className="bg-[#151716] rounded-xl p-6 shadow-2xl border border-white/5">
+          {/* Header & Tabs */}
+          <div className="bg-[#151716] rounded-xl p-6 shadow-2xl border border-white/5 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-[#1a1c1b] rounded-lg border border-[#d4af37]/20">
+              <div className="p-3 bg-[#1a1c1b] rounded-lg border border-[#d4af37]/20 flex-shrink-0">
                 <ConciergeBell className="h-7 w-7 text-[#d4af37]" />
               </div>
               <div>
                 <h1 className="text-2xl md:text-3xl font-playfair italic font-bold text-[#f3cf7a] tracking-tight">Reception Desk</h1>
-                <p className="text-gray-500 text-[10px] uppercase font-bold tracking-widest mt-0.5">Welcome, {user?.name} — log guest requests below</p>
+                <p className="text-gray-500 text-[10px] uppercase font-bold tracking-widest mt-0.5">Welcome, {user?.name} — Guest Management</p>
               </div>
+            </div>
+
+            <div className="flex bg-[#0f1110] p-1.5 rounded-xl border border-white/5 shadow-inner self-stretch md:self-auto">
+              <button 
+                onClick={() => setViewMode("form")}
+                className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                  viewMode === "form" ? "bg-gradient-to-r from-[#d4af37] to-[#f3cf7a] text-[#0f1110] shadow-xl" : "text-gray-500 hover:text-white"
+                }`}
+              >
+                <ClipboardList size={14} /> New Check-In
+              </button>
+              <button 
+                onClick={() => setViewMode("status")}
+                className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                  viewMode === "status" ? "bg-gradient-to-r from-[#d4af37] to-[#f3cf7a] text-[#0f1110] shadow-xl" : "text-gray-500 hover:text-white"
+                }`}
+              >
+                <Users size={14} /> Guest Status
+              </button>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div>
             {/* ── FORM ── */}
-            <div className="lg:col-span-7">
-              <div className="bg-[#151716] rounded-xl shadow-2xl border border-white/5 p-6 md:p-8">
+            {viewMode === "form" && (
+              <div>
+                <div className="bg-[#151716] rounded-xl shadow-2xl border border-white/5 p-6 md:p-8">
                 <h2 className="text-[10px] font-black text-gray-500 mb-6 uppercase tracking-widest flex items-center gap-2">
                   <Hotel size={13} className="text-[#d4af37]" /> New Check-In
                 </h2>
 
-                <form onSubmit={handleSubmit} className="space-y-5">
+                <form onSubmit={handleSubmit}>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* ── LEFT COLUMN ── */}
+                  <div className="space-y-5">
 
                   {/* Guest Name */}
                   <div>
@@ -595,9 +635,13 @@ export default function ReceptionDashboard() {
                       </div>
                     </div>
                   </div>
+                  </div>{/* end left column */}
+
+                  {/* ── RIGHT COLUMN ── */}
+                  <div className="space-y-5">
 
                   {/* Floor + Room */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1.5">Floor</label>
                       <select value={formData.floorId} onChange={e => handleFloorChange(e.target.value)} className={ic + " appearance-none"}>
@@ -743,31 +787,52 @@ export default function ReceptionDashboard() {
                       className={ic + " resize-none"} />
                   </div>
 
+                  </div>{/* end right column */}
+                  </div>{/* end 2-col grid */}
+
                   <button type="submit" disabled={submitting}
-                    className="w-full bg-gradient-to-b from-[#f3cf7a] to-[#b38822] text-[#2a1708] border border-[#f5db8b] py-4 rounded-xl font-black text-xs uppercase tracking-widest shadow-[0_4px_15px_rgba(212,175,55,0.2)] hover:shadow-[0_4px_25px_rgba(212,175,55,0.4)] transition-all hover:scale-[1.01] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+                    className="w-full mt-4 bg-gradient-to-b from-[#f3cf7a] to-[#b38822] text-[#2a1708] border border-[#f5db8b] py-4 rounded-xl font-black text-xs uppercase tracking-widest shadow-[0_4px_15px_rgba(212,175,55,0.2)] hover:shadow-[0_4px_25px_rgba(212,175,55,0.4)] transition-all hover:scale-[1.01] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
                     {submitting ? "Submitting…" : (
                       <span className="flex items-center justify-center gap-2"><CheckCircle2 size={16} /> Submit Request</span>
                     )}
                   </button>
                   </form>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* ── SUBMISSIONS ── */}
-            <div className="lg:col-span-5">
-              <div className="bg-[#151716] rounded-xl shadow-2xl border border-white/5 p-6 h-full flex flex-col font-bold">
+            {viewMode === "status" && (
+              <div>
+                <div className="bg-[#151716] rounded-xl shadow-2xl border border-white/5 p-6 min-h-[60vh] flex flex-col font-bold">
 
-                {/* Search & Tabs */}
+                {/* Search & Date Filters */}
                 <div className="mb-6 space-y-4">
-                  <div className="relative">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
-                    <input 
-                      type="text"
-                      value={searchQuery}
-                      onChange={e => setSearchQuery(e.target.value)}
-                      placeholder="Search guests by name, phone, room or ID..."
-                      className="w-full bg-[#0f1110] border border-white/5 rounded-2xl pl-12 pr-4 py-3.5 text-xs font-bold uppercase tracking-widest text-[#f3cf7a] outline-none focus:border-[#d4af37]/30 transition-all placeholder:text-gray-700"
-                    />
+                  <div className="flex flex-col md:flex-row gap-4">
+                    <div className="relative flex-1">
+                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
+                      <input 
+                        type="text"
+                        value={searchQuery}
+                        onChange={e => setSearchQuery(e.target.value)}
+                        placeholder="Search guests by name, phone, room or ID..."
+                        className="w-full bg-[#0f1110] border border-white/5 rounded-2xl pl-12 pr-4 py-3.5 text-xs font-bold uppercase tracking-widest text-[#f3cf7a] outline-none focus:border-[#d4af37]/30 transition-all placeholder:text-gray-700"
+                      />
+                    </div>
+                    {/* Date Filters */}
+                    <div className="flex items-center gap-1 bg-[#0f1110] border border-white/5 p-1 rounded-xl w-full md:w-auto overflow-x-auto text-[10px] uppercase font-black tracking-widest text-gray-500 shrink-0">
+                       <button onClick={() => setDateFilter("all")} className={`px-3 py-2 rounded-lg transition-all ${dateFilter === "all" ? "bg-[#d4af37]/10 text-[#f3cf7a]" : "hover:text-gray-300"}`}>All Time</button>
+                       <button onClick={() => setDateFilter("today")} className={`px-3 py-2 rounded-lg transition-all ${dateFilter === "today" ? "bg-[#d4af37]/10 text-[#f3cf7a]" : "hover:text-gray-300"}`}>Today</button>
+                       <button onClick={() => setDateFilter("week")} className={`px-3 py-2 rounded-lg transition-all ${dateFilter === "week" ? "bg-[#d4af37]/10 text-[#f3cf7a]" : "hover:text-gray-300"}`}>Week</button>
+                       <button onClick={() => setDateFilter("year")} className={`px-3 py-2 rounded-lg transition-all ${dateFilter === "year" ? "bg-[#d4af37]/10 text-[#f3cf7a]" : "hover:text-gray-300"}`}>Year</button>
+                       <div className="relative flex items-center">
+                          <input type="date" value={customDate} onChange={e => { setCustomDate(e.target.value); setDateFilter("custom"); }} 
+                                 className="opacity-0 absolute inset-0 w-full h-full cursor-pointer [color-scheme:dark]" />
+                          <button className={`px-3 py-2 rounded-lg transition-all flex items-center gap-1 ${dateFilter === "custom" ? "bg-[#d4af37]/10 text-[#f3cf7a]" : "hover:text-gray-300"}`}>
+                             <Calendar size={12} /> {dateFilter === "custom" && customDate ? customDate : "Pick Date"}
+                          </button>
+                       </div>
+                    </div>
                   </div>
 
                   {/* Tab bar */}
@@ -815,22 +880,26 @@ export default function ReceptionDashboard() {
                           <p className="text-gray-600 text-[10px] font-black uppercase tracking-widest">{searchQuery ? "No matches found" : "No guest records"}</p>
                         </div>
                       )
-                      return filteredSubmissions.map((s: any) => (
-                        ["guests", "check_in", "check_out"].includes(s.status) ? (
-                          <GuestCard 
-                            key={s._id} 
-                            s={s} 
-                            rooms={rooms} 
-                            token={token} 
-                            notify={notify} 
-                            fetchSubmissions={fetchSubmissions}
-                            setExtendGuest={setExtendGuest}
-                            setNewCheckOut={setNewCheckOut}
-                          />
-                        ) : (
-                          <SubmissionCard key={s._id} s={s} />
-                        )
-                      ))
+                      return (
+                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                          {filteredSubmissions.map((s: any) =>
+                            ["guests", "check_in", "check_out"].includes(s.status) ? (
+                              <GuestCard 
+                                key={s._id} 
+                                s={s} 
+                                rooms={rooms} 
+                                token={token} 
+                                notify={notify} 
+                                fetchSubmissions={fetchSubmissions}
+                                setExtendGuest={setExtendGuest}
+                                setNewCheckOut={setNewCheckOut}
+                              />
+                            ) : (
+                              <SubmissionCard key={s._id} s={s} />
+                            )
+                          )}
+                        </div>
+                      )
                     })()}
 
                     {/* ── CHECK-IN TAB ── */}
@@ -843,7 +912,7 @@ export default function ReceptionDashboard() {
                         </div>
                       )
                       return (
-                        <div className="space-y-3">
+                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                           {checkIns.map((s: any) => (
                             <GuestCard 
                               key={s._id} 
@@ -870,7 +939,7 @@ export default function ReceptionDashboard() {
                         </div>
                       )
                       return (
-                        <div className="space-y-3">
+                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                           {checkOuts.map((s: any) => (
                             <GuestCard 
                               key={s._id} 
@@ -897,12 +966,14 @@ export default function ReceptionDashboard() {
                         </div>
                       )
                       return (
-                        <div className="space-y-2">
-                          <p className="text-[9px] font-black uppercase tracking-widest text-yellow-500 mb-2 flex items-center gap-1.5">
+                        <div className="space-y-3">
+                          <p className="text-[9px] font-black uppercase tracking-widest text-yellow-500 flex items-center gap-1.5">
                             <span className="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse" />
                             Awaiting Admin Approval ({pending.length})
                           </p>
-                          {pending.map((s: any) => <SubmissionCard key={s._id} s={s} />)}
+                          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                            {pending.map((s: any) => <SubmissionCard key={s._id} s={s} />)}
+                          </div>
                         </div>
                       )
                     })()}
@@ -917,20 +988,22 @@ export default function ReceptionDashboard() {
                         </div>
                       )
                       return (
-                        <div className="space-y-2">
-                          <p className="text-[9px] font-black uppercase tracking-widest text-red-400 mb-2 flex items-center gap-1.5">
+                        <div className="space-y-3">
+                          <p className="text-[9px] font-black uppercase tracking-widest text-red-400 flex items-center gap-1.5">
                             <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
                             Denied by Admin ({rejected.length})
                           </p>
-                          {rejected.map((s: any) => <SubmissionCard key={s._id} s={s} />)}
+                          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                            {rejected.map((s: any) => <SubmissionCard key={s._id} s={s} />)}
+                          </div>
                         </div>
                       )
                     })()}
-
                   </div>
-                )}
+                  )}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
 

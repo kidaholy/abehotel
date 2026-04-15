@@ -40,27 +40,40 @@ export async function GET(request: Request) {
     }
 
     const bookings = await ReceptionRequest.find({
-      status: { $in: ["pending", "guests", "check_in", "check_out"] },
+      status: { $in: ["guests", "check_in", "check_out"] },
       inquiryType: { $in: ["check_in", "reservation"] },
       createdAt: { $gte: startDate },
     }).lean()
 
-    const totalRevenue = bookings.reduce((sum, b) => sum + (Number(b.roomPrice) || 0), 0)
+    // Helper: calculate nights between checkIn and checkOut strings
+    const calcNights = (checkIn?: string, checkOut?: string): number => {
+      if (!checkIn || !checkOut) return 1
+      const msPerDay = 1000 * 60 * 60 * 24
+      const diff = Math.round((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / msPerDay)
+      return diff > 0 ? diff : 1
+    }
+
+    const totalRevenue = bookings.reduce((sum, b) => {
+      const nights = calcNights(b.checkIn as string | undefined, b.checkOut as string | undefined)
+      return sum + (Number(b.roomPrice) || 0) * nights
+    }, 0)
     const totalBookings = bookings.length
 
     const byRoom = bookings.reduce((acc: any, b) => {
       const key = b.roomNumber || "Unknown"
+      const nights = calcNights(b.checkIn as string | undefined, b.checkOut as string | undefined)
       if (!acc[key]) acc[key] = { roomNumber: key, bookings: 0, revenue: 0 }
       acc[key].bookings++
-      acc[key].revenue += Number(b.roomPrice) || 0
+      acc[key].revenue += (Number(b.roomPrice) || 0) * nights
       return acc
     }, {})
 
     const byPayment = bookings.reduce((acc: any, b) => {
       const key = b.paymentMethod || "cash"
+      const nights = calcNights(b.checkIn as string | undefined, b.checkOut as string | undefined)
       if (!acc[key]) acc[key] = { method: key, count: 0, revenue: 0 }
       acc[key].count++
-      acc[key].revenue += Number(b.roomPrice) || 0
+      acc[key].revenue += (Number(b.roomPrice) || 0) * nights
       return acc
     }, {})
 
@@ -74,9 +87,11 @@ export async function GET(request: Request) {
         guestName: b.guestName,
         roomNumber: b.roomNumber,
         roomPrice: b.roomPrice,
-        paymentMethod: b.paymentMethod,
         checkIn: b.checkIn,
         checkOut: b.checkOut,
+        nights: calcNights(b.checkIn as string | undefined, b.checkOut as string | undefined),
+        totalAmount: (Number(b.roomPrice) || 0) * calcNights(b.checkIn as string | undefined, b.checkOut as string | undefined),
+        paymentMethod: b.paymentMethod,
         createdAt: b.createdAt,
       }))
     })
