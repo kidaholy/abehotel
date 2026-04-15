@@ -29,6 +29,7 @@ import {
   Key,
   Megaphone,
   Calendar,
+  Search,
   MessageSquare,
   DoorOpen,
   Users,
