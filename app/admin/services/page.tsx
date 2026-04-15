@@ -435,6 +435,7 @@ export default function AdminServicesPage() {
   }
 
   const handleEdit = (room: Room) => {
+    console.log("✏️ Editing Room Data:", room)
     setEditingRoom(room)
     setRoomForm({
       roomNumber: room.roomNumber, 
@@ -443,14 +444,15 @@ export default function AdminServicesPage() {
       type: room.type, 
       category: room.category, 
       price: room.price.toString(), 
-      status: room.status
+      status: room.status,
+      roomServiceMenuTier: room.roomServiceMenuTier || "standard"
     })
     setShowForm(true)
   }
 
   const resetRoomForm = () => {
     setEditingRoom(null)
-    setRoomForm({ roomNumber: "", name: "", floorId: "", type: "standard", category: "Standard", price: "", status: "available" })
+    setRoomForm({ roomNumber: "", name: "", floorId: "", type: "standard", category: "Standard", price: "", status: "available", roomServiceMenuTier: "standard" })
     setShowForm(false)
   }
 

@@ -39,6 +39,11 @@ const RoomSchema = new Schema<IRoom>(
     { timestamps: true }
 )
 
-const Room = mongoose.models.Room || mongoose.model<IRoom>("Room", RoomSchema)
+// Force model re-registration to pick up new schema fields
+if (mongoose.models.Room) {
+    delete mongoose.models.Room
+}
+
+const Room = mongoose.model<IRoom>("Room", RoomSchema)
 
 export default Room

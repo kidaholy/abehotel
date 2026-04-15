@@ -398,7 +398,11 @@ export function MenuManagementSection({
           type: "success"
         })
         resetForm()
-        setTimeout(() => fetchMenuItems(), 500)
+        // Increase delay and force refresh
+        setTimeout(() => {
+          fetchMenuItems()
+          setImageInputType('file')
+        }, 800)
         localStorage.setItem('menuUpdated', Date.now().toString())
       } else {
         const errorData = await response.json()

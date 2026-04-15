@@ -13,6 +13,7 @@ export async function PUT(req: Request, context: { params: Promise<{ id: string 
 
         await connectDB()
         const body = await req.json()
+        console.log("🛠️ Updating Room ID:", id, "with body:", body)
         const room = await (Room as any).findByIdAndUpdate(id, body, { new: true })
         
         if (!room) {
