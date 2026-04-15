@@ -27,6 +27,7 @@ interface Order {
   createdAt: string
   updatedAt: string
   isDeleted?: boolean
+  distributions?: string[]
 }
 
 export default function CashierOrdersPage() {
@@ -204,6 +205,15 @@ export default function CashierOrdersPage() {
                               <span className="inline-flex items-center px-2 py-0.5 rounded bg-blue-50 text-blue-700 text-[10px] font-black border border-blue-100 w-fit">
                                 Table {order.tableNumber}
                               </span>
+                              {order.distributions && order.distributions.length > 0 && (
+                                <div className="flex flex-wrap gap-1 mt-1">
+                                  {order.distributions.map((dist, idx) => (
+                                    <span key={idx} className="bg-orange-50 text-orange-700 text-[8px] font-black px-1.5 py-0.5 rounded border border-orange-100 uppercase tracking-widest italic">
+                                      🚚 {dist}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
                             </div>
                           </td>
                           <td className="py-4 px-6">

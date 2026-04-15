@@ -58,10 +58,10 @@ export function POSPage({ fixedTier }: POSPageProps) {
   const [isButcherOrder, setIsButcherOrder] = useState(false)
   const [isDrinksOrder, setIsDrinksOrder] = useState(false)
   const [showCart, setShowCart] = useState(false)
-  const [paperWidth, setPaperWidth] = useState(80)
   const [searchTerm, setSearchTerm] = useState("")
   const [idSearchTerm, setIdSearchTerm] = useState("")
   const [selectedFloorId, setSelectedFloorId] = useState<string>("")
+  const [distributions, setDistributions] = useState<string[]>([])
   const [variantModal, setVariantModal] = useState<{ item: MenuItem } | null>(null)
   const [roomOrdersCount, setRoomOrdersCount] = useState(0)
   const [isRoomServiceHandler, setIsRoomServiceHandler] = useState(false)
@@ -203,7 +203,8 @@ export function POSPage({ fixedTier }: POSPageProps) {
         body: JSON.stringify({
           items: cartItems.map((item) => ({ menuItemId: item.id, name: item.name, quantity: item.quantity, price: item.price, menuTier: fixedTier })),
           totalAmount, subtotal, tax, paymentMethod: "cash", status: "pending",
-          tableNumber: finalTableNumber, floorId: selectedFloorId || user?.floorId
+          tableNumber: finalTableNumber, floorId: selectedFloorId || user?.floorId,
+          distributions
         }),
       })
       if (response.ok) {
@@ -213,6 +214,7 @@ export function POSPage({ fixedTier }: POSPageProps) {
         const snapshotCart = [...cartItems]
         setCartItems([])
         setTableNumber("")
+        setDistributions([])
         setIsButcherOrder(false)
         setIsDrinksOrder(false)
         setIsCheckoutLoading(false)
@@ -222,7 +224,7 @@ export function POSPage({ fixedTier }: POSPageProps) {
           const receiptHtml = getReceiptHTML({
             orderNumber: data.orderNumber, tableNumber: finalTableNumber,
             items: snapshotCart.map(item => ({ menuId: item.menuId, name: item.name, quantity: item.quantity, price: item.price })),
-            subtotal, tax, total: totalAmount, paperWidth,
+            subtotal, tax, total: totalAmount, paperWidth: 80,
             appName: settings.app_name, appTagline: settings.app_tagline, vatRate: settings.vat_rate
           })
           const iframe = document.createElement('iframe')
@@ -274,8 +276,9 @@ export function POSPage({ fixedTier }: POSPageProps) {
     items: cartItems, onRemove: handleRemoveFromCart, onQuantityChange: handleQuantityChange,
     onCheckout: handleCheckout, isLoading: isCheckoutLoading, isEmbedded: true,
     tableNumber, setTableNumber, isMeatOnly, isDrinksOnly, isButcherOrder, setIsButcherOrder,
-    isDrinksOrder, setIsDrinksOrder, paperWidth, setPaperWidth,
+    isDrinksOrder, setIsDrinksOrder,
     assignedFloorId: selectedFloorId || user?.floorId, setSelectedFloorId, onClear: handleClearCart,
+    distribution: distributions, setDistribution: setDistributions,
   }
 
   return (

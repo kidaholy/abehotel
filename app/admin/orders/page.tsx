@@ -31,6 +31,7 @@ interface Order {
   updatedAt?: string
   kitchenAcceptedAt?: string
   createdBy?: { name: string }
+  distributions?: string[]
 }
 
 export default function AdminOrdersPage() {
@@ -504,7 +505,18 @@ export default function AdminOrdersPage() {
                           </span>
                           <span className="text-[8px] font-bold text-gray-500 mt-1 ml-1 uppercase tracking-widest">{isCompleted ? `finished in ${threshold + delay}m` : `exceeded ${threshold}m target`}</span>
                         </div>
-                        <span className="text-[10px] font-bold text-[#d4af37] uppercase tracking-widest border-l border-white/10 pl-3 ml-1">{o.tableNumber}</span>
+                        <div className="flex flex-col gap-1 items-start border-l border-white/10 pl-3 ml-1">
+                          <span className="text-[10px] font-bold text-[#d4af37] uppercase tracking-widest">{o.tableNumber}</span>
+                          {(o.distributions || []).length > 0 && (
+                            <div className="flex flex-wrap gap-1">
+                              {o.distributions!.map((dist, idx) => (
+                                <span key={idx} className="bg-orange-950/40 text-orange-400 border border-orange-500/30 px-1.5 py-0.5 rounded text-[7px] font-black tracking-widest uppercase italic">
+                                  🚚 {dist}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     )
                   })}
@@ -780,11 +792,20 @@ export default function AdminOrdersPage() {
                                 <h4 className="text-[#f3cf7a] font-playfair italic font-bold">#{order.orderNumber}</h4>
                                 <p className="text-[10px] text-gray-500 font-bold uppercase tracking-tighter mt-1">{order.tableNumber}</p>
                               </div>
-                              <div className="flex-1 min-w-0 bg-[#151716] p-2 px-4 rounded-xl border border-white/5">
-                                <p className="text-[9px] text-gray-400 line-clamp-1 uppercase tracking-wide">
-                                  {order.items.map(i => `${i.quantity}× ${i.name}`).join(', ')}
-                                </p>
-                              </div>
+                                <div className="flex-1 min-w-0 bg-[#151716] p-2 px-4 rounded-xl border border-white/5">
+                                  <p className="text-[9px] text-gray-400 line-clamp-1 uppercase tracking-wide">
+                                    {order.items.map(i => `${i.quantity}× ${i.name}`).join(', ')}
+                                  </p>
+                                  {(order.distributions || []).length > 0 && (
+                                    <div className="flex flex-wrap gap-1 mt-1.5">
+                                      {order.distributions!.map((dist, idx) => (
+                                        <span key={idx} className="bg-orange-900/30 text-orange-400 text-[8px] font-black px-1.5 py-0.5 rounded border border-orange-500/20 uppercase tracking-widest italic">
+                                          🚚 {dist}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
                               <div className="flex items-center gap-3 ml-auto">
                                 <span className={`px-2 py-0.5 rounded-full text-[8px] font-bold uppercase tracking-[0.1em] ${status.color}`}>
                                   {status.label}
@@ -823,6 +844,15 @@ export default function AdminOrdersPage() {
                                 <span className="bg-[#1a1c1b] text-[#f3cf7a] border border-[#d4af37]/20 px-2 py-0.5 rounded text-[10px] font-black tracking-widest uppercase">FLOOR #{order.floorNumber}</span>
                               )}
                               <span className="bg-[#1a1c1b] text-gray-400 border border-white/10 px-2 py-0.5 rounded text-[10px] font-black tracking-widest uppercase">{order.tableNumber}</span>
+                              {(order.distributions || []).length > 0 && (
+                                <div className="flex flex-wrap gap-1 items-center ml-2 border-l border-white/10 pl-2">
+                                  {order.distributions!.map((dist, idx) => (
+                                    <span key={idx} className="bg-orange-900/30 text-orange-400 border border-orange-500/20 px-2 py-0.5 rounded text-[8px] font-black tracking-widest uppercase italic shadow-sm">
+                                      🚚 {dist}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
                             </div>
                             <div className="flex items-center gap-2 mt-2">
                               <p className="text-[10px] font-light text-gray-500 uppercase tracking-widest">

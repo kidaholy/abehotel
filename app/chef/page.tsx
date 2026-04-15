@@ -32,6 +32,8 @@ interface Order {
   tableNumber?: string
   createdAt: string
   updatedAt: string
+  isDeleted?: boolean
+  distributions?: string[]
 }
 
 export default function KitchenDisplayPage() {
@@ -449,6 +451,15 @@ function OrderCard({
                 <Clock className="h-3 w-3" />
                 {elapsedMinutes > 0 ? `${elapsedMinutes}m ago` : "Just now"}
               </p>
+              {order.distributions && order.distributions.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {order.distributions.map((dist, idx) => (
+                    <span key={idx} className="bg-orange-900/30 text-orange-400 text-[8px] font-black px-1.5 py-0.5 rounded border border-orange-500/20 uppercase tracking-widest italic">
+                      🚚 {dist}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
           {order.notes && (

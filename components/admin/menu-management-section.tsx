@@ -123,6 +123,12 @@ export function MenuManagementSection({
   const [showCategoryManager, setShowCategoryManager] = useState(false)
   const [categoryLoading, setCategoryLoading] = useState(false)
   const [newCategoryName, setNewCategoryName] = useState("")
+
+  const [distributions, setDistributions] = useState<any[]>([])
+  const [showDistManager, setShowDistManager] = useState(false)
+  const [distLoading, setDistLoading] = useState(false)
+  const [newDistName, setNewDistName] = useState("")
+  const [distFilter, setDistFilter] = useState("all")
   const [showQrModal, setShowQrModal] = useState(false)
   const [qrDataUrl, setQrDataUrl] = useState<string>("")
   const [qrGenerating, setQrGenerating] = useState(false)
@@ -137,9 +143,25 @@ export function MenuManagementSection({
     if (token) {
       fetchMenuItems()
       fetchCategories()
+      fetchDistributions()
       fetchStockItems()
     }
   }, [token])
+
+  const fetchDistributions = async () => {
+    if (!token) return
+    try {
+      const response = await fetch(`/api/categories?type=distribution`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setDistributions(data)
+      }
+    } catch (error) {
+      console.error("Error fetching distributions:", error)
+    }
+  }
 
   const fetchStockItems = async () => {
     try {
@@ -241,7 +263,7 @@ export function MenuManagementSection({
 
   useEffect(() => {
     filterItems()
-  }, [menuItems, searchTerm, categoryFilter, mainCategoryFilter])
+  }, [menuItems, searchTerm, categoryFilter, distFilter, mainCategoryFilter])
 
   const fetchMenuItems = async () => {
     try {
@@ -280,6 +302,9 @@ export function MenuManagementSection({
     }
     if (categoryFilter !== "all") {
       filtered = filtered.filter(item => item.category === categoryFilter)
+    }
+    if (distFilter !== "all") {
+      filtered = filtered.filter(item => item.distributions?.includes(distFilter))
     }
 
     // Sort numerically by menuId
@@ -711,6 +736,35 @@ export function MenuManagementSection({
                     </div>
                   </div>
                 </div>
+
+                <div>
+                  <div className="flex justify-between items-center mb-2 mx-1">
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500">Distribution</label>
+                    <button
+                      onClick={() => setShowDistManager(true)}
+                      className="text-[10px] font-black uppercase tracking-widest text-[#d4af37] hover:text-[#f3cf7a] transition-colors"
+                    >
+                      {t("adminMenu.manage")}
+                    </button>
+                  </div>
+                  <div className="relative">
+                    <select
+                      value={distFilter}
+                      onChange={(e) => setDistFilter(e.target.value)}
+                      className="w-full bg-[#0f1110] border border-white/5 rounded-2xl px-4 py-4 text-sm font-bold appearance-none cursor-pointer focus:outline-none focus:border-[#d4af37]/50 text-white pr-10 shadow-inner"
+                    >
+                      <option value="all" className="bg-[#151716]">All Distributions</option>
+                      {distributions.map((dist: any) => (
+                        <option key={dist._id} value={dist.name} className="bg-[#151716]">
+                          {dist.name}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500">
+                      <ChevronDown size={14} />
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -1109,67 +1163,46 @@ export function MenuManagementSection({
                   </div>
                 </div>
 
-                {/* Distribution Variants */}
+                {/* Distribution Availability */}
                 <div className="md:col-span-2 bg-[#1a1c1b] p-8 rounded-[35px] border border-white/5 shadow-2xl relative overflow-hidden group/variants">
                   <div className="absolute -right-4 -top-4 opacity-5 group-hover/variants:scale-110 transition-transform duration-500">
                     <ArrowLeftRight size={80} className="text-[#d4af37]" />
                   </div>
                   <h3 className="text-[10px] font-black text-[#d4af37] uppercase tracking-[0.2em] mb-3 flex items-center gap-2">
-                    <ArrowLeftRight size={14} /> Distribution Variants (Optional)
+                    <ArrowLeftRight size={14} /> Distribution Availability
                   </h3>
-                  <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-6">Add options (e.g. Hot, Cold, Spicy, Mild).</p>
+                  <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-6">Select which distributions this item is available for.</p>
  
-                  {/* Input to add new variant */}
-                  <div className="flex gap-2 p-1.5 bg-[#0f1110] border border-white/5 rounded-2xl shadow-inner mb-6 focus-within:border-[#d4af37]/30 transition-all">
-                    <input
-                      type="text"
-                      id="newVariantInput"
-                      placeholder="e.g. Hot, Cold, Large..."
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault()
-                          const val = (e.target as HTMLInputElement).value.trim()
-                          if (val && !formData.distributions.includes(val)) {
-                            setFormData(prev => ({ ...prev, distributions: [...prev.distributions, val] }));
-                            (e.target as HTMLInputElement).value = ''
-                          }
-                        }
-                      }}
-                      className="flex-1 bg-transparent px-4 py-3 text-sm font-bold text-white outline-none placeholder-gray-700"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const input = document.getElementById('newVariantInput') as HTMLInputElement
-                        const val = input?.value.trim()
-                        if (val && !formData.distributions.includes(val)) {
-                          setFormData(prev => ({ ...prev, distributions: [...prev.distributions, val] }))
-                          input.value = ''
-                        }
-                      }}
-                      className="px-6 py-3 bg-gradient-to-r from-[#d4af37] to-[#f3cf7a] text-[#0f1110] rounded-xl text-[10px] font-black uppercase tracking-widest hover:shadow-lg transition-all transform active:scale-95"
-                    >
-                      + Add
-                    </button>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {distributions.map((dist: any) => (
+                      <button
+                        key={dist._id}
+                        type="button"
+                        onClick={() => {
+                          const current = formData.distributions || []
+                          const updated = current.includes(dist.name)
+                            ? current.filter(d => d !== dist.name)
+                            : [...current, dist.name]
+                          setFormData({ ...formData, distributions: updated })
+                        }}
+                        className={`flex items-center gap-2.5 p-3 rounded-2xl border transition-all text-left group/btn ${formData.distributions?.includes(dist.name)
+                          ? 'bg-[#d4af37] border-[#d4af37] text-[#0f1110] shadow-lg scale-[1.02]'
+                          : 'bg-[#0f1110] border-white/5 text-gray-400 hover:border-[#d4af37]/30'
+                          }`}
+                      >
+                        <div className={`w-4 h-4 rounded-md border flex items-center justify-center transition-all ${formData.distributions?.includes(dist.name)
+                          ? 'bg-white border-white text-[#d4af37]'
+                          : 'border-white/10 group-hover/btn:border-[#d4af37]/50'
+                          }`}>
+                          {formData.distributions?.includes(dist.name) && <Check size={12} strokeWidth={4} />}
+                        </div>
+                        <span className="text-[10px] font-black uppercase tracking-widest truncate">{dist.name}</span>
+                      </button>
+                    ))}
+                    {distributions.length === 0 && (
+                      <p className="col-span-full text-center py-6 text-gray-600 text-[9px] font-black uppercase tracking-widest italic border border-dashed border-white/5 rounded-2xl">No distributions found. Add them in the sidebar.</p>
+                    )}
                   </div>
-
-                  {/* List of added variants */}
-                  {formData.distributions.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                      {formData.distributions.map((variant, idx) => (
-                        <span key={idx} className="flex items-center gap-1.5 bg-[#d4af37]/10 border border-[#d4af37]/20 text-[#f3cf7a] font-bold text-[10px] uppercase tracking-widest px-3 py-1.5 rounded-xl">
-                          {variant}
-                          <button
-                            type="button"
-                            onClick={() => setFormData(prev => ({ ...prev, distributions: prev.distributions.filter((_, i) => i !== idx) }))}
-                            className="text-[#f3cf7a]/40 hover:text-red-400 transition-colors"
-                          >
-                            <X size={14} />
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  )}
                 </div>
 
                 <div className="md:col-span-2 space-y-6 pt-10 border-t border-white/5">
@@ -1222,6 +1255,43 @@ export function MenuManagementSection({
         title={t("adminMenu.manageCategories")}
         value={newCategoryName}
         onChange={setNewCategoryName}
+        t={t}
+      />
+
+      <CategoryManager
+        show={showDistManager}
+        onClose={() => setShowDistManager(false)}
+        categories={distributions}
+        onAdd={async (e: any) => {
+          e.preventDefault()
+          if (!newDistName.trim()) return
+          setDistLoading(true)
+          try {
+            const res = await fetch("/api/categories", {
+              method: "POST",
+              headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+              body: JSON.stringify({ name: newDistName, type: "distribution" }),
+            })
+            if (res.ok) { setNewDistName(""); fetchDistributions() }
+          } finally { setDistLoading(false) }
+        }}
+        onDelete={async (id: string) => {
+          if (!await confirm({ title: "Delete Distribution", message: "Are you sure?", type: "warning" })) return
+          await fetch(`/api/categories/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } })
+          fetchDistributions()
+        }}
+        onUpdate={async (id: string, newName: string) => {
+          await fetch(`/api/categories/${id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ name: newName }),
+          })
+          fetchDistributions()
+        }}
+        loading={distLoading}
+        title="Manage Distributions"
+        value={newDistName}
+        onChange={setNewDistName}
         t={t}
       />
 

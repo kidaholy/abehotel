@@ -57,8 +57,8 @@ export default function AdminSettingsPage() {
   // Category Management State
   const [categories, setCategories] = useState<any[]>([])
   const [editingCategory, setEditingCategory] = useState<any>(null)
-  const [newCategory, setNewCategory] = useState({ name: "", type: "menu" as "menu" | "stock", description: "" })
-  const [categoryType, setCategoryType] = useState<"menu" | "stock">("menu")
+  const [newCategory, setNewCategory] = useState({ name: "", type: "menu" as "menu" | "stock" | "distribution", description: "" })
+  const [categoryType, setCategoryType] = useState<"menu" | "stock" | "distribution">("menu")
 
   // Always keep formData in sync with settings from DB
   // Use a ref to track if user has made local changes
@@ -961,8 +961,9 @@ export default function AdminSettingsPage() {
 
                 {activeTab === "categories" && (
                   <div className="space-y-10 relative z-10">
-                    <div className="flex gap-2 mb-8 bg-[#0f1110] border border-white/5 p-1 rounded-2xl w-fit">
+                    <div className="flex flex-wrap gap-2 mb-8 bg-[#0f1110] border border-white/5 p-1 rounded-2xl w-fit">
                       <button
+                        type="button"
                         onClick={() => setCategoryType("menu")}
                         className={`px-8 py-3 rounded-xl text-sm font-bold tracking-wider uppercase transition-all ${categoryType === "menu"
                           ? "bg-[#b38822]/20 text-[#f3cf7a] shadow-sm border border-[#d4af37]/30"
@@ -972,6 +973,7 @@ export default function AdminSettingsPage() {
                         🍽️ Menu Categories
                       </button>
                       <button
+                        type="button"
                         onClick={() => setCategoryType("stock")}
                         className={`px-8 py-3 rounded-xl text-sm font-bold tracking-wider uppercase transition-all ${categoryType === "stock"
                           ? "bg-[#b38822]/20 text-[#f3cf7a] shadow-sm border border-[#d4af37]/30"
@@ -980,12 +982,22 @@ export default function AdminSettingsPage() {
                       >
                         📦 Stock Categories
                       </button>
+                      <button
+                        type="button"
+                        onClick={() => setCategoryType("distribution")}
+                        className={`px-8 py-3 rounded-xl text-sm font-bold tracking-wider uppercase transition-all ${categoryType === "distribution"
+                          ? "bg-[#b38822]/20 text-[#f3cf7a] shadow-sm border border-[#d4af37]/30"
+                          : "text-gray-500 hover:text-gray-300"
+                          }`}
+                      >
+                        🚚 Distribution
+                      </button>
                     </div>
 
                     <div className="bg-[#0f1110] p-6 lg:p-8 rounded-3xl border border-white/5 shadow-inner">
                       <h3 className="font-bold text-xs uppercase tracking-widest text-[#d4af37] mb-6 flex items-center gap-2">
                         <span className="w-5 h-[1px] bg-[#d4af37]/50 block"></span>
-                        {editingCategory ? "Update Category" : `Add New ${categoryType === 'menu' ? 'Menu' : 'Stock'} Category`}
+                        {editingCategory ? "Update Category" : `Add New ${categoryType === 'menu' ? 'Menu' : categoryType === 'stock' ? 'Stock' : 'Distribution'} Category`}
                       </h3>
                       <div className="flex flex-col sm:flex-row gap-4">
                         <input

@@ -29,6 +29,7 @@ interface IOrder extends Document {
   tableId?: mongoose.Types.ObjectId | string
   floorId?: mongoose.Types.ObjectId | string
   floorNumber?: string
+  distributions?: string[]
   createdBy: mongoose.Types.ObjectId
   createdAt: Date
   updatedAt: Date
@@ -79,6 +80,7 @@ const orderSchema = new Schema<IOrder>(
     tableId: { type: Schema.Types.ObjectId, ref: "Table" },
     floorId: { type: Schema.Types.ObjectId, ref: "Floor" },
     floorNumber: { type: String },
+    distributions: [{ type: String }],
     createdBy: { type: Schema.Types.ObjectId, ref: "User" },
     kitchenAcceptedAt: { type: Date },
     readyAt: { type: Date },

@@ -35,11 +35,11 @@ interface CartSidebarProps {
   setIsButcherOrder?: (val: boolean) => void
   isDrinksOrder?: boolean
   setIsDrinksOrder?: (val: boolean) => void
-  paperWidth: number
-  setPaperWidth: (val: number) => void
   assignedFloorId?: string
   setSelectedFloorId?: (val: string) => void
   onClear?: () => void
+  distribution: string[]
+  setDistribution: (val: string[]) => void
 }
 
 export function CartSidebar({
@@ -58,11 +58,11 @@ export function CartSidebar({
   setIsButcherOrder,
   isDrinksOrder = false,
   setIsDrinksOrder,
-  paperWidth,
-  setPaperWidth,
   assignedFloorId,
   setSelectedFloorId,
   onClear,
+  distribution,
+  setDistribution,
 }: CartSidebarProps) {
   const { t } = useLanguage()
   const { settings } = useSettings()
@@ -77,6 +77,8 @@ export function CartSidebar({
   const [floors, setFloors] = useState<any[]>([])
   const [activeFloorTab, setActiveFloorTab] = useState<string>("")
   const [isTableModalOpen, setIsTableModalOpen] = useState(false)
+  const [distributions, setDistributions] = useState<any[]>([])
+  const [isDistModalOpen, setIsDistModalOpen] = useState(false)
 
   useEffect(() => {
     // Fetch tables and floors
@@ -109,6 +111,20 @@ export function CartSidebar({
       } catch (err) { console.error("Failed to load data", err) }
     }
     fetchData()
+
+    const fetchDistributions = async () => {
+      if (!token) return
+      try {
+        const res = await fetch("/api/categories?type=distribution", {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        if (res.ok) {
+          const data = await res.json()
+          setDistributions(data)
+        }
+      } catch (err) { console.error("Failed to load distributions", err) }
+    }
+    fetchDistributions()
   }, [token, assignedFloorId])
 
 
@@ -264,20 +280,48 @@ export function CartSidebar({
               </DialogContent>
             </Dialog>
 
-            <div className="flex items-center gap-1 bg-[#0f1110] p-1 rounded-xl border border-white/5">
-              {[80, 58].map((size) => (
-                <button
-                  key={size}
-                  onClick={() => setPaperWidth(size)}
-                  className={`px-3 py-1.5 rounded-lg text-[9px] font-black transition-all ${paperWidth === size
-                    ? "bg-[#d4af37] text-[#0f1110] shadow-md scale-105"
-                    : "bg-[#0f1110] text-gray-500 border border-white/5"
-                    }`}
-                >
-                  {size}mm
+            <Dialog open={isDistModalOpen} onOpenChange={setIsDistModalOpen}>
+              <DialogTrigger asChild>
+                <button className="flex-1 bg-[#0f1110] border border-white/5 rounded-xl px-4 py-3 text-xs font-bold flex justify-between items-center hover:border-[#d4af37] hover:bg-[#d4af37]/5 transition-all outline-none">
+                  <div className="flex items-center gap-2 overflow-hidden mr-2">
+                    <span className="text-gray-500 font-bold">🚚</span>
+                    <span className={distribution.length > 0 ? "text-white font-bold truncate" : "text-gray-500 font-bold"}>
+                      {distribution.length > 0 ? distribution.join(", ") : "Distribution"}
+                    </span>
+                  </div>
+                  <span className="text-[10px] text-gray-500">▼</span>
                 </button>
-              ))}
-            </div>
+              </DialogTrigger>
+              <DialogContent className="max-w-md bg-[#151716] border-white/5 text-white">
+                <DialogHeader>
+                  <DialogTitle className="text-xl font-playfair italic font-bold text-[#f3cf7a]">Select Distribution</DialogTitle>
+                </DialogHeader>
+                <div className="grid grid-cols-2 gap-3 mt-4">
+                  {distributions.map(dist => (
+                    <button
+                      key={dist._id}
+                      onClick={() => {
+                        const current = distribution || []
+                        const updated = current.includes(dist.name)
+                          ? current.filter(d => d !== dist.name)
+                          : [...current, dist.name]
+                        setDistribution(updated)
+                      }}
+                      className={`p-4 rounded-xl border font-bold transition-all ${distribution.includes(dist.name)
+                        ? "bg-[#2d5a41] border-[#2d5a41] text-white shadow-lg scale-105"
+                        : "bg-[#0f1110] border-white/5 hover:border-[#2d5a41] text-gray-400"
+                        }`}
+                    >
+                      {dist.name}
+                    </button>
+                  ))}
+                  {distributions.length === 0 && (
+                    <p className="col-span-2 text-center py-6 text-gray-500 text-xs italic">No distributions found. Add them in Admin Settings.</p>
+                  )}
+                </div>
+              </DialogContent>
+            </Dialog>
+
           </div>
         )}
 

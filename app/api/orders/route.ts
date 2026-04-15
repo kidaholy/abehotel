@@ -178,7 +178,7 @@ export async function POST(request: Request) {
     console.log("📊 Database connected successfully")
 
     const body = await request.json()
-    const { items, totalAmount, subtotal, tax, paymentMethod, customerName, tableNumber, tableId } = body
+    const { items, totalAmount, subtotal, tax, paymentMethod, customerName, tableNumber, tableId, distributions } = body
     console.log("📝 Order data received:", { items: items.length, totalAmount, subtotal, tax, tableNumber, tableId })
 
     // Validate required fields
@@ -201,10 +201,10 @@ export async function POST(request: Request) {
 
     // FETCH DATA IN PARALLEL
     const [standardMenuItems, vip1MenuItems, vip2MenuItems, stockItems, recentOrders, tableData] = await Promise.all([
-      MenuItem.find({ _id: { $in: menuItemIds } }).populate('stockItemId').lean(),
+      (MenuItem as any).find({ _id: { $in: menuItemIds } }).populate('stockItemId').lean(),
       (Vip1MenuItem as any).find({ _id: { $in: menuItemIds } }).lean(),
       (Vip2MenuItem as any).find({ _id: { $in: menuItemIds } }).lean(),
-      Stock.find({ _id: { $in: stockIds } }),
+      (Stock as any).find({ _id: { $in: stockIds } }),
       // Fetch the last 50 numeric orders to find the true numeric maximum
       Order.find({ orderNumber: /^\d+$/ }, { orderNumber: 1 }).sort({ createdAt: -1 }).limit(50).lean(),
       tableId ? Table.findById(tableId) :
@@ -288,6 +288,7 @@ export async function POST(request: Request) {
       tableId,
       floorId,
       floorNumber,
+      distributions,
       createdBy: decoded.id,
       thresholdMinutes: (() => {
         const foodItems = linkedMenuItems.filter(m => m.mainCategory?.toLowerCase() !== "drinks")
