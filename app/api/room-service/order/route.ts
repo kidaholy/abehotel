@@ -35,7 +35,7 @@ export async function POST(request: Request) {
       (MenuItem as any).find({ _id: { $in: menuItemIds } }).lean(),
       (Stock as any).find({ _id: { $in: stockIds } }),
       (Order as any).find({ orderNumber: /^\d+$/ }, { orderNumber: 1 }).sort({ createdAt: -1 }).limit(50).lean(),
-      (Room as any).findOne({ roomNumber: tableNumber }).lean()
+      (Room as any).findOne({ roomNumber: tableNumber }).populate('floorId').lean()
     ])
 
     for (const [stockId, requiredAmount] of stockConsumptionMap) {
@@ -78,7 +78,8 @@ export async function POST(request: Request) {
       paymentMethod: paymentMethod || "room_bill",
       customerName: customerName || `${tableNumber}`,
       tableNumber,
-      floorId: (roomData as any)?.floorId,
+      floorId: (roomData as any)?.floorId?._id || (roomData as any)?.floorId,
+      createdBy: (roomData as any)?.floorId?.roomServiceCashierId,
       notes: notes || "Room Service App Order",
       thresholdMinutes: (() => {
         const foodItems = (standardMenuItems as any[]).filter(m => m.mainCategory?.toLowerCase() !== "drinks")
@@ -112,7 +113,14 @@ export async function POST(request: Request) {
     try {
       (async () => {
         try {
-          addNotification("info", `🔔 Room Service: New Order Request #${order.orderNumber} from Room ${tableNumber} awaits confirmation!`, "cashier")
+          const message = `🔔 Room Service: New Order Request #${order.orderNumber} from Room ${tableNumber} awaits confirmation!`
+          const cashierId = (roomData as any)?.floorId?.roomServiceCashierId
+          
+          if (cashierId) {
+            addNotification("info", message, undefined, cashierId.toString())
+          } else {
+            addNotification("info", message, "cashier")
+          }
         } catch (err) {}
       })()
     } catch (error) {}

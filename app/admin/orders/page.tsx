@@ -354,9 +354,7 @@ export default function AdminOrdersPage() {
 
   // Dynamic Cashier List from Orders
   const cashierList = Array.from(new Set(orders.map(o => {
-    const name = o.createdBy?.name || "Unknown";
-    const floor = o.floorNumber ? ` (${o.floorNumber})` : "";
-    return `${name}${floor}`;
+    return o.createdBy?.name || "Unknown";
   }))).sort();
 
   const getStatusConfig = (status: string) => {
@@ -506,7 +504,9 @@ export default function AdminOrdersPage() {
                           <span className="text-[8px] font-bold text-gray-500 mt-1 ml-1 uppercase tracking-widest">{isCompleted ? `finished in ${threshold + delay}m` : `exceeded ${threshold}m target`}</span>
                         </div>
                         <div className="flex flex-col gap-1 items-start border-l border-white/10 pl-3 ml-1">
-                          <span className="text-[10px] font-bold text-[#d4af37] uppercase tracking-widest">{o.tableNumber}</span>
+                          <span className="text-[10px] font-bold text-[#d4af37] tracking-widest">
+                            {o.floorNumber ? `${o.floorNumber} - ` : ''}{o.tableNumber}
+                          </span>
                           {(o.distributions || []).length > 0 && (
                             <div className="flex flex-wrap gap-1">
                               {o.distributions!.map((dist, idx) => (
@@ -759,9 +759,7 @@ export default function AdminOrdersPage() {
                             <span className="text-gray-500 text-[8px] font-bold uppercase tracking-widest">Revenue</span>
                             <span className="text-lg font-black text-[#4ade80]">
                               {filteredOrders.filter(o => {
-                                const name = o.createdBy?.name || "Unknown";
-                                const floor = o.floorNumber ? ` (${o.floorNumber})` : "";
-                                return `${name}${floor}` === cashierList[activeCashierIdx];
+                                return (o.createdBy?.name || "Unknown") === cashierList[activeCashierIdx];
                               }).reduce((sum, o) => sum + o.totalAmount, 0).toLocaleString()} Br
                             </span>
                           </div>
@@ -770,9 +768,7 @@ export default function AdminOrdersPage() {
                             <span className="text-gray-500 text-[8px] font-bold uppercase tracking-widest">Orders</span>
                             <span className="text-lg font-black text-white">
                               {filteredOrders.filter(o => {
-                                const name = o.createdBy?.name || "Unknown";
-                                const floor = o.floorNumber ? ` (${o.floorNumber})` : "";
-                                return `${name}${floor}` === cashierList[activeCashierIdx];
+                                return (o.createdBy?.name || "Unknown") === cashierList[activeCashierIdx];
                               }).length}
                             </span>
                           </div>
@@ -781,16 +777,16 @@ export default function AdminOrdersPage() {
 
                       <div className="flex-1 overflow-y-auto space-y-4 custom-scrollbar pr-2">
                         {filteredOrders.filter(o => {
-                          const name = o.createdBy?.name || "Unknown";
-                          const floor = o.floorNumber ? ` (${o.floorNumber})` : "";
-                          return `${name}${floor}` === cashierList[activeCashierIdx];
+                          return (o.createdBy?.name || "Unknown") === cashierList[activeCashierIdx];
                         }).map((order) => {
                           const status = getStatusConfig(order.status)
                           return (
                             <div key={order._id} className="bg-[#0f1110] rounded-2xl p-4 border border-white/5 hover:border-[#d4af37]/20 transition-all flex flex-col md:flex-row items-start md:items-center gap-4">
                               <div className="flex-shrink-0 w-24">
                                 <h4 className="text-[#f3cf7a] font-playfair italic font-bold">#{order.orderNumber}</h4>
-                                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-tighter mt-1">{order.tableNumber}</p>
+                                <p className="text-[10px] text-gray-500 font-bold tracking-tighter mt-1">
+                                  {order.floorNumber ? `${order.floorNumber} - ` : ''}{order.tableNumber}
+                                </p>
                               </div>
                                 <div className="flex-1 min-w-0 bg-[#151716] p-2 px-4 rounded-xl border border-white/5">
                                   <p className="text-[9px] text-gray-400 line-clamp-1 uppercase tracking-wide">
@@ -841,9 +837,9 @@ export default function AdminOrdersPage() {
                             <div className="flex items-center gap-2 mb-1">
                               <h3 className="text-xl font-playfair italic text-[#f3cf7a]">#{order.orderNumber}</h3>
                               {order.floorNumber && (
-                                <span className="bg-[#1a1c1b] text-[#f3cf7a] border border-[#d4af37]/20 px-2 py-0.5 rounded text-[10px] font-black tracking-widest uppercase">FLOOR #{order.floorNumber}</span>
+                                <span className="bg-[#1a1c1b] text-[#f3cf7a] border border-[#d4af37]/20 px-2 py-0.5 rounded text-[10px] font-black tracking-widest">FLOOR #{order.floorNumber}</span>
                               )}
-                              <span className="bg-[#1a1c1b] text-gray-400 border border-white/10 px-2 py-0.5 rounded text-[10px] font-black tracking-widest uppercase">{order.tableNumber}</span>
+                              <span className="bg-[#1a1c1b] text-gray-400 border border-white/10 px-2 py-0.5 rounded text-[10px] font-black tracking-widest">{order.tableNumber}</span>
                               {(order.distributions || []).length > 0 && (
                                 <div className="flex flex-wrap gap-1 items-center ml-2 border-l border-white/10 pl-2">
                                   {order.distributions!.map((dist, idx) => (
