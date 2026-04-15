@@ -75,3 +75,21 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: "Failed to submit request" }, { status })
   }
 }
+
+// DELETE all requests (Admin only)
+export async function DELETE(request: Request) {
+  try {
+    const decoded = await validateSession(request)
+    if (decoded.role !== "admin") {
+      return NextResponse.json({ message: "Forbidden" }, { status: 403 })
+    }
+    
+    await connectDB()
+    await ReceptionRequest.deleteMany({})
+
+    return NextResponse.json({ message: "All reception requests deleted successfully." })
+  } catch (error: any) {
+    const status = error.message?.includes("Unauthorized") ? 401 : 500
+    return NextResponse.json({ message: "Failed to delete requests" }, { status })
+  }
+}

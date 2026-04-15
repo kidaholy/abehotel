@@ -50,3 +50,27 @@ export async function PUT(request: Request, context: any) {
     return NextResponse.json({ message: "Failed to update request" }, { status })
   }
 }
+
+// DELETE single request (admin only)
+export async function DELETE(request: Request, context: any) {
+  try {
+    const params = await context.params
+    const decoded = await validateSession(request)
+    
+    if (decoded.role !== "admin") {
+      return NextResponse.json({ message: "Forbidden" }, { status: 403 })
+    }
+
+    await connectDB()
+    const deleted = await ReceptionRequest.findByIdAndDelete(params.id)
+    
+    if (!deleted) {
+      return NextResponse.json({ message: "Request not found" }, { status: 404 })
+    }
+
+    return NextResponse.json({ message: "Request deleted successfully" })
+  } catch (error: any) {
+    const status = error.message?.includes("Unauthorized") ? 401 : 500
+    return NextResponse.json({ message: "Failed to delete request" }, { status })
+  }
+}

@@ -25,6 +25,7 @@ const STATUS_STYLES: Record<string, string> = {
 
 const FILTER_LABELS: Record<string, { label: string; icon: any }> = {
   all:       { label: "GUESTS",   icon: <Users size={14} /> },
+  pending:   { label: "PENDING",  icon: <Clock size={14} /> },
   check_in:  { label: "APPROVED", icon: <CheckCircle2 size={14} /> },
   rejected:  { label: "DENIED",   icon: <XCircle size={14} /> },
   check_out: { label: "CHECK OUT", icon: <Key size={14} /> },
@@ -132,6 +133,7 @@ export default function AdminReceptionPage() {
 
   const counts: Record<string, number> = {
     all: searchFiltered.length,
+    pending: searchFiltered.filter(r => r.status === "pending").length,
     check_in: searchFiltered.filter(r => r.status === "check_in").length,
     rejected: searchFiltered.filter(r => r.status === "rejected").length,
     check_out: searchFiltered.filter(r => r.status === "check_out").length,

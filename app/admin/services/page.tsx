@@ -109,7 +109,7 @@ export default function AdminServicesPage() {
   // Reception state
   const [receptionRequests, setReceptionRequests] = useState<any[]>([])
   const [receptionLoading, setReceptionLoading] = useState(false)
-  const [receptionFilter, setReceptionFilter] = useState<"all"|"pending"|"check_in"|"rejected"|"check_out">("all")
+  const [receptionFilter, setReceptionFilter] = useState<"all"|"pending"|"guests"|"check_in"|"rejected"|"check_out">("pending")
   const [selectedRequest, setSelectedRequest] = useState<any | null>(null)
   const [reviewNote, setReviewNote] = useState("")
   const [actioning, setActioning] = useState(false)
@@ -128,6 +128,7 @@ export default function AdminServicesPage() {
   }
   const STATUS_STYLES: Record<string, string> = {
     pending:   "bg-yellow-900/30 text-yellow-400 border-yellow-500/30",
+    guests:    "bg-emerald-900/30 text-emerald-400 border-emerald-500/30",
     check_in:  "bg-blue-900/30 text-blue-400 border-blue-500/30",
     rejected:  "bg-red-900/30 text-red-400 border-red-500/30",
     check_out: "bg-purple-900/30 text-purple-400 border-purple-500/30",
@@ -207,6 +208,61 @@ export default function AdminServicesPage() {
     setActioning(false)
   }
 
+  const handleReceptionDelete = async (id: string) => {
+    const confirmed = await confirm({
+      title: "Delete Request",
+      message: "Are you sure you want to permanently delete this reception request?",
+      type: "danger",
+      confirmText: "Delete",
+      cancelText: "Cancel",
+    })
+    if (!confirmed) return
+    
+    setActioning(true)
+    try {
+      const res = await fetch(`/api/reception-requests/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      if (res.ok) {
+        notify({ title: "Deleted", message: "Request successfully deleted.", type: "success" })
+        setSelectedRequest(null)
+        fetchReception()
+      } else {
+        const err = await res.json()
+        notify({ title: "Error", message: err.message || "Failed to delete", type: "error" })
+      }
+    } catch { notify({ title: "Error", message: "Network error", type: "error" }) }
+    setActioning(false)
+  }
+
+  const handleReceptionDeleteAll = async () => {
+    const confirmed = await confirm({
+      title: "Delete All Requests",
+      message: "WARNING: This will permanently delete ALL reception requests in the database. This action cannot be undone. Are you absolutely sure?",
+      type: "danger",
+      confirmText: "DELETE ALL",
+      cancelText: "Cancel",
+    })
+    if (!confirmed) return
+    
+    setActioning(true)
+    try {
+      const res = await fetch(`/api/reception-requests`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      if (res.ok) {
+        notify({ title: "Wiped", message: "All reception records have been permanently deleted.", type: "success" })
+        fetchReception()
+      } else {
+        const err = await res.json()
+        notify({ title: "Error", message: err.message || "Failed to bulk delete", type: "error" })
+      }
+    } catch { notify({ title: "Error", message: "Network error", type: "error" }) }
+    setActioning(false)
+  }
+
   const fetchData = useCallback(async () => {
     if (!token) return
     try {
@@ -228,7 +284,13 @@ export default function AdminServicesPage() {
   }, [token])
 
   useEffect(() => { fetchData() }, [fetchData])
-  useEffect(() => { if (activeTab === "reception") fetchReception() }, [activeTab, token])
+  useEffect(() => {
+    if (activeTab === "reception") {
+      fetchReception()
+      const interval = setInterval(fetchReception, 15000)
+      return () => clearInterval(interval)
+    }
+  }, [activeTab, token])
 
   const handleAddCategory = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -455,10 +517,13 @@ export default function AdminServicesPage() {
                       <div className="space-y-5">
                         {/* Filter tabs */}
                         <div className="flex gap-2 flex-wrap">
-                          {(["all","check_in","rejected","check_out"] as const).map(f => {
-                            const count = f === "all" ? receptionRequests.length : receptionRequests.filter(r => r.status === f).length
-                            const label = f === "all" ? "GUESTS" : f === "check_in" ? "APPROVED" : f === "rejected" ? "DENIED" : "CHECK OUT"
-                            const icon = f === "all" ? <Users size={10} /> : f === "check_in" ? <CheckCircle2 size={10} /> : f === "rejected" ? <XCircle size={10} /> : <Key size={10} />
+                          {(["all","pending","check_in","rejected","check_out"] as const).map(f => {
+                            const count = f === "all" ? receptionRequests.length : receptionRequests.filter(r => {
+                              if (f === "pending") return r.status === "pending" || !["guests", "check_in", "check_out", "rejected"].includes(r.status)
+                              return r.status === f
+                            }).length
+                            const label = f === "all" ? "GUESTS" : f === "pending" ? "PENDING" : f === "check_in" ? "CHECKED IN" : f === "rejected" ? "DENIED" : "CHECKED OUT"
+                            const icon = f === "all" ? <Users size={10} /> : f === "pending" ? <Clock size={10} /> : f === "check_in" ? <CheckCircle2 size={10} /> : f === "rejected" ? <XCircle size={10} /> : <Key size={10} />
                             return (
                               <button key={f} onClick={() => setReceptionFilter(f)}
                                 className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-1.5 border ${
@@ -471,30 +536,50 @@ export default function AdminServicesPage() {
                               </button>
                             )
                           })}
-                          <button onClick={fetchReception} className="ml-auto p-2 hover:bg-white/5 rounded-lg text-gray-500 hover:text-white transition-colors">
-                            <RefreshCw className={`h-4 w-4 ${receptionLoading ? "animate-spin" : ""}`} />
-                          </button>
+                          
+                          <div className="ml-auto flex gap-2">
+                            <button onClick={handleReceptionDeleteAll} disabled={receptionRequests.length === 0 || actioning} className="p-2 bg-red-900/10 hover:bg-red-900/30 rounded-lg text-red-500 hover:text-red-400 disabled:opacity-30 border border-red-500/20 transition-all flex items-center gap-1">
+                              <Trash2 className="h-4 w-4" /> <span className="text-[10px] font-black uppercase tracking-widest hidden sm:inline">Wipe All</span>
+                            </button>
+                            <button onClick={fetchReception} className="p-2 hover:bg-white/5 rounded-lg text-gray-500 hover:text-white transition-colors">
+                              <RefreshCw className={`h-4 w-4 ${receptionLoading ? "animate-spin" : ""}`} />
+                            </button>
+                          </div>
                         </div>
 
                         {receptionLoading ? (
                           <div className="flex items-center justify-center py-24"><RefreshCw className="h-8 w-8 animate-spin text-[#d4af37]" /></div>
-                        ) : receptionRequests.filter(r => receptionFilter === "all" || r.status === receptionFilter).length === 0 ? (
+                        ) : receptionRequests.filter(r => {
+                          if (receptionFilter === "all") return true
+                          if (receptionFilter === "pending") return r.status === "pending" || !["guests", "check_in", "check_out", "rejected"].includes(r.status)
+                          return r.status === receptionFilter
+                        }).length === 0 ? (
                           <div className="flex flex-col items-center justify-center py-24 text-gray-600">
                             <ConciergeBell size={40} className="mb-3 opacity-30" />
                             <p className="text-[10px] font-black uppercase tracking-widest">No {receptionFilter} requests</p>
                           </div>
                         ) : (
                           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                            {receptionRequests.filter(r => receptionFilter === "all" || r.status === receptionFilter).map(r => {
+                            {receptionRequests.filter(r => {
+                              if (receptionFilter === "all") return true
+                              if (receptionFilter === "pending") return r.status === "pending" || !["guests", "check_in", "check_out", "rejected"].includes(r.status)
+                              return r.status === receptionFilter
+                            }).map(r => {
                               const type = INQUIRY_TYPES[r.inquiryType]
                               return (
-                                <div key={r._id} className="bg-[#0f1110] rounded-2xl border border-white/5 hover:border-white/10 transition-all p-5 flex flex-col gap-3">
+                                <div key={r._id} className="bg-[#0f1110] rounded-2xl border border-white/5 hover:border-white/10 transition-all p-5 flex flex-col gap-3 relative group/card">
                                   <div className="flex items-start justify-between gap-2">
                                     <div className="flex items-center gap-2 text-[#d4af37]">
                                       {type?.icon ?? <MessageSquare size={13} />}
                                       <span className="font-black text-white text-sm">{r.guestName}</span>
                                     </div>
-                                    <span className={`text-[9px] font-black px-2.5 py-1 rounded-full uppercase border shrink-0 ${STATUS_STYLES[r.status] || STATUS_STYLES.pending}`}>{r.status}</span>
+                                    <div className="flex items-center gap-2">
+                                      <button onClick={() => handleReceptionDelete(r._id)} 
+                                        className="opacity-0 group-hover/card:opacity-100 p-1.5 bg-red-900/10 hover:bg-red-900/30 text-red-500 rounded-md border border-red-500/20 transition-all shadow-sm">
+                                        <Trash2 size={10} />
+                                      </button>
+                                      <span className={`text-[9px] font-black px-2.5 py-1 rounded-full uppercase border shrink-0 ${STATUS_STYLES[r.status] || STATUS_STYLES.pending}`}>{r.status}</span>
+                                    </div>
                                   </div>
                                   <span className="text-[9px] font-black uppercase tracking-widest text-gray-500 bg-[#151716] border border-white/5 px-2 py-1 rounded w-fit">{type?.label || r.inquiryType}</span>
                                   <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-gray-500 font-bold">
@@ -718,8 +803,14 @@ export default function AdminServicesPage() {
                     </button>
                   </div>
                 ) : (
-                  <div className={`p-3 rounded-xl border text-center text-[10px] font-black uppercase tracking-widest ${STATUS_STYLES[selectedRequest.status]}`}>
-                    {selectedRequest.status === "check_out" ? "CHECKED OUT - Guest has departed" : "DENIED - Request rejected"}
+                  <div className="flex items-center gap-3">
+                    <div className={`flex-1 p-3 rounded-xl border text-center text-[10px] font-black uppercase tracking-widest ${STATUS_STYLES[selectedRequest.status]}`}>
+                      {selectedRequest.status === "check_out" ? "CHECKED OUT - Guest has departed" : "DENIED - Request rejected"}
+                    </div>
+                    <button onClick={() => handleReceptionDelete(selectedRequest._id)} disabled={actioning}
+                      className="p-3 bg-red-900/30 border border-red-500/30 rounded-xl text-red-400 hover:bg-red-900/50 transition-all disabled:opacity-50">
+                      <Trash2 size={14} />
+                    </button>
                   </div>
                 )}
               </div>
