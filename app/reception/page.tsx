@@ -309,6 +309,7 @@ export default function ReceptionDashboard() {
   const [searchQuery, setSearchQuery] = useState("")
   const [dateFilter, setDateFilter] = useState<"all" | "today" | "week" | "month" | "year" | "custom">("all")
   const [customDate, setCustomDate] = useState("")
+  const datePickerRef = useRef<HTMLInputElement>(null)
   const [extendGuest, setExtendGuest] = useState<any | null>(null)
   const [newCheckOut, setNewCheckOut] = useState("")
   const [extending, setExtending] = useState(false)
@@ -825,13 +826,21 @@ export default function ReceptionDashboard() {
                        <button onClick={() => setDateFilter("today")} className={`px-3 py-2 rounded-lg transition-all ${dateFilter === "today" ? "bg-[#d4af37]/10 text-[#f3cf7a]" : "hover:text-gray-300"}`}>Today</button>
                        <button onClick={() => setDateFilter("week")} className={`px-3 py-2 rounded-lg transition-all ${dateFilter === "week" ? "bg-[#d4af37]/10 text-[#f3cf7a]" : "hover:text-gray-300"}`}>Week</button>
                        <button onClick={() => setDateFilter("year")} className={`px-3 py-2 rounded-lg transition-all ${dateFilter === "year" ? "bg-[#d4af37]/10 text-[#f3cf7a]" : "hover:text-gray-300"}`}>Year</button>
-                       <div className="relative flex items-center">
-                          <input type="date" value={customDate} onChange={e => { setCustomDate(e.target.value); setDateFilter("custom"); }} 
-                                 className="opacity-0 absolute inset-0 w-full h-full cursor-pointer [color-scheme:dark]" />
-                          <button className={`px-3 py-2 rounded-lg transition-all flex items-center gap-1 ${dateFilter === "custom" ? "bg-[#d4af37]/10 text-[#f3cf7a]" : "hover:text-gray-300"}`}>
+                                               <div className="relative flex items-center">
+                          <input
+                            ref={datePickerRef}
+                            type="date"
+                            value={customDate}
+                            onChange={e => { setCustomDate(e.target.value); setDateFilter("custom") }}
+                            className="sr-only"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => (datePickerRef.current as any)?.showPicker?.() ?? datePickerRef.current?.click()}
+                            className={`px-3 py-2 rounded-lg transition-all flex items-center gap-1 ${dateFilter === "custom" ? "bg-[#d4af37]/10 text-[#f3cf7a]" : "hover:text-gray-300"}`}>
                              <Calendar size={12} /> {dateFilter === "custom" && customDate ? customDate : "Pick Date"}
                           </button>
-                       </div>
+                        </div>
                     </div>
                   </div>
 
