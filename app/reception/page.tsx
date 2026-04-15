@@ -49,11 +49,11 @@ const EMPTY_FORM = {
 
 function GuestCard({ s, rooms, token, notify, fetchSubmissions, setExtendGuest, setNewCheckOut }: { s: any; rooms: any[]; token: string | null; notify: any; fetchSubmissions: () => void; setExtendGuest: (s: any) => void; setNewCheckOut: (d: string) => void }) {
   const STATUS_STYLES: Record<string, string> = {
-    pending:   "bg-yellow-900/30 text-yellow-400 border-yellow-500/30",
-    guests:    "bg-emerald-900/30 text-emerald-400 border-emerald-500/30",
-    rejected:  "bg-red-900/30 text-red-400 border-red-500/30",
-    check_in:  "bg-blue-900/30 text-blue-400 border-blue-500/30",
-    check_out: "bg-purple-900/30 text-purple-400 border-purple-500/30",
+    pending:   "bg-yellow-900/40 text-yellow-400 border-yellow-500/30",
+    guests:    "bg-emerald-900/40 text-emerald-400 border-emerald-500/30",
+    rejected:  "bg-red-900/40 text-red-400 border-red-500/30",
+    check_in:  "bg-blue-900/40 text-blue-400 border-blue-500/30",
+    check_out: "bg-purple-900/40 text-purple-400 border-purple-500/30",
   }
 
   const calcGuestDuration = () => {
@@ -72,85 +72,147 @@ function GuestCard({ s, rooms, token, notify, fetchSubmissions, setExtendGuest, 
   const gd = calcGuestDuration()
 
   return (
-    <div key={s._id} className="bg-[#0f1110] rounded-xl p-4 border border-emerald-500/10 hover:border-emerald-500/20 transition-all">
-      <div className="flex items-start gap-3">
-        {s.photoUrl ? (
-          <img src={s.photoUrl} alt={s.guestName} className="w-12 h-12 rounded-xl object-cover border border-white/10 shrink-0" />
-        ) : (
-          <div className="w-12 h-12 rounded-xl bg-emerald-900/30 border border-emerald-500/20 flex items-center justify-center shrink-0">
-            <Users size={20} className="text-emerald-400" />
+    <div key={s._id} className="relative bg-[#151716] rounded-[2rem] border border-white/5 overflow-hidden group hover:border-[#d4af37]/30 transition-all flex flex-col shadow-2xl">
+      {/* Top Accent Bar */}
+      <div className={`h-1.5 w-full ${
+        s.status === 'check_in' ? 'bg-blue-500' : 
+        s.status === 'rejected' ? 'bg-red-500' : 
+        s.status === 'check_out' ? 'bg-purple-500' : 
+        s.status === 'guests' ? 'bg-emerald-500' : 'bg-yellow-500'
+      }`} />
+      
+      {/* Profile Image Banner Overlay */}
+      <div className="w-full h-40 min-h-[160px] flex-shrink-0 relative bg-[#0f1110] border-b border-white/5 overflow-hidden">
+         {s.photoUrl || s.idPhotoFront ? (
+           <img src={s.photoUrl || s.idPhotoFront} alt={s.guestName} className="w-full h-full object-cover" />
+         ) : (
+           <div className="w-full h-full flex items-center justify-center opacity-10">
+             <Users size={64} className="text-[#d4af37]" />
+           </div>
+         )}
+         <div className="absolute inset-0 bg-gradient-to-t from-[#151716] via-transparent to-transparent" />
+      </div>
+
+      {/* Circular Avatar Overlap */}
+      <div className="relative h-6 w-full px-5">
+        <div className="absolute -top-10 left-5 w-20 h-20 rounded-2xl border-4 border-[#151716] bg-[#1a1c1b] overflow-hidden shadow-2xl flex-shrink-0 z-20">
+          {s.photoUrl || s.idPhotoFront ? (
+            <img src={s.photoUrl || s.idPhotoFront} alt={s.guestName} className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <Users size={32} className="text-gray-700" />
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="p-5 flex flex-col gap-4 mt-4">
+        {/* Header: Name & Status */}
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex flex-col gap-0.5">
+            <span className="font-bold text-white text-lg tracking-tight leading-none">{s.guestName}</span>
+            <span className="text-[9px] font-black text-gray-600 uppercase tracking-widest">Guest Profile</span>
           </div>
-        )}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between gap-2">
-            <span className="font-black text-white text-sm truncate">{s.guestName}</span>
-            <span className={`text-[9px] font-black px-2 py-0.5 rounded-full border shrink-0 ${STATUS_STYLES[s.status] || STATUS_STYLES.guests}`}>
-              {s.status === "check_in" ? "APPROVED" : s.status === "rejected" ? "DENIED" : s.status === "guests" ? "ACTIVE GUEST" : s.status.replace("_", " ").toUpperCase()}
-            </span>
-          </div>
-          <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1 text-[10px] text-gray-500 font-bold">
-            {s.roomNumber && <span className="flex items-center gap-1"><DoorOpen size={10} /> Room {s.roomNumber}</span>}
-            {s.phone      && <span className="flex items-center gap-1"><Phone size={10} /> {s.phone}</span>}
-            {s.faydaId    && <span className="flex items-center gap-1"><IdCard size={10} /> {s.faydaId}</span>}
-            {s.checkIn    && <span className="flex items-center gap-1"><Calendar size={10} /> {s.checkIn}{s.checkInTime ? ` ${s.checkInTime}` : ""} → {s.checkOut || "?"}{s.checkOutTime ? ` ${s.checkOutTime}` : ""}</span>}
-            {s.guests     && <span className="flex items-center gap-1"><Users size={10} /> {s.guests} guest{parseInt(s.guests) > 1 ? "s" : ""}</span>}
+          <span className={`text-[10px] font-black px-3 py-1 rounded-full uppercase border shadow-sm ${STATUS_STYLES[s.status] || STATUS_STYLES.guests}`}>
+            {s.status === "check_in" ? "APPROVED" : s.status === "rejected" ? "DENIED" : s.status === "guests" ? "ACTIVE" : s.status.replace("_", " ").toUpperCase()}
+          </span>
+        </div>
+
+        {/* Detailed Info Grid */}
+        <div className="space-y-4">
+          {/* Row 1: ID, Phone, Room, Price */}
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[10px] text-gray-400 font-bold">
+            <div className="flex items-center gap-1.5 min-w-fit">
+              <IdCard size={12} className="text-gray-600" />
+              <span className="text-gray-300">{s.faydaId || "No ID"}</span>
+            </div>
+            <div className="flex items-center gap-1.5 min-w-fit">
+              <Phone size={12} className="text-gray-600" />
+              <span className="text-gray-300">{s.phone || "No Phone"}</span>
+            </div>
+            <div className="flex items-center gap-1.5 min-w-fit">
+              <DoorOpen size={12} className="text-gray-600" />
+              <span className="text-white">Room {s.roomNumber || "?"}</span>
+            </div>
           </div>
 
+          {/* Row 2: Duration Summary */}
           {gd && (
-            <div className="mt-2 grid grid-cols-3 gap-2">
-              <div className="bg-[#151716] rounded-lg p-2 text-center border border-white/5">
-                <p className="text-sm font-black text-white">{gd.nights}</p>
+            <div className="bg-[#0f1110] border border-white/5 rounded-2xl p-4 grid grid-cols-3 gap-3">
+              <div className="text-center">
+                <p className="text-xl font-black text-white">{gd.nights}</p>
                 <p className="text-[8px] font-black uppercase tracking-widest text-gray-600">Night{gd.nights !== 1 ? "s" : ""}</p>
               </div>
-              <div className="bg-[#151716] rounded-lg p-2 text-center border border-white/5">
-                <p className="text-sm font-black text-[#f3cf7a]">{gd.pricePerNight.toLocaleString()}</p>
-                <p className="text-[8px] font-black uppercase tracking-widest text-gray-600">ETB/Night</p>
+              <div className="text-center border-x border-white/5">
+                <p className="text-xl font-black text-[#f3cf7a]">{gd.pricePerNight.toLocaleString()}</p>
+                <p className="text-[8px] font-black uppercase tracking-widest text-gray-600">ETB/NIGHT</p>
               </div>
-              <div className="bg-[#d4af37]/10 rounded-lg p-2 text-center border border-[#d4af37]/20">
-                <p className="text-sm font-black text-[#f3cf7a]">{gd.total.toLocaleString()}</p>
-                <p className="text-[8px] font-black uppercase tracking-widest text-[#d4af37]/60">Total ETB</p>
+              <div className="text-center">
+                <p className="text-xl font-black text-white">{gd.total.toLocaleString()}</p>
+                <p className="text-[8px] font-black uppercase tracking-widest text-[#d4af37]">TOTAL ETB</p>
               </div>
             </div>
           )}
 
-          {s.reviewNote && <p className="mt-1.5 text-[10px] text-blue-400 bg-blue-900/20 rounded-lg px-2 py-1 border border-blue-500/20">↩ {s.reviewNote}</p>}
-          <div className="mt-2 flex gap-2">
-            {s.status === "check_in" && (
-              <button type="button"
-                onClick={async () => {
-                  const res = await fetch(`/api/reception-requests/${s._id}`, {
-                    method: "PUT",
-                    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-                    body: JSON.stringify({ status: "guests", reviewNote: "Check-in completed by reception" }),
-                  })
-                  if (res.ok) { notify({ title: "Checked In", message: `${s.guestName} is now active.`, type: "success" }); fetchSubmissions() }
-                }}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-900/20 border border-emerald-500/30 rounded-lg text-[10px] font-black uppercase tracking-widest text-emerald-400 hover:bg-emerald-900/30 transition-all shadow-sm">
-                <CheckCircle2 size={11} /> Check In
-              </button>
-            )}
-            {(s.status === "guests" || s.status === "check_in") && (
-              <button type="button"
-                onClick={async () => {
-                  const res = await fetch(`/api/reception-requests/${s._id}`, {
-                    method: "PUT",
-                    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-                    body: JSON.stringify({ status: "pending", inquiryType: "check_out", reviewNote: "Check-out requested by reception" }),
-                  })
-                  if (res.ok) { notify({ title: "Departure Requested", message: `Check-out for ${s.guestName} sent to admin for approval.`, type: "success" }); fetchSubmissions() }
-                }}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-red-900/20 border border-red-500/20 rounded-lg text-[10px] font-black uppercase tracking-widest text-red-400 hover:bg-red-900/30 transition-all shadow-sm">
-                <Key size={11} /> Check Out
-              </button>
-            )}
-            {(s.status === "guests" || s.status === "check_in") && (
-              <button type="button"
-                onClick={() => { setExtendGuest(s); setNewCheckOut(s.checkOut || "") }}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#d4af37]/10 border border-[#d4af37]/30 rounded-lg text-[10px] font-black uppercase tracking-widest text-[#f3cf7a] hover:bg-[#d4af37]/20 transition-all ml-auto">
-                <Calendar size={11} /> Extend
-              </button>
+          {/* Row 3: Dates */}
+          <div className="flex flex-wrap items-center gap-2 border-t border-white/5 pt-3">
+            <div className="p-1.5 bg-[#1a1c1b] rounded-lg border border-white/5">
+               <Calendar size={12} className="text-[#d4af37]" />
+            </div>
+            <span className="text-[10px] font-bold text-gray-300">{s.checkIn} → {s.checkOut || "?"}</span>
+            {s.guests && (
+              <span className="ml-auto text-[9px] font-black px-2 py-0.5 bg-[#1a1c1b] text-gray-500 rounded uppercase tracking-widest border border-white/5">
+                {s.guests} Guest{parseInt(s.guests) > 1 ? "s" : ""}
+              </span>
             )}
           </div>
+        </div>
+
+        {/* Notes & Review Row */}
+        {s.reviewNote && (
+          <p className="text-[11px] text-blue-400 bg-blue-900/20 rounded-xl p-3 border border-blue-500/20 flex items-start gap-2">
+            <RefreshCw size={12} className="mt-0.5 shrink-0" />
+            <span>{s.reviewNote}</span>
+          </p>
+        )}
+
+        {/* Actions Row */}
+        <div className="mt-auto flex gap-2 pt-2">
+          {s.status === "check_in" && (
+            <button type="button"
+              onClick={async () => {
+                const res = await fetch(`/api/reception-requests/${s._id}`, {
+                  method: "PUT",
+                  headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                  body: JSON.stringify({ status: "guests", reviewNote: "Check-in completed by reception" }),
+                })
+                if (res.ok) { notify({ title: "Checked In", message: `${s.guestName} is now active.`, type: "success" }); fetchSubmissions() }
+              }}
+              className="flex-1 flex items-center justify-center gap-2 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-emerald-600/20">
+              <CheckCircle2 size={14} /> Check In
+            </button>
+          )}
+          {(s.status === "guests" || s.status === "check_in") && (
+            <button type="button"
+              onClick={async () => {
+                const res = await fetch(`/api/reception-requests/${s._id}`, {
+                  method: "PUT",
+                  headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                  body: JSON.stringify({ status: "pending", inquiryType: "check_out", reviewNote: "Check-out requested by reception" }),
+                })
+                if (res.ok) { notify({ title: "Departure Requested", message: `Check-out for ${s.guestName} sent to admin for approval.`, type: "success" }); fetchSubmissions() }
+              }}
+              className="flex-1 flex items-center justify-center gap-2 py-3 bg-[#1a1c1b] border border-red-500/30 text-red-500 hover:bg-red-900/10 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
+              <Key size={14} /> Check Out
+            </button>
+          )}
+          {(s.status === "guests" || s.status === "check_in") && (
+            <button type="button"
+              onClick={() => { setExtendGuest(s); setNewCheckOut(s.checkOut || "") }}
+              className="flex items-center justify-center gap-2 px-6 py-3 bg-[#d4af37]/10 border border-[#d4af37]/30 text-[#f3cf7a] hover:bg-[#d4af37]/20 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
+              <Calendar size={14} /> Extend
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -162,42 +224,71 @@ function SubmissionCard({ s }: { s: any }) {
     { value: "check_in",  label: "Check-In" },
     { value: "check_out", label: "Check-Out" },
   ]
-  const PAYMENT_METHODS = [
-    { value: "cash",           label: "Cash" },
-    { value: "mobile_banking", label: "Mobile Banking" },
-    { value: "telebirr",       label: "Telebirr" },
-    { value: "cheque",         label: "Cheque" },
-  ]
   const STATUS_STYLES: Record<string, string> = {
-    pending:   "bg-yellow-900/30 text-yellow-400 border-yellow-500/30",
-    guests:    "bg-emerald-900/30 text-emerald-400 border-emerald-500/30",
-    rejected:  "bg-red-900/30 text-red-400 border-red-500/30",
-    check_in:  "bg-blue-900/30 text-blue-400 border-blue-500/30",
-    check_out: "bg-purple-900/30 text-purple-400 border-purple-500/30",
+    pending:   "bg-yellow-900/40 text-yellow-400 border-yellow-500/30",
+    guests:    "bg-emerald-900/40 text-emerald-400 border-emerald-500/30",
+    rejected:  "bg-red-900/40 text-red-400 border-red-500/30",
+    check_in:  "bg-blue-900/40 text-blue-400 border-blue-500/30",
+    check_out: "bg-purple-900/40 text-purple-400 border-purple-500/30",
   }
   const type = INQUIRY_TYPES.find(t => t.value === s.inquiryType)
-  const pm   = PAYMENT_METHODS.find(p => p.value === s.paymentMethod)
+
   return (
-    <div className={`bg-[#0f1110] rounded-xl p-4 border transition-all ${s.status === "rejected" ? "border-red-500/10" : "border-white/5 hover:border-white/10"}`}>
-      <div className="flex items-start justify-between gap-2 mb-2">
-        <span className="font-black text-white text-sm">{s.guestName}</span>
+    <div className="relative bg-[#0f1110] rounded-[1.5rem] border border-white/5 overflow-hidden group hover:border-white/10 transition-all flex flex-col shadow-lg p-5">
+      <div className="flex items-start justify-between gap-4 mb-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-[#1a1c1b] border border-white/5 flex items-center justify-center shrink-0">
+            {s.photoUrl || s.idPhotoFront ? (
+              <img src={s.photoUrl || s.idPhotoFront} alt={s.guestName} className="w-full h-full object-cover rounded-xl" />
+            ) : (
+              <Users size={16} className="text-gray-700" />
+            )}
+          </div>
+          <div className="flex flex-col">
+            <span className="font-black text-white text-sm">{s.guestName}</span>
+            <span className="text-[8px] font-black text-gray-600 uppercase tracking-widest">{type?.label || s.inquiryType}</span>
+          </div>
+        </div>
         <span className={`text-[9px] font-black px-2.5 py-1 rounded-full uppercase border shrink-0 ${STATUS_STYLES[s.status] || STATUS_STYLES.pending}`}>
           {s.status === "check_in" ? "APPROVED" : 
            s.status === "rejected" ? "DENIED" : 
-           s.status === "guests" ? "ACTIVE GUEST" : 
-           s.status === "check_out" ? "CHECKED OUT" : 
+           s.status === "guests" ? "ACTIVE" : 
+           s.status === "check_out" ? "DONE" : 
            s.status.replace("_", " ").toUpperCase()}
         </span>
       </div>
-      <div className="flex flex-wrap gap-2 text-[10px] text-gray-500 font-bold">
-        {s.roomNumber && <span>{type?.label} · Room {s.roomNumber}</span>}
-        {s.phone      && <span>{s.phone}</span>}
-        {s.checkIn    && <span>{s.checkIn} → {s.checkOut || "?"}</span>}
-        {s.paymentMethod && <span>{pm?.label || s.paymentMethod}</span>}
-        {s.paymentReference && <span className="text-[#f3cf7a]">Ref #{s.paymentReference}</span>}
+
+      <div className="grid grid-cols-2 gap-3 text-[10px] font-bold">
+        {s.roomNumber && (
+          <div className="flex items-center gap-1.5 text-gray-400 bg-[#151716] p-2 rounded-lg border border-white/5">
+            <DoorOpen size={12} className="text-gray-600" />
+            <span>Room {s.roomNumber}</span>
+          </div>
+        )}
+        {s.phone && (
+          <div className="flex items-center gap-1.5 text-gray-400 bg-[#151716] p-2 rounded-lg border border-white/5">
+            <Phone size={12} className="text-gray-600" />
+            <span>{s.phone}</span>
+          </div>
+        )}
       </div>
+
+      {s.checkIn && (
+        <div className="mt-3 flex items-center gap-2 text-[9px] font-black text-gray-500 uppercase tracking-widest bg-[#151716] p-2 rounded-lg border border-white/5">
+          <Calendar size={12} className="text-gray-700" />
+          <span>{s.checkIn} → {s.checkOut || "?"}</span>
+        </div>
+      )}
+
+      {s.paymentReference && (
+        <div className="mt-3 flex items-center justify-between bg-[#d4af37]/5 p-2 rounded-lg border border-[#d4af37]/20">
+          <span className="text-[9px] font-black text-[#d4af37] uppercase tracking-widest">Payment Ref</span>
+          <span className="text-[10px] font-black text-[#f3cf7a]">#{s.paymentReference}</span>
+        </div>
+      )}
+
       {s.reviewNote && (
-        <p className="mt-2 text-[10px] text-red-400 bg-red-900/20 rounded-lg px-2 py-1 border border-red-500/20">
+        <p className="mt-3 text-[10px] text-red-400 bg-red-900/20 rounded-lg px-3 py-2 border border-red-500/20 italic">
           ↩ {s.reviewNote}
         </p>
       )}

@@ -677,55 +677,154 @@ export default function AdminServicesPage() {
                             }).map(r => {
                               const type = INQUIRY_TYPES[r.inquiryType]
                               return (
-                                <div key={r._id} className="bg-[#0f1110] rounded-2xl border border-white/5 hover:border-white/10 transition-all p-5 flex flex-col gap-3 relative group/card">
-                                  <div className="flex items-start justify-between gap-2">
-                                    <div className="flex items-center gap-2 text-[#d4af37]">
-                                      {type?.icon ?? <MessageSquare size={13} />}
-                                      <span className="font-black text-white text-sm">{r.guestName}</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                      <button onClick={() => handleReceptionDelete(r._id)} 
-                                        className="opacity-0 group-hover/card:opacity-100 p-1.5 bg-red-900/10 hover:bg-red-900/30 text-red-500 rounded-md border border-red-500/20 transition-all shadow-sm">
-                                        <Trash2 size={10} />
-                                      </button>
-                                      <span className={`text-[9px] font-black px-2.5 py-1 rounded-full uppercase border shrink-0 ${STATUS_STYLES[r.status] || STATUS_STYLES.pending}`}>{r.status}</span>
-                                    </div>
+                                <div key={r._id} className="relative bg-[#151716] rounded-[2rem] border border-white/5 overflow-hidden group hover:border-[#d4af37]/30 transition-all flex flex-col shadow-2xl">
+                                  {/* Top Accent Bar */}
+                                  <div className={`h-1.5 w-full ${
+                                    r.status === 'check_in' ? 'bg-blue-500' : 
+                                    r.status === 'rejected' ? 'bg-red-500' : 
+                                    r.status === 'check_out' ? 'bg-purple-500' : 'bg-yellow-500'
+                                  }`} />
+                                  
+                                  {/* Profile Image Banner Overlay */}
+                                  <div className="w-full h-40 min-h-[160px] flex-shrink-0 relative bg-[#0f1110] border-b border-white/5 overflow-hidden">
+                                     {r.photoUrl || r.idPhotoFront ? (
+                                       <img src={r.photoUrl || r.idPhotoFront} alt={r.guestName} className="w-full h-full object-cover" />
+                                     ) : (
+                                       <div className="w-full h-full flex items-center justify-center opacity-10">
+                                         <Users size={64} className="text-[#d4af37]" />
+                                       </div>
+                                     )}
+                                     <div className="absolute inset-0 bg-gradient-to-t from-[#151716] via-transparent to-transparent" />
                                   </div>
-                                  <span className="text-[9px] font-black uppercase tracking-widest text-gray-500 bg-[#151716] border border-white/5 px-2 py-1 rounded w-fit">{type?.label || r.inquiryType}</span>
-                                  <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-gray-500 font-bold">
-                                    {r.faydaId    && <span className="flex items-center gap-1"><IdCard size={10} /> {r.faydaId}</span>}
-                                    {r.phone      && <span className="flex items-center gap-1"><Phone size={10} /> {r.phone}</span>}
-                                    {r.roomNumber && <span className="flex items-center gap-1"><DoorOpen size={10} /> Room {r.roomNumber}</span>}
-                                    {r.roomPrice  && <span className="flex items-center gap-1"><Banknote size={10} /> {r.roomPrice} ETB</span>}
-                                    {r.guests     && <span className="flex items-center gap-1"><Users size={10} /> {r.guests} guest{parseInt(r.guests) > 1 ? "s" : ""}</span>}
-                                    {r.checkIn    && <span className="flex items-center gap-1"><Calendar size={10} /> {r.checkIn}{r.checkInTime ? ` ${r.checkInTime}` : ""} → {r.checkOut || "?"}{r.checkOutTime ? ` ${r.checkOutTime}` : ""}</span>}
-                                    {r.paymentMethod && <span className="flex items-center gap-1">
-                                      {r.paymentMethod === "cash" ? <Banknote size={10} /> : r.paymentMethod === "mobile_banking" ? <Smartphone size={10} /> : <CreditCard size={10} />}
-                                      {PAYMENT_LABELS[r.paymentMethod] || r.paymentMethod}
-                                    </span>}
-                                    {(r.paymentReference || r.chequeNumber) && <span className="text-[#f3cf7a]">Ref #{r.paymentReference || r.chequeNumber}</span>}
-                                  </div>
-                                  {r.notes && <p className="text-[11px] text-gray-500 bg-[#151716] rounded-lg p-2 border border-white/5 italic">"{r.notes}"</p>}
-                                  {r.reviewNote && <p className="text-[11px] text-blue-400 bg-blue-900/20 rounded-lg p-2 border border-blue-500/20">↩ {r.reviewNote}</p>}
-                                  <p className="text-[9px] text-gray-600 mt-auto">{new Date(r.createdAt).toLocaleString()}</p>
-                                  <div className="flex gap-2 pt-1">
-                                    <button onClick={() => { setSelectedRequest(r); setReviewNote(r.reviewNote || "") }}
-                                      className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-[#151716] border border-white/10 rounded-lg text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-white hover:border-white/20 transition-all">
-                                      <Eye size={12} /> Review
+
+                                  {/* Circular Avatar Overlap */}
+                                  <div className="relative h-6 w-full px-5">
+                                    <div className="absolute -top-10 left-5 w-20 h-20 rounded-2xl border-4 border-[#151716] bg-[#1a1c1b] overflow-hidden shadow-2xl flex-shrink-0 z-20">
+                                      {r.photoUrl ? (
+                                        <img src={r.photoUrl} alt={r.guestName} className="w-full h-full object-cover" />
+                                      ) : (
+                                        <div className="w-full h-full flex items-center justify-center">
+                                          <Users size={32} className="text-gray-700" />
+                                        </div>
+                                      )}
+                                    </div>
+                                    <button onClick={() => handleReceptionDelete(r._id)} 
+                                      className="absolute right-5 -top-5 opacity-0 group-hover:opacity-100 p-2 bg-red-950/50 hover:bg-red-600 text-red-500 hover:text-white rounded-xl border border-red-500/30 transition-all shadow-xl z-20">
+                                      <Trash2 size={14} />
                                     </button>
-                                    {r.status === "pending" && (
-                                      <>
-                                        <button onClick={() => handleReceptionAction(r._id, "rejected")}
-                                          className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-red-900/30 border border-red-500/30 rounded-lg text-[10px] font-black uppercase tracking-widest text-red-400 hover:bg-red-900/50 transition-all">
-                                          <XCircle size={12} /> Deny
-                                        </button>
-                                        <button onClick={() => handleReceptionAction(r._id, r.inquiryType === "check_out" ? "check_out" : "check_in")}
-                                          className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-gradient-to-b from-[#f3cf7a] to-[#b38822] text-[#2a1708] border border-[#f5db8b] rounded-lg text-[10px] font-black uppercase tracking-widest hover:shadow-[#d4af37]/10 transition-all">
-                                          {r.inquiryType === "check_out" ? <Key size={12} /> : <CheckCircle2 size={12} />}
-                                          Approve
-                                        </button>
-                                      </>
-                                    )}
+                                  </div>
+
+                                  <div className="p-5 flex flex-col gap-4 mt-4">
+                                    {/* Header: Name & Status */}
+                                    <div className="flex items-start justify-between gap-4">
+                                      <div className="flex flex-col gap-0.5">
+                                        <span className="font-bold text-white text-lg tracking-tight leading-none">{r.guestName}</span>
+                                        <span className="text-[9px] font-black text-gray-600 uppercase tracking-widest">Guest Profile</span>
+                                      </div>
+                                      <span className={`text-[10px] font-black px-3 py-1 rounded-full uppercase border shadow-sm ${STATUS_STYLES[r.status] || STATUS_STYLES.pending}`}>
+                                        {r.status.toUpperCase()}
+                                      </span>
+                                    </div>
+
+                                    {/* Action Tag */}
+                                    <div className="flex">
+                                       <span className="text-[8px] font-black px-3 py-1 bg-[#1a1c1b] text-gray-500 rounded border border-white/5 uppercase tracking-widest">
+                                         {r.inquiryType.replace("_", "-").toUpperCase()}
+                                       </span>
+                                    </div>
+
+                                    {/* Detailed Info Grid */}
+                                    <div className="space-y-4">
+                                      {/* Row 1: ID, Phone, Room, Price */}
+                                      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[10px] text-gray-400 font-bold">
+                                        <div className="flex items-center gap-1.5 min-w-fit">
+                                          <IdCard size={12} className="text-gray-600" />
+                                          <span className="text-gray-300">{r.faydaId || "No ID"}</span>
+                                        </div>
+                                        <div className="flex items-center gap-1.5 min-w-fit">
+                                          <Phone size={12} className="text-gray-600" />
+                                          <span className="text-gray-300">{r.phone || "No Phone"}</span>
+                                        </div>
+                                        <div className="flex items-center gap-1.5 min-w-fit">
+                                          <DoorOpen size={12} className="text-gray-600" />
+                                          <span className="text-white">Room {r.roomNumber || "?"}</span>
+                                        </div>
+                                        <div className="flex items-center gap-1.5 min-w-fit">
+                                          <Banknote size={12} className="text-gray-600" />
+                                          <span className="text-[#f3cf7a]">{r.roomPrice || "?"} ETB</span>
+                                        </div>
+                                      </div>
+
+                                      {/* Row 2: Guests, Dates */}
+                                      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[10px] text-gray-400 font-bold border-t border-white/5 pt-3">
+                                        <div className="flex items-center gap-1.5">
+                                          <Users size={12} className="text-gray-600" />
+                                          <span className="text-gray-300">{r.guests} Guests</span>
+                                        </div>
+                                        <div className="flex items-center gap-1.5">
+                                          <Calendar size={12} className="text-gray-600" />
+                                          <span className="text-gray-300">{r.checkIn} → {r.checkOut || "?"}</span>
+                                        </div>
+                                      </div>
+
+                                      {/* Row 3: Payment */}
+                                      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-white/5 pt-3">
+                                        <div className="flex items-center gap-2">
+                                          <div className="p-1.5 bg-[#1a1c1b] rounded-lg border border-white/5">
+                                            {r.paymentMethod === "cash" ? <Banknote size={12} className="text-emerald-500" /> : r.paymentMethod === "mobile_banking" ? <Smartphone size={12} className="text-blue-500" /> : <CreditCard size={12} className="text-purple-500" />}
+                                          </div>
+                                          <span className="text-[9px] font-black uppercase tracking-widest text-gray-500">{r.paymentMethod.replace("_", " ")}</span>
+                                        </div>
+                                        {(r.paymentReference || r.chequeNumber) && (
+                                          <div className="flex items-center gap-1.5 px-3 py-1 bg-[#d4af37]/5 border border-[#d4af37]/20 rounded-md">
+                                            <span className="text-[9px] font-black text-[#f3cf7a] tracking-tight">Ref #{r.paymentReference || r.chequeNumber}</span>
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+
+                                    {/* Notes & Review Row */}
+                                    <div className="space-y-3 pt-2">
+                                      {r.notes && <p className="text-[11px] text-gray-500 bg-[#1a1c1b] rounded-xl p-3 border border-white/5 italic line-clamp-2">"{r.notes}"</p>}
+                                      {r.reviewNote && <p className="text-[11px] text-blue-400 bg-blue-900/20 rounded-xl p-3 border border-blue-500/20 flex items-start gap-2">
+                                        <RefreshCw size={12} className="mt-0.5 shrink-0" />
+                                        <span>{r.reviewNote}</span>
+                                      </p>}
+                                      
+                                      <div className="flex items-center justify-between text-[9px] font-bold text-gray-600 mt-2 px-1">
+                                        <span>{new Date(r.createdAt).toLocaleString()}</span>
+                                        {r.transactionUrl && (
+                                          <a href={r.transactionUrl} target="_blank" rel="noopener noreferrer" 
+                                            className="flex items-center gap-1 text-[#d4af37] hover:underline">
+                                            <Link size={10} /> Receipt
+                                          </a>
+                                        )}
+                                      </div>
+                                    </div>
+
+                                    {/* Action Button */}
+                                    <div className="flex gap-2 pt-2">
+                                      <button onClick={() => { setSelectedRequest(r); setReviewNote(r.reviewNote || "") }}
+                                        className="flex-1 flex items-center justify-center gap-2 py-3.5 bg-white overflow-hidden relative group/btn rounded-2xl transition-all hover:scale-[1.02] active:scale-[0.98] shadow-xl">
+                                        <div className="absolute inset-0 bg-gradient-to-r from-[#d4af37] to-[#f3cf7a] opacity-0 group-hover/btn:opacity-100 transition-opacity" />
+                                        <Eye size={16} className="text-[#0f1110] relative z-10" />
+                                        <span className="text-[#0f1110] font-black text-[10px] uppercase tracking-[0.2em] relative z-10">Review</span>
+                                      </button>
+                                      
+                                      {r.status === "pending" && (
+                                        <>
+                                          <button onClick={() => handleReceptionAction(r._id, "rejected")}
+                                            className="px-4 py-3.5 bg-red-900/20 border border-red-500/30 rounded-2xl text-red-500 hover:bg-red-900/40 transition-all flex items-center justify-center">
+                                            <XCircle size={18} />
+                                          </button>
+                                          <button onClick={() => handleReceptionAction(r._id, r.inquiryType === "check_out" ? "check_out" : "check_in")}
+                                            className="px-6 py-3.5 bg-emerald-900/20 border border-emerald-500/30 rounded-2xl text-emerald-500 hover:bg-emerald-900/40 transition-all flex items-center justify-center gap-2">
+                                            <CheckCircle2 size={18} />
+                                            <span className="text-[10px] font-black uppercase tracking-widest">Approve</span>
+                                          </button>
+                                        </>
+                                      )}
+                                    </div>
                                   </div>
                                 </div>
                               )
