@@ -835,6 +835,39 @@ export default function ReceptionDashboard() {
                     </div>
                   </div>
 
+                  {/* ── Revenue Summary ── */}
+                  {(() => {
+                    const approved = filteredSubmissions.filter(s => ["guests","check_in","check_out"].includes(s.status))
+                    const calcNights = (checkIn?: string, checkOut?: string) => {
+                      if (!checkIn || !checkOut) return 1
+                      const diff = Math.round((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / 86400000)
+                      return diff > 0 ? diff : 1
+                    }
+                    const totalRevenue = approved.reduce((sum, s) => sum + (Number(s.roomPrice) || 0) * calcNights(s.checkIn, s.checkOut), 0)
+                    const totalNights  = approved.reduce((sum, s) => sum + calcNights(s.checkIn, s.checkOut), 0)
+                    const avgNights    = approved.length > 0 ? (totalNights / approved.length).toFixed(1) : "—"
+                    const periodLabel  = dateFilter === "all" ? "All Time" : dateFilter === "today" ? "Today" : dateFilter === "week" ? "This Week" : dateFilter === "year" ? "This Year" : customDate || "Custom"
+                    return (
+                      <div className="grid grid-cols-3 gap-3">
+                        <div className="bg-[#0f1110] border border-[#d4af37]/20 rounded-2xl p-4 text-center">
+                          <p className="text-[9px] font-black uppercase tracking-widest text-gray-500 mb-1">Total Revenue</p>
+                          <p className="text-xl font-black text-[#f3cf7a]">{totalRevenue.toLocaleString()}</p>
+                          <p className="text-[9px] text-gray-600 font-bold">ETB · {periodLabel}</p>
+                        </div>
+                        <div className="bg-[#0f1110] border border-white/5 rounded-2xl p-4 text-center">
+                          <p className="text-[9px] font-black uppercase tracking-widest text-gray-500 mb-1">Approved Guests</p>
+                          <p className="text-xl font-black text-white">{approved.length}</p>
+                          <p className="text-[9px] text-gray-600 font-bold">Checked In / Active</p>
+                        </div>
+                        <div className="bg-[#0f1110] border border-white/5 rounded-2xl p-4 text-center">
+                          <p className="text-[9px] font-black uppercase tracking-widest text-gray-500 mb-1">Avg. Stay</p>
+                          <p className="text-xl font-black text-white">{avgNights}</p>
+                          <p className="text-[9px] text-gray-600 font-bold">Nights per Guest</p>
+                        </div>
+                      </div>
+                    )
+                  })()}
+
                   {/* Tab bar */}
                   <div className="flex items-center justify-between">
                     <div className="flex gap-1 bg-[#0f1110] border border-white/5 p-1 rounded-xl overflow-x-auto">
