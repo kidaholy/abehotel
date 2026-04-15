@@ -78,10 +78,17 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
         }
 
         // 🔗 BUSINESS LOGIC: Restore stock if order is cancelled
-        if (status === "cancelled" && previousStatus !== "cancelled") {
+        if (status === "cancelled" && previousStatus !== "cancelled" && previousStatus !== "unconfirmed") {
             const stockConsumptionMap = await calculateStockConsumption(order.items)
             await applyStockAdjustment(stockConsumptionMap, 1) // 1 = Restore
             console.log(`📡 Restored stock for cancelled order #${order.orderNumber}`)
+        }
+
+        // 🔗 BUSINESS LOGIC: Deduct stock when an unconfirmed room order is verified
+        if (status === "pending" && previousStatus === "unconfirmed") {
+            const stockConsumptionMap = await calculateStockConsumption(order.items)
+            await applyStockAdjustment(stockConsumptionMap, -1) // -1 = Deduct
+            console.log(`📡 Deducted stock for confirmed room service order #${order.orderNumber}`)
         }
 
         // Set timestamps and calculate delay
@@ -193,9 +200,9 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
             return NextResponse.json({ message: "Order not found" }, { status: 404 })
         }
 
-        // 🔗 BUSINESS LOGIC: Restore stock on deletion if the order was not already cancelled
+        // 🔗 BUSINESS LOGIC: Restore stock on deletion if the order was not already cancelled/unconfirmed
         const status = orderToDelete.status
-        if (status !== 'cancelled') {
+        if (status !== 'cancelled' && status !== 'unconfirmed') {
             const stockConsumptionMap = await calculateStockConsumption(orderToDelete.items)
             await applyStockAdjustment(stockConsumptionMap, 1) // 1 = Restore
             console.log(`📡 Restored stock for deleted order #${orderToDelete.orderNumber}`)

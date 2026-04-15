@@ -4,6 +4,8 @@ import Floor from "@/lib/models/floor"
 import Table from "@/lib/models/table"
 import { validateSession } from "@/lib/auth"
 
+export const dynamic = 'force-dynamic'
+
 // Middleware helper to verify admin access
 const verifyAdmin = async (request: Request) => {
     try {
@@ -20,8 +22,13 @@ export async function GET(request: Request) {
         if (!(await verifyAdmin(request))) return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
 
         await connectDB()
-        const floors = await (Floor as any).find({}).sort({ order: 1 })
-        return NextResponse.json(floors)
+        const floors = await (Floor as any).find({}).sort({ order: 1 }).lean()
+        const serialized = floors.map((f: any) => ({
+            ...f,
+            _id: f._id.toString(),
+            roomServiceCashierId: f.roomServiceCashierId?.toString() || null
+        }))
+        return NextResponse.json(serialized)
     } catch (error: any) {
         return NextResponse.json({ message: "Failed to fetch floors" }, { status: 500 })
     }
@@ -50,23 +57,40 @@ export async function PUT(request: Request) {
         if (!(await verifyAdmin(request))) return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
 
         await connectDB()
-        const { id, floorNumber, description, order, isActive, isVIP, type } = await request.json()
+        const body = await request.json()
+        const { id } = body
 
         if (!id) {
             return NextResponse.json({ message: "ID is required" }, { status: 400 })
         }
 
-        const updatedFloor = await (Floor as any).findByIdAndUpdate(
-            id,
-            { floorNumber, description, order, isActive, isVIP, type },
-            { new: true }
+        const updateObj: any = {}
+        const fields = ['floorNumber', 'description', 'order', 'isActive', 'isVIP', 'type', 'roomServiceCashierId']
+        fields.forEach(f => {
+            if (body[f] !== undefined) updateObj[f] = body[f]
+        })
+
+        console.log("🛠️ Attempting update for floor:", id, updateObj)
+
+        const updatedFloor = await (Floor as any).findOneAndUpdate(
+            { _id: id },
+            { $set: updateObj },
+            { new: true, lean: true }
         )
 
+        console.log("✅ Floor updated result:", updatedFloor)
+
         if (!updatedFloor) {
+            console.log("❌ Floor not found for update:", id)
             return NextResponse.json({ message: "Floor not found" }, { status: 404 })
         }
 
-        return NextResponse.json(updatedFloor)
+        const serialized = {
+            ...updatedFloor,
+            _id: updatedFloor._id.toString(),
+            roomServiceCashierId: updatedFloor.roomServiceCashierId?.toString() || null
+        }
+        return NextResponse.json(serialized)
     } catch (error: any) {
         return NextResponse.json({ message: "Failed to update floor" }, { status: 500 })
     }

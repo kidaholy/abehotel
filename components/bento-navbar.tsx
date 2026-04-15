@@ -15,6 +15,8 @@ export function BentoNavbar() {
     const { t } = useLanguage()
     const [isMenuOpen, setIsMenuOpen] = useState(false)
     const [pendingReception, setPendingReception] = useState(0)
+    const [pendingRoomOrders, setPendingRoomOrders] = useState(0)
+    const [isRoomServiceHandler, setIsRoomServiceHandler] = useState(false)
 
     // Poll pending reception count for admin
     useEffect(() => {
@@ -32,6 +34,42 @@ export function BentoNavbar() {
         const interval = setInterval(fetch_, 30000)
         return () => clearInterval(interval)
     }, [user?.role, token])
+
+    // Poll pending room orders for cashier
+    useEffect(() => {
+        if (user?.role !== "cashier" || !token) return
+        const fetch_ = async () => {
+            try {
+                const res = await fetch("/api/room-orders", { headers: { Authorization: `Bearer ${token}` } })
+                if (res.ok) {
+                    const data = await res.json()
+                    setPendingRoomOrders(data.length)
+                }
+            } catch { /* silent */ }
+        }
+        fetch_()
+        const interval = setInterval(fetch_, 15000)
+        return () => clearInterval(interval)
+    }, [user?.role, token])
+
+    // Check if cashier is assigned to any floor
+    useEffect(() => {
+        if (user?.role !== "cashier" || !token) {
+            setIsRoomServiceHandler(false)
+            return
+        }
+        const checkAssignment = async () => {
+            try {
+                const res = await fetch("/api/floors", { headers: { Authorization: `Bearer ${token}` } })
+                if (res.ok) {
+                    const floors = await res.json()
+                    const assigned = floors.some((f: any) => f.roomServiceCashierId === user.id)
+                    setIsRoomServiceHandler(assigned)
+                }
+            } catch { /* silent */ }
+        }
+        checkAssignment()
+    }, [user?.role, token, user?.id])
 
     const getLinkClass = (path: string) => {
         const base = "hover:text-[#f3cf7a] hover:scale-105 transition-all text-[10px] uppercase tracking-widest font-black"
@@ -55,6 +93,7 @@ export function BentoNavbar() {
         { label: "Standard POS", href: "/cashier" },
         { label: "VIP 1 POS", href: "/cashier/vip1" },
         { label: "VIP 2 POS", href: "/cashier/vip2" },
+        ...(isRoomServiceHandler ? [{ label: "Room Orders", href: "/cashier/room-orders" }] : []),
         { label: t("nav.recentOrders"), href: "/cashier/orders" },
     ]
     const guestLinks = [
@@ -88,6 +127,11 @@ export function BentoNavbar() {
                             {link.href === "/admin/services" && pendingReception > 0 && (
                                 <span className="absolute -top-2 -right-3 min-w-[16px] h-4 bg-red-500 text-white text-[8px] font-black rounded-full flex items-center justify-center px-1 shadow-lg">
                                     {pendingReception}
+                                </span>
+                            )}
+                            {link.href === "/cashier/room-orders" && pendingRoomOrders > 0 && (
+                                <span className="absolute -top-2 -right-3 min-w-[16px] h-4 bg-[#d4af37] text-[#0f1110] text-[8px] font-black rounded-full flex items-center justify-center px-1 shadow-lg border border-[#0f1110]">
+                                    {pendingRoomOrders}
                                 </span>
                             )}
                         </Link>
@@ -128,6 +172,11 @@ export function BentoNavbar() {
                                     {link.href === "/admin/services" && pendingReception > 0 && (
                                         <span className="min-w-[18px] h-[18px] bg-red-500 text-white text-[8px] font-black rounded-full flex items-center justify-center px-1">
                                             {pendingReception}
+                                        </span>
+                                    )}
+                                    {link.href === "/cashier/room-orders" && pendingRoomOrders > 0 && (
+                                        <span className="min-w-[18px] h-[18px] bg-[#d4af37] text-[#0f1110] text-[8px] font-black rounded-full flex items-center justify-center px-1">
+                                            {pendingRoomOrders}
                                         </span>
                                     )}
                                 </Link>

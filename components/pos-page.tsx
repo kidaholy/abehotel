@@ -10,7 +10,7 @@ import { useAuth } from "@/context/auth-context"
 import { useLanguage } from "@/context/language-context"
 import { ConfirmationCard, NotificationCard } from "@/components/confirmation-card"
 import { useConfirmation } from "@/hooks/use-confirmation"
-import { ShoppingCart, RefreshCw, X, Search, Hash, Utensils, Coffee, Crown, Wine } from 'lucide-react'
+import { ShoppingCart, RefreshCw, X, Search, Hash, Utensils, Coffee, Crown, Wine, ConciergeBell } from 'lucide-react'
 import { motion, AnimatePresence } from "framer-motion"
 import { useMemo, useRef } from "react"
 import { useSettings } from "@/context/settings-context"
@@ -63,6 +63,9 @@ export function POSPage({ fixedTier }: POSPageProps) {
   const [idSearchTerm, setIdSearchTerm] = useState("")
   const [selectedFloorId, setSelectedFloorId] = useState<string>("")
   const [variantModal, setVariantModal] = useState<{ item: MenuItem } | null>(null)
+  const [roomOrdersCount, setRoomOrdersCount] = useState(0)
+  const [isRoomServiceHandler, setIsRoomServiceHandler] = useState(false)
+  const prevRoomOrdersCount = useRef(0)
   const { token, user } = useAuth()
   const { t } = useLanguage()
   const { settings } = useSettings()
@@ -86,6 +89,42 @@ export function POSPage({ fixedTier }: POSPageProps) {
     }
     refreshUserProfile()
   }, [token, user])
+
+  // Check assignment and poll for room orders
+  useEffect(() => {
+    if (!token || user?.role !== 'cashier') return
+    const checkAndPoll = async () => {
+      try {
+        const floorsRes = await fetch("/api/floors", { headers: { Authorization: `Bearer ${token}` } })
+        if (floorsRes.ok) {
+          const floors = await floorsRes.json()
+          const assigned = floors.some((f: any) => f.roomServiceCashierId === user.id)
+          setIsRoomServiceHandler(assigned)
+          
+          if (assigned) {
+            const res = await fetch("/api/room-orders", { headers: { Authorization: `Bearer ${token}` } })
+            if (res.ok) {
+              const data = await res.json()
+              const newCount = data.length
+              if (newCount > prevRoomOrdersCount.current) {
+                let plays = 0
+                const interval = setInterval(() => {
+                  new Audio('/notification.mp3').play().catch(() => {})
+                  plays++
+                  if (plays >= 5) clearInterval(interval)
+                }, 1500)
+              }
+              setRoomOrdersCount(newCount)
+              prevRoomOrdersCount.current = newCount
+            }
+          }
+        }
+      } catch { /* silent */ }
+    }
+    checkAndPoll()
+    const interval = setInterval(checkAndPoll, 15000)
+    return () => clearInterval(interval)
+  }, [token, user?.role, user?.id])
 
   const isMeatOnly = useMemo(() => {
     return cartItems.length > 0 && cartItems.every(item =>
@@ -437,6 +476,34 @@ export function POSPage({ fixedTier }: POSPageProps) {
 
           <ConfirmationCard isOpen={confirmationState.isOpen} onClose={closeConfirmation} onConfirm={confirmationState.onConfirm} title={confirmationState.options.title} message={confirmationState.options.message} type={confirmationState.options.type} confirmText={confirmationState.options.confirmText} cancelText={confirmationState.options.cancelText} icon={confirmationState.options.icon} />
           <NotificationCard isOpen={notificationState.isOpen} onClose={closeNotification} title={notificationState.options.title} message={notificationState.options.message} type={notificationState.options.type} autoClose={notificationState.options.autoClose} duration={notificationState.options.duration} />
+          
+          {/* Room Service Notification Toast */}
+          <AnimatePresence>
+            {isRoomServiceHandler && roomOrdersCount > 0 && (
+              <motion.div 
+                initial={{ opacity: 0, y: 50, scale: 0.9 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                className="fixed bottom-28 left-8 z-[100] cursor-pointer"
+                onClick={() => window.location.href = '/cashier/room-orders'}
+              >
+                <div className="bg-[#151716] border-2 border-[#d4af37] rounded-2xl p-4 shadow-[0_0_30px_rgba(212,175,55,0.2)] flex items-center gap-4 group hover:bg-[#1a1c1b] transition-all">
+                  <div className="w-12 h-12 bg-[#d4af37]/10 rounded-xl flex items-center justify-center text-[#d4af37] group-hover:scale-110 transition-transform">
+                    <ConciergeBell className="animate-bounce" />
+                  </div>
+                  <div>
+                    <h4 className="text-[#f3cf7a] font-playfair italic font-bold">New Room Request</h4>
+                    <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest leading-none mt-1">
+                      {roomOrdersCount} request{roomOrdersCount > 1 ? 's' : ''} waiting
+                    </p>
+                  </div>
+                  <div className="ml-2 w-6 h-6 bg-[#d4af37] text-[#0f1110] rounded-full flex items-center justify-center text-[10px] font-black">
+                    {roomOrdersCount}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </ProtectedRoute>

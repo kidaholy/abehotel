@@ -3,6 +3,8 @@ import { connectDB } from "@/lib/db"
 import Room from "@/lib/models/room"
 import { validateSession } from "@/lib/auth"
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(req: Request) {
     try {
         await connectDB()

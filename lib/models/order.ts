@@ -6,7 +6,7 @@ interface IOrderItem {
   name: string
   quantity: number
   price: number
-  status: "pending" | "preparing" | "ready" | "served" | "completed" | "cancelled"
+  status: "unconfirmed" | "pending" | "preparing" | "ready" | "served" | "completed" | "cancelled"
   modifiers?: string[]
   notes?: string
   category?: string
@@ -22,7 +22,7 @@ interface IOrder extends Document {
   totalAmount: number
   tax?: number
   subtotal?: number
-  status: "pending" | "preparing" | "ready" | "served" | "completed" | "cancelled"
+  status: "unconfirmed" | "pending" | "preparing" | "ready" | "served" | "completed" | "cancelled"
   paymentMethod: string
   customerName?: string
   tableNumber: string
@@ -53,7 +53,7 @@ const orderSchema = new Schema<IOrder>(
         price: { type: Number, required: true },
         status: {
           type: String,
-          enum: ["pending", "preparing", "ready", "served", "completed", "cancelled"],
+          enum: ["unconfirmed", "pending", "preparing", "ready", "served", "completed", "cancelled"],
           default: "pending"
         },
         modifiers: [{ type: String }],
@@ -70,7 +70,7 @@ const orderSchema = new Schema<IOrder>(
     subtotal: { type: Number, default: 0 },
     status: {
       type: String,
-      enum: ["pending", "preparing", "ready", "served", "completed", "cancelled"],
+      enum: ["unconfirmed", "pending", "preparing", "ready", "served", "completed", "cancelled"],
       default: "pending",
     },
     paymentMethod: { type: String, default: "cash" },
@@ -98,6 +98,9 @@ orderSchema.index({ "items.category": 1 })
 orderSchema.index({ createdBy: 1 })
 orderSchema.index({ createdAt: -1 })
 
-const Order = mongoose.models.Order || mongoose.model<IOrder>("Order", orderSchema)
+if (mongoose.models.Order) {
+  delete mongoose.models.Order
+}
+const Order = mongoose.model<IOrder>("Order", orderSchema)
 
 export default Order

@@ -8,6 +8,7 @@ export interface IFloor extends Document {
     isVIP: boolean
     type: 'standard' | 'vip'
     status?: string
+    roomServiceCashierId?: mongoose.Types.ObjectId | string
     createdAt: Date
     updatedAt: Date
 }
@@ -21,10 +22,15 @@ const FloorSchema = new Schema<IFloor>(
         isVIP: { type: Boolean, default: false },
         type: { type: String, enum: ['standard', 'vip'], default: 'standard' },
         status: { type: String, default: "active" },
+        roomServiceCashierId: { type: Schema.Types.ObjectId, ref: "User" },
     },
     { timestamps: true }
 )
 
-const Floor = mongoose.models.Floor || mongoose.model<IFloor>("Floor", FloorSchema)
+// Force model re-registration to clear any ghost schemas
+if (mongoose.models.Floor) {
+    delete mongoose.models.Floor
+}
+const Floor = mongoose.model<IFloor>("Floor", FloorSchema)
 
 export default Floor

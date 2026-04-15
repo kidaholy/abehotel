@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { ProtectedRoute } from "@/components/protected-route"
 import { BentoNavbar } from "@/components/bento-navbar"
@@ -9,6 +9,7 @@ import { ConfirmationCard, NotificationCard } from "@/components/confirmation-ca
 import { useConfirmation } from "@/hooks/use-confirmation"
 import { TransactionPreview } from "@/components/transaction-preview"
 import { MenuManagementSection, CategoryManager } from "@/components/admin/menu-management-section"
+import { QRCodeSVG } from "qrcode.react"
 import { 
   Plus, 
   Trash2, 
@@ -83,6 +84,7 @@ interface Floor {
   floorNumber: number
   type: string
   isVIP: boolean
+  roomServiceCashierId?: string | null
 }
 
 export default function AdminServicesPage() {
@@ -105,6 +107,13 @@ export default function AdminServicesPage() {
   })
   const [editingRoom, setEditingRoom] = useState<Room | null>(null)
   const [formLoading, setFormLoading] = useState(false)
+  const [selectedQrRoom, setSelectedQrRoom] = useState<Room | null>(null)
+  const [cashiers, setCashiers] = useState<any[]>([])
+  
+  // Room Order tracking for Admin
+  const [roomOrdersCount, setRoomOrdersCount] = useState(0)
+  const prevRoomOrdersCount = useRef(0)
+  const prevReceptionCount = useRef(0)
 
   // Reception state
   const [receptionRequests, setReceptionRequests] = useState<any[]>([])
@@ -139,7 +148,20 @@ export default function AdminServicesPage() {
     setReceptionLoading(true)
     try {
       const res = await fetch("/api/reception-requests", { headers: { Authorization: `Bearer ${token}` } })
-      if (res.ok) setReceptionRequests(await res.json())
+      if (res.ok) {
+        const data = await res.json()
+        const pendingCount = data.filter((r: any) => r.status === "pending").length
+        if (pendingCount > prevReceptionCount.current) {
+          let plays = 0
+          const interval = setInterval(() => {
+            new Audio('/notification.mp3').play().catch(() => {})
+            plays++
+            if (plays >= 5) clearInterval(interval)
+          }, 1500)
+        }
+        setReceptionRequests(data)
+        prevReceptionCount.current = pendingCount
+      }
     } catch { /* silent */ }
     finally { setReceptionLoading(false) }
   }
@@ -267,15 +289,23 @@ export default function AdminServicesPage() {
     if (!token) return
     try {
       setLoading(true)
+      const fetchOptions = { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' as RequestCache }
       const [roomsRes, floorsRes, categoriesRes] = await Promise.all([
-        fetch("/api/admin/rooms", { headers: { Authorization: `Bearer ${token}` } }),
-        fetch("/api/admin/floors", { headers: { Authorization: `Bearer ${token}` } }),
-        fetch("/api/categories?type=room", { headers: { Authorization: `Bearer ${token}` } })
+        fetch("/api/admin/rooms", fetchOptions),
+        fetch("/api/admin/floors", fetchOptions),
+        fetch("/api/categories?type=room", fetchOptions)
       ])
       
       if (roomsRes.ok) setRooms(await roomsRes.json())
       if (floorsRes.ok) setFloors(await floorsRes.json())
       if (categoriesRes.ok) setCategories(await categoriesRes.json())
+
+      // Fetch cashiers for assignment
+      const usersRes = await fetch("/api/users", { headers: { Authorization: `Bearer ${token}` } })
+      if (usersRes.ok) {
+        const users = await usersRes.json()
+        setCashiers(users.filter((u: any) => u.role === 'cashier'))
+      }
     } catch (error) {
       console.error("Fetch error:", error)
     } finally {
@@ -291,6 +321,33 @@ export default function AdminServicesPage() {
       return () => clearInterval(interval)
     }
   }, [activeTab, token])
+
+  // Poll room orders for Admin audio notifications
+  useEffect(() => {
+    if (!token) return
+    const fetch_ = async () => {
+      try {
+        const res = await fetch("/api/room-orders", { headers: { Authorization: `Bearer ${token}` } })
+        if (res.ok) {
+          const data = await res.json()
+          const newCount = data.length
+          if (newCount > prevRoomOrdersCount.current) {
+            let plays = 0
+            const interval = setInterval(() => {
+              new Audio('/notification.mp3').play().catch(() => {})
+              plays++
+              if (plays >= 5) clearInterval(interval)
+            }, 1500)
+          }
+          setRoomOrdersCount(newCount)
+          prevRoomOrdersCount.current = newCount
+        }
+      } catch { /* silent */ }
+    }
+    fetch_()
+    const interval = setInterval(fetch_, 15000)
+    return () => clearInterval(interval)
+  }, [token])
 
   const handleAddCategory = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -394,6 +451,56 @@ export default function AdminServicesPage() {
     setEditingRoom(null)
     setRoomForm({ roomNumber: "", name: "", floorId: "", type: "standard", category: "Standard", price: "", status: "available" })
     setShowForm(false)
+  }
+
+  const handlePrintQR = () => {
+    const printContent = document.getElementById("qr-print-area")
+    if (!printContent) return
+    const WinPrint = window.open("", "", "width=900,height=650")
+    if (!WinPrint) return
+    WinPrint.document.write(`
+      <html>
+        <head>
+          <title>Print Room QR Code</title>
+          <style>
+            body { font-family: 'Inter', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; background-color: #fff; color: #000; }
+            .qr-container { display: flex; flex-direction: column; align-items: center; gap: 20px; padding: 40px; border: 2px solid #000; border-radius: 20px; max-width: 400px; text-align: center; }
+            h1 { margin: 0; font-size: 32px; font-weight: 900; }
+            p { margin: 0; font-size: 16px; color: #444; }
+            .logo { font-size: 24px; font-weight: bold; margin-bottom: 10px; border-bottom: 2px solid #ccc; padding-bottom: 10px; width: 100%; }
+          </style>
+        </head>
+        <body>
+          ${printContent.innerHTML}
+        </body>
+      </html>
+    `)
+    WinPrint.document.close()
+    WinPrint.focus()
+    // Give it a moment to render the SVG before printing
+    setTimeout(() => {
+      WinPrint.print()
+      WinPrint.close()
+    }, 250)
+  }
+
+  const handleAssignCashier = async (floorId: string, cashierId: string) => {
+    try {
+      const res = await fetch("/api/admin/floors", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ id: floorId, roomServiceCashierId: cashierId || null }),
+      })
+      if (res.ok) {
+        notify({ title: "Assignment Updated", message: "Cashier assigned to floor successfully.", type: "success" })
+        fetchData()
+      } else {
+        const err = await res.json()
+        notify({ title: "Error", message: err.message || "Failed to assign cashier", type: "error" })
+      }
+    } catch {
+      notify({ title: "Error", message: "Network error", type: "error" })
+    }
   }
 
   const router = useRouter()
@@ -648,6 +755,26 @@ export default function AdminServicesPage() {
                                     </div>
                                     <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">{floorRooms.length} room{floorRooms.length !== 1 ? "s" : ""}</span>
                                     <div className="flex-1 h-[1px] bg-white/5" />
+                                    
+                                    {/* Cashier Assignment Dropdown */}
+                                    <div className="flex items-center gap-3 bg-[#0f1110] border border-white/5 rounded-xl px-4 py-2 hover:border-[#d4af37]/20 transition-all">
+                                      <Users size={14} className="text-gray-500" />
+                                      <div className="flex flex-col">
+                                        <span className="text-[8px] font-black uppercase tracking-widest text-gray-600">Room Service Handler</span>
+                                        <select 
+                                          value={(floor as any).roomServiceCashierId || ""} 
+                                          onChange={(e) => handleAssignCashier(floor._id, e.target.value)}
+                                          className="bg-transparent text-white text-[10px] font-bold outline-none cursor-pointer pr-2"
+                                        >
+                                          <option value="" className="text-black bg-white">Auto (Unassigned)</option>
+                                          {cashiers.map(c => (
+                                            <option key={c._id} value={c._id} className="text-black bg-white">
+                                              {c.name} ({c.email})
+                                            </option>
+                                          ))}
+                                        </select>
+                                      </div>
+                                    </div>
                                   </div>
 
                                   {/* Rooms Grid */}
@@ -669,6 +796,7 @@ export default function AdminServicesPage() {
                                         <div className="flex justify-between items-center mt-6">
                                           <span className="text-lg font-black text-[#f3cf7a]">{room.price} Br</span>
                                           <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button onClick={() => setSelectedQrRoom(room)} className="p-2 bg-[#151716] rounded-xl text-gray-500 hover:text-white hover:bg-white/10 border border-transparent hover:border-white/20 transition-all" title="View QR Code"><span className="font-bold flex items-center justify-center italic">QR</span></button>
                                             <button onClick={() => handleEdit(room)} className="p-2 bg-[#151716] rounded-xl text-gray-500 hover:text-[#f3cf7a] hover:bg-[#1a1c1b] border border-transparent hover:border-[#d4af37]/30 transition-all"><Pencil size={14} /></button>
                                             <button onClick={() => handleRoomDelete(room)} className="p-2 bg-[#151716] rounded-xl text-gray-500 hover:text-red-500 hover:bg-red-950/50 border border-transparent hover:border-red-500/30 transition-all"><Trash2 size={14} /></button>
                                           </div>
@@ -862,6 +990,46 @@ export default function AdminServicesPage() {
                     {formLoading ? "Saving…" : "Save Room"}
                   </button>
                 </form>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {selectedQrRoom && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
+            <div className="bg-[#151716] border border-white/10 rounded-3xl shadow-2xl max-w-sm w-full relative overflow-hidden flex flex-col">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 shrink-0">
+                <h2 className="text-lg font-playfair italic text-[#f3cf7a]">Room QR Code</h2>
+                <button onClick={() => setSelectedQrRoom(null)} className="w-8 h-8 bg-[#0f1110] border border-white/20 rounded-xl flex items-center justify-center text-white hover:text-red-400 hover:border-red-500/30 transition-all"><X size={16} /></button>
+              </div>
+              <div className="p-8 flex flex-col items-center justify-center">
+                <div id="qr-print-area" className="qr-container bg-white p-6 rounded-2xl flex flex-col items-center justify-center text-center shadow-lg border-4 border-[#0f1110]">
+                  <div className="logo hidden">ABE HOTEL</div>
+                  <h1 className="text-2xl font-black text-black mb-1 hidden">Room {selectedQrRoom.roomNumber}</h1>
+                  <p className="text-xs text-gray-600 mb-6 hidden">Scan for Room Service</p>
+                  
+                  {/* The actual QR shown in UI */}
+                  <div className="bg-white p-2 rounded-xl">
+                    <QRCodeSVG 
+                      value={`${typeof window !== 'undefined' ? window.location.origin : ''}/room-service/${selectedQrRoom.roomNumber}`}
+                      size={200}
+                      level="H"
+                      includeMargin={false}
+                    />
+                  </div>
+
+                  <h3 className="text-xl font-black text-black mt-4 block">Room {selectedQrRoom.roomNumber}</h3>
+                  <p className="text-[10px] uppercase font-black tracking-widest text-gray-500 block">Room Service</p>
+                </div>
+
+                <div className="mt-8 w-full">
+                  <button onClick={handlePrintQR} className="w-full bg-gradient-to-r from-[#d4af37] to-[#f3cf7a] text-[#0f1110] py-3.5 rounded-xl font-bold text-[10px] uppercase tracking-widest shadow-[0_0_15px_rgba(212,175,55,0.2)] hover:shadow-[0_0_20px_rgba(212,175,55,0.4)] transition-all">
+                    Print QR Code
+                  </button>
+                  <p className="text-center text-gray-500 text-[10px] mt-4 font-bold tracking-widest uppercase break-all px-4">
+                    {typeof window !== 'undefined' ? window.location.origin : ''}/room-service/{selectedQrRoom.roomNumber}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
