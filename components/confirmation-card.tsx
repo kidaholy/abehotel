@@ -38,8 +38,8 @@ export function ConfirmationCard({
   }, [isOpen])
 
   const handleConfirm = () => {
-    onConfirm()
-    onClose()
+    onConfirm?.()
+    if (typeof onClose === 'function') onClose()
   }
 
   const getTypeStyles = () => {
@@ -97,7 +97,7 @@ export function ConfirmationCard({
             {icon || styles.defaultIcon}
           </div>
           <button
-            onClick={onClose}
+            onClick={() => { if (typeof onClose === 'function') onClose() }}
             className="w-10 h-10 bg-[#0f1110] border border-white/5 rounded-xl flex items-center justify-center font-bold text-gray-500 hover:text-white transition-colors"
           >
             <X className="w-5 h-5" />
@@ -117,7 +117,7 @@ export function ConfirmationCard({
         {/* Actions */}
         <div className="flex gap-4">
           <button
-            onClick={onClose}
+            onClick={() => { if (typeof onClose === 'function') onClose() }}
             className="flex-1 bg-[#0f1110] border border-white/5 text-gray-500 font-black py-4 rounded-xl hover:text-white transition-all text-[10px] uppercase tracking-widest"
           >
             {cancelText}
@@ -161,7 +161,7 @@ export function NotificationCard({
       setIsVisible(true)
       if (autoClose) {
         const timer = setTimeout(() => {
-          onClose()
+          if (typeof onClose === 'function') onClose()
         }, duration)
         return () => clearTimeout(timer)
       }

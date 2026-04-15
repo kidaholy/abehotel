@@ -24,7 +24,7 @@ export async function GET(request: Request) {
       requests = await ReceptionRequest.find({
         $or: [
           { submittedBy: decoded.id },
-          { status: { $in: ["guests", "check_in", "check_out", "approved"] } }
+          { status: { $in: ["guests", "check_in", "check_out", "rejected"] } }
         ]
       }).sort({ createdAt: -1 }).lean()
     } else {

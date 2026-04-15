@@ -109,10 +109,11 @@ export default function AdminServicesPage() {
   // Reception state
   const [receptionRequests, setReceptionRequests] = useState<any[]>([])
   const [receptionLoading, setReceptionLoading] = useState(false)
-  const [receptionFilter, setReceptionFilter] = useState<"all"|"pending"|"approved"|"denied">("pending")
+  const [receptionFilter, setReceptionFilter] = useState<"all"|"pending"|"check_in"|"rejected"|"check_out">("all")
   const [selectedRequest, setSelectedRequest] = useState<any | null>(null)
   const [reviewNote, setReviewNote] = useState("")
   const [actioning, setActioning] = useState(false)
+  const [extendDate, setExtendDate] = useState("")
 
   const INQUIRY_TYPES: Record<string, { label: string; icon: any }> = {
     check_in:     { label: "Check-In",       icon: <Hotel size={13} /> },
@@ -126,9 +127,10 @@ export default function AdminServicesPage() {
     cash: "Cash", mobile_banking: "Mobile Banking", telebirr: "Telebirr", cheque: "Cheque"
   }
   const STATUS_STYLES: Record<string, string> = {
-    pending:  "bg-yellow-900/30 text-yellow-400 border-yellow-500/30",
-    approved: "bg-emerald-900/30 text-emerald-400 border-emerald-500/30",
-    denied:   "bg-red-900/30 text-red-400 border-red-500/30",
+    pending:   "bg-yellow-900/30 text-yellow-400 border-yellow-500/30",
+    check_in:  "bg-blue-900/30 text-blue-400 border-blue-500/30",
+    rejected:  "bg-red-900/30 text-red-400 border-red-500/30",
+    check_out: "bg-purple-900/30 text-purple-400 border-purple-500/30",
   }
 
   const fetchReception = async () => {
@@ -141,12 +143,13 @@ export default function AdminServicesPage() {
     finally { setReceptionLoading(false) }
   }
 
-  const handleReceptionAction = async (id: string, status: "approved" | "denied") => {
+  const handleReceptionAction = async (id: string, status: "check_in" | "check_out" | "rejected") => {
+    const label = status === "check_in" ? "Approve Arrival" : status === "check_out" ? "Approve Check-Out" : "Reject"
     const confirmed = await confirm({
-      title: status === "approved" ? "Approve Request" : "Deny Request",
-      message: `Are you sure you want to ${status} this request?`,
-      type: status === "approved" ? "success" : "danger",
-      confirmText: status === "approved" ? "Approve" : "Deny",
+      title: `${label} Request`,
+      message: `Are you sure you want to proceed?`,
+      type: status === "rejected" ? "danger" : "success",
+      confirmText: label,
       cancelText: "Cancel",
     })
     if (!confirmed) return
@@ -158,13 +161,47 @@ export default function AdminServicesPage() {
         body: JSON.stringify({ status, reviewNote }),
       })
       if (res.ok) {
-        notify({ title: `Request ${status}`, message: `The request has been ${status}.`, type: status === "approved" ? "success" : "error" })
+        notify({ title: "Success", message: "Request updated successfully", type: "success" })
         setSelectedRequest(null)
         setReviewNote("")
         fetchReception()
       } else {
         const err = await res.json()
-        notify({ title: "Error", message: err.message || "Failed", type: "error" })
+        notify({ title: "Error", message: err.message || "Failed to update", type: "error" })
+      }
+    } catch { notify({ title: "Error", message: "Network error", type: "error" }) }
+    setActioning(false)
+  }
+
+  const handleExtendDate = async (id: string) => {
+    if (!extendDate) {
+      notify({ title: "Error", message: "Please select a new checkout date", type: "error" })
+      return
+    }
+    
+    const confirmed = await confirm({
+      title: "Extend Stay",
+      message: `Extend checkout date to ${extendDate}?`,
+      type: "success",
+      confirmText: "Extend",
+      cancelText: "Cancel",
+    })
+    if (!confirmed) return
+    
+    setActioning(true)
+    try {
+      const res = await fetch(`/api/reception-requests/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ checkOut: extendDate }),
+      })
+      if (res.ok) {
+        notify({ title: "Success", message: "Stay extended successfully", type: "success" })
+        setExtendDate("")
+        fetchReception()
+      } else {
+        const err = await res.json()
+        notify({ title: "Error", message: err.message || "Failed to extend", type: "error" })
       }
     } catch { notify({ title: "Error", message: "Network error", type: "error" }) }
     setActioning(false)
@@ -418,22 +455,19 @@ export default function AdminServicesPage() {
                       <div className="space-y-5">
                         {/* Filter tabs */}
                         <div className="flex gap-2 flex-wrap">
-                          {(["pending","approved","denied","all"] as const).map(f => {
+                          {(["all","check_in","rejected","check_out"] as const).map(f => {
                             const count = f === "all" ? receptionRequests.length : receptionRequests.filter(r => r.status === f).length
+                            const label = f === "all" ? "GUESTS" : f === "check_in" ? "APPROVED" : f === "rejected" ? "DENIED" : "CHECK OUT"
+                            const icon = f === "all" ? <Users size={10} /> : f === "check_in" ? <CheckCircle2 size={10} /> : f === "rejected" ? <XCircle size={10} /> : <Key size={10} />
                             return (
                               <button key={f} onClick={() => setReceptionFilter(f)}
                                 className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-1.5 border ${
                                   receptionFilter === f
-                                    ? f === "pending"  ? "bg-yellow-900/40 text-yellow-400 border-yellow-500/30"
-                                    : f === "approved" ? "bg-emerald-900/40 text-emerald-400 border-emerald-500/30"
-                                    : f === "denied"   ? "bg-red-900/40 text-red-400 border-red-500/30"
-                                    : "bg-[#d4af37]/10 text-[#f3cf7a] border-[#d4af37]/30"
-                                    : "bg-[#0f1110] text-gray-500 border-white/5 hover:text-gray-300"
+                                    ? "bg-gradient-to-b from-[#f3cf7a] to-[#b38822] text-[#2a1708] border-[#f5db8b] shadow-lg"
+                                    : "bg-[#1a1c1b] text-gray-500 border-white/5 hover:border-[#d4af37]/20 hover:text-gray-300"
                                 }`}>
-                                {f === "pending" && <Clock size={10} />}
-                                {f === "approved" && <CheckCircle2 size={10} />}
-                                {f === "denied" && <XCircle size={10} />}
-                                {f} <span className="opacity-60">({count})</span>
+                                {icon}
+                                {label} <span className="opacity-60">({count})</span>
                               </button>
                             )
                           })}
@@ -486,13 +520,14 @@ export default function AdminServicesPage() {
                                     </button>
                                     {r.status === "pending" && (
                                       <>
-                                        <button onClick={() => handleReceptionAction(r._id, "approved")}
-                                          className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-emerald-900/30 border border-emerald-500/30 rounded-lg text-[10px] font-black uppercase tracking-widest text-emerald-400 hover:bg-emerald-900/50 transition-all">
-                                          <CheckCircle2 size={12} /> Approve
-                                        </button>
-                                        <button onClick={() => handleReceptionAction(r._id, "denied")}
+                                        <button onClick={() => handleReceptionAction(r._id, "rejected")}
                                           className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-red-900/30 border border-red-500/30 rounded-lg text-[10px] font-black uppercase tracking-widest text-red-400 hover:bg-red-900/50 transition-all">
                                           <XCircle size={12} /> Deny
+                                        </button>
+                                        <button onClick={() => handleReceptionAction(r._id, r.inquiryType === "check_out" ? "check_out" : "check_in")}
+                                          className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-gradient-to-b from-[#f3cf7a] to-[#b38822] text-[#2a1708] border border-[#f5db8b] rounded-lg text-[10px] font-black uppercase tracking-widest hover:shadow-[#d4af37]/10 transition-all">
+                                          {r.inquiryType === "check_out" ? <Key size={12} /> : <CheckCircle2 size={12} />}
+                                          Approve
                                         </button>
                                       </>
                                     )}
@@ -652,18 +687,39 @@ export default function AdminServicesPage() {
                 </div>
                 {selectedRequest.status === "pending" ? (
                   <div className="flex gap-3 pt-2">
-                    <button onClick={() => handleReceptionAction(selectedRequest._id, "denied")} disabled={actioning}
+                    <button onClick={() => handleReceptionAction(selectedRequest._id, "rejected")} disabled={actioning}
                       className="flex-1 flex items-center justify-center gap-2 py-3 bg-red-900/30 border border-red-500/30 rounded-xl text-[10px] font-black uppercase tracking-widest text-red-400 hover:bg-red-900/50 transition-all disabled:opacity-50">
                       <XCircle size={14} /> Deny
                     </button>
-                    <button onClick={() => handleReceptionAction(selectedRequest._id, "approved")} disabled={actioning}
+                    <button onClick={() => handleReceptionAction(selectedRequest._id, selectedRequest.inquiryType === "check_out" ? "check_out" : "check_in")} disabled={actioning}
                       className="flex-[2] flex items-center justify-center gap-2 py-3 bg-gradient-to-b from-[#f3cf7a] to-[#b38822] text-[#2a1708] border border-[#f5db8b] rounded-xl text-[10px] font-black uppercase tracking-widest shadow-[0_4px_15px_rgba(212,175,55,0.2)] transition-all disabled:opacity-50">
-                      <CheckCircle2 size={14} /> Approve
+                      {selectedRequest.inquiryType === "check_out" ? <Key size={14} /> : <CheckCircle2 size={14} />}
+                      Approve
+                    </button>
+                  </div>
+                ) : selectedRequest.status === "check_in" ? (
+                  <div className="space-y-3 pt-2">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-2">
+                        <label className="block text-[9px] font-black uppercase tracking-widest text-[#d4af37]">Extend Checkout</label>
+                        <input type="date" value={extendDate} onChange={e => setExtendDate(e.target.value)}
+                          className="w-full bg-[#0f1110] border border-white/10 text-white rounded-xl px-3 py-2 text-sm outline-none focus:border-[#d4af37]/30 transition-all" />
+                      </div>
+                      <div className="flex flex-col justify-end">
+                        <button onClick={() => handleExtendDate(selectedRequest._id)} disabled={actioning || !extendDate}
+                          className="py-2 bg-[#d4af37]/20 border border-[#d4af37]/30 rounded-xl text-[10px] font-black uppercase tracking-widest text-[#f3cf7a] hover:bg-[#d4af37]/30 transition-all disabled:opacity-50">
+                          Extend
+                        </button>
+                      </div>
+                    </div>
+                    <button onClick={() => handleReceptionAction(selectedRequest._id, "check_out")} disabled={actioning}
+                      className="w-full py-3 bg-purple-900/30 border border-purple-500/30 rounded-xl text-[10px] font-black uppercase tracking-widest text-purple-400 hover:bg-purple-900/50 transition-all flex items-center justify-center gap-2 disabled:opacity-50">
+                      <Key size={14} /> Approve Check-Out
                     </button>
                   </div>
                 ) : (
                   <div className={`p-3 rounded-xl border text-center text-[10px] font-black uppercase tracking-widest ${STATUS_STYLES[selectedRequest.status]}`}>
-                    This request has been {selectedRequest.status}
+                    {selectedRequest.status === "check_out" ? "CHECKED OUT - Guest has departed" : "DENIED - Request rejected"}
                   </div>
                 )}
               </div>

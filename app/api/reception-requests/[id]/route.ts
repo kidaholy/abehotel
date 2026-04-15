@@ -32,8 +32,8 @@ export async function PUT(request: Request, context: any) {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 })
     }
 
-    if (!["guests", "rejected", "check_in", "check_out"].includes(status)) {
-      return NextResponse.json({ message: "Status must be 'guests', 'rejected', 'check_in', or 'check_out'" }, { status: 400 })
+    if (!["guests", "rejected", "check_in", "check_out", "pending"].includes(status)) {
+      return NextResponse.json({ message: "Status must be 'guests', 'rejected', 'check_in', 'check_out', or 'pending'" }, { status: 400 })
     }
 
     const updated = await ReceptionRequest.findByIdAndUpdate(
