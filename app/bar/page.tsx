@@ -26,7 +26,7 @@ interface Order {
   _id: string
   orderNumber: string
   items: OrderItem[]
-  status: "pending" | "preparing" | "ready" | "completed" | "cancelled"
+  status: "unconfirmed" | "pending" | "preparing" | "ready" | "completed" | "cancelled"
   notes?: string
   floorNumber?: string
   tableNumber?: string
@@ -115,6 +115,7 @@ export default function BarDisplayPage() {
         const data = await response.json()
         const activeOrders = data.filter((order: Order) =>
           order.status !== "completed" && order.status !== "cancelled" &&
+          order.status !== "unconfirmed" &&
           !pendingUpdates.current.has(order._id) &&
           order.items.some(item => (item as any).mainCategory === "Drinks" && 
             item.status !== "completed" && 
@@ -398,22 +399,13 @@ function BarOrderCard({ order, onStatusChange, onItemStatusChange }: {
         </div>
 
         <div className="mt-auto pt-4 border-t border-white/5">
-          {order.status !== 'ready' ? (
-            <button
-              onClick={() => onStatusChange(order._id, 'ready')}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-2xl transition-all shadow-xl active:scale-95 text-xs tracking-[0.2em] uppercase"
-            >
-              DRINKS ARE READY
-            </button>
-          ) : (
-            <button
-              onClick={() => onStatusChange(order._id, 'preparing')}
-              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-4 rounded-2xl transition-all shadow-xl active:scale-95 text-xs tracking-[0.2em] uppercase flex items-center justify-center gap-3"
-            >
-               <Beer className="h-4 w-4" />
-               COMPLETED
-            </button>
-          )}
+          <button
+            onClick={() => onStatusChange(order._id, 'completed')}
+            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-4 rounded-2xl transition-all shadow-xl active:scale-95 text-xs tracking-[0.2em] uppercase flex items-center justify-center gap-3"
+          >
+             <Beer className="h-4 w-4" />
+             COMPLETE ORDER
+          </button>
         </div>
       </CardContent>
     </Card>

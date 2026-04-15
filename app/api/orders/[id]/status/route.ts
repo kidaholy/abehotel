@@ -1,12 +1,22 @@
-﻿import { NextResponse } from "next/server"
+import { NextResponse } from "next/server"
 import { connectDB } from "@/lib/db"
 import Order from "@/lib/models/order"
 import User from "@/lib/models/user"
+import MenuItem from "@/lib/models/menu-item"
+import Settings from "@/lib/models/settings"
 import { addNotification } from "@/lib/notifications"
 import { calculateStockConsumption, applyStockAdjustment } from "@/lib/stock-logic"
 import { validateSession } from "@/lib/auth"
 
 export async function PUT(request: Request, context: any) {
+  return await handleStatusUpdate(request, context)
+}
+
+export async function PATCH(request: Request, context: any) {
+  return await handleStatusUpdate(request, context)
+}
+
+async function handleStatusUpdate(request: Request, context: any) {
   try {
     const [params, decoded] = await Promise.all([
       context.params,
@@ -28,7 +38,7 @@ export async function PUT(request: Request, context: any) {
 
     const previousStatus = orderToUpdate.status
 
-    if (decoded.role === 'chef') {
+    if (decoded.role === 'chef' || decoded.role === 'bar') {
       const user = await User.findById(decoded.id).lean() as any
       const assignedCategories = user?.assignedCategories || []
 
@@ -38,7 +48,11 @@ export async function PUT(request: Request, context: any) {
       const normalizedAssigned = assignedCategories.map((c: string) => c.trim().normalize("NFC").toLowerCase())
 
       orderToUpdate.items.forEach((item: any) => {
-        if (item.category && normalizedAssigned.includes(item.category.trim().normalize("NFC").toLowerCase())) {
+        const itemCat = (item.category || "").trim().normalize("NFC").toLowerCase()
+        const isAssigned = normalizedAssigned.includes(itemCat)
+        const isDrinksForBar = decoded.role === 'bar' && item.mainCategory === 'Drinks'
+
+        if (isAssigned || isDrinksForBar) {
           item.status = status
         }
         const isItemDone = ['ready', 'served', 'completed', 'cancelled'].includes(item.status)
@@ -69,6 +83,43 @@ export async function PUT(request: Request, context: any) {
     if (status === "cancelled" && previousStatus !== "cancelled") {
       const stockConsumptionMap = await calculateStockConsumption(orderToUpdate.items)
       await applyStockAdjustment(stockConsumptionMap, 1)
+    }
+
+    const now = new Date()
+
+    if (status === "preparing" && previousStatus !== "preparing") {
+      orderToUpdate.kitchenAcceptedAt = now
+    }
+
+    if (status === "ready" && previousStatus !== "ready") {
+      orderToUpdate.readyAt = now
+    }
+
+    if ((status === "served" || status === "completed") &&
+      (previousStatus !== "served" && previousStatus !== "completed")) {
+
+      orderToUpdate.servedAt = now
+      const createdAt = new Date(orderToUpdate.createdAt)
+      const durationMs = now.getTime() - createdAt.getTime()
+      const totalMinutes = Math.floor(durationMs / 60000)
+
+      orderToUpdate.totalPreparationTime = totalMinutes
+
+      let dynamicThreshold = orderToUpdate.thresholdMinutes
+
+      if (!dynamicThreshold) {
+        const menuItemIds = orderToUpdate.items.map((item: any) => item.menuItemId)
+        const menuItems = await (MenuItem as any).find({ _id: { $in: menuItemIds } }).lean()
+        const itemPrepTimes = menuItems.map((mi: any) => (mi as any).preparationTime || 0)
+        const maxPrepTime = itemPrepTimes.length > 0 ? Math.max(...itemPrepTimes) : 0
+        const thresholdSetting = await (Settings as any).findOne({ key: "PREPARATION_TIME_THRESHOLD" })
+        const globalFallback = thresholdSetting ? parseInt(thresholdSetting.value) : 20
+        dynamicThreshold = maxPrepTime > 0 ? maxPrepTime : globalFallback
+        orderToUpdate.thresholdMinutes = dynamicThreshold
+      }
+
+      const excessDelay = Math.max(0, totalMinutes - dynamicThreshold)
+      orderToUpdate.delayMinutes = excessDelay
     }
 
     await orderToUpdate.save()
