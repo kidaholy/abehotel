@@ -944,6 +944,46 @@ export function MenuManagementSection({
                   <div className="space-y-8">
                     <div className="space-y-4">
                       <label className="block text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] ml-1">{t("adminMenu.image")}</label>
+                      
+                      {/* Image Input Type Toggle */}
+                      <div className="flex gap-2 mb-3">
+                        <button
+                          type="button"
+                          onClick={() => setImageInputType('file')}
+                          className={`flex-1 py-2 px-3 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                            imageInputType === 'file'
+                              ? 'bg-[#d4af37] text-[#0f1110]'
+                              : 'bg-[#1a1c1b] text-gray-400 border border-white/10'
+                          }`}
+                        >
+                          Upload File
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setImageInputType('url')}
+                          className={`flex-1 py-2 px-3 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                            imageInputType === 'url'
+                              ? 'bg-[#d4af37] text-[#0f1110]'
+                              : 'bg-[#1a1c1b] text-gray-400 border border-white/10'
+                          }`}
+                        >
+                          Image URL
+                        </button>
+                      </div>
+
+                      {/* Image URL Input */}
+                      {imageInputType === 'url' && (
+                        <div className="space-y-2 mb-4">
+                          <input
+                            type="url"
+                            value={formData.image}
+                            onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                            placeholder="https://example.com/image.jpg"
+                            className="w-full bg-[#0f1110] border border-white/5 rounded-2xl px-5 py-3.5 text-sm font-bold text-white outline-none focus:border-[#d4af37]/50 shadow-inner placeholder:text-gray-600"
+                          />
+                        </div>
+                      )}
+
                       <div className="bg-[#0f1110] border border-white/5 rounded-3xl p-6 shadow-inner">
                         {formData.image ? (
                           <div className="relative aspect-video rounded-2xl overflow-hidden border border-white/10 group/img">

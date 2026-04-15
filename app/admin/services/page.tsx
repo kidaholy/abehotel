@@ -77,6 +77,7 @@ interface Room {
   category: string
   price: number
   status: string
+  roomServiceMenuTier?: string
 }
 
 interface Floor {
@@ -103,7 +104,7 @@ export default function AdminServicesPage() {
   const [newCategoryName, setNewCategoryName] = useState("")
 
   const [roomForm, setRoomForm] = useState({
-    roomNumber: "", name: "", floorId: "", type: "standard", category: "Standard", price: "", status: "available"
+    roomNumber: "", name: "", floorId: "", type: "standard", category: "Standard", price: "", status: "available", roomServiceMenuTier: "standard"
   })
   const [editingRoom, setEditingRoom] = useState<Room | null>(null)
   const [formLoading, setFormLoading] = useState(false)
@@ -970,9 +971,13 @@ export default function AdminServicesPage() {
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Price (Br)</label>
-                      <input required type="number" value={roomForm.price} onChange={e => setRoomForm({ ...roomForm, price: e.target.value })}
-                        className="w-full bg-[#0f1110] border border-white/5 rounded-xl px-4 py-3 text-sm font-bold text-[#d4af37] outline-none focus:border-[#d4af37]/50 focus:ring-1 focus:ring-[#d4af37]/50 transition-all" />
+                      <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Room Service Menu</label>
+                      <select value={roomForm.roomServiceMenuTier} onChange={e => setRoomForm({ ...roomForm, roomServiceMenuTier: e.target.value })}
+                        className="w-full bg-[#0f1110] border border-white/5 rounded-xl px-4 py-3 text-sm font-bold text-[#d4af37] outline-none focus:border-[#d4af37]/50 focus:ring-1 focus:ring-[#d4af37]/50 transition-all font-inter">
+                        <option value="standard">Standard Menu</option>
+                        <option value="vip1">VIP 1 Menu</option>
+                        <option value="vip2">VIP 2 Menu</option>
+                      </select>
                     </div>
                     <div>
                       <div className="flex justify-between items-center mb-2">

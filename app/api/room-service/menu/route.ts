@@ -18,9 +18,9 @@ export async function GET(req: Request) {
     let menuTier = 'standard'
 
     if (roomNumber) {
-        const room = await (Room as any).findOne({ roomNumber }).populate('floorId').lean()
-        if (room && room.floorId) {
-            menuTier = (room.floorId as any).roomServiceMenuTier || 'standard'
+        const room = await (Room as any).findOne({ roomNumber }).lean()
+        if (room) {
+            menuTier = room.roomServiceMenuTier || 'standard'
         }
     }
 
