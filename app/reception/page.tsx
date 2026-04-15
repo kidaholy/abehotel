@@ -314,9 +314,10 @@ export default function ReceptionDashboard() {
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null)
   const [uploadingFront, setUploadingFront] = useState(false)
   const [uploadingBack, setUploadingBack]   = useState(false)
-  const [photoUploadMode, setPhotoUploadMode] = useState<"url" | "file">("url")
+  const [uploadingProfile, setUploadingProfile] = useState(false)
   const frontRef = useRef<HTMLInputElement>(null)
   const backRef  = useRef<HTMLInputElement>(null)
+  const profileRef = useRef<HTMLInputElement>(null)
 
   const fetchSubmissions = useCallback(async () => {
     try {
@@ -371,12 +372,15 @@ export default function ReceptionDashboard() {
 
   const duration = calcDuration()
 
-  const handlePhotoUpload = (file: File, side: "front" | "back") => {
-    const set = side === "front" ? setUploadingFront : setUploadingBack
+  const handlePhotoUpload = (file: File, side: "front" | "back" | "profile") => {
+    const set = side === "front" ? setUploadingFront : side === "back" ? setUploadingBack : setUploadingProfile
     set(true)
     const reader = new FileReader()
     reader.onload = e => {
-      setFormData(p => ({ ...p, [side === "front" ? "idPhotoFront" : "idPhotoBack"]: e.target?.result as string }))
+      setFormData(p => ({ 
+        ...p, 
+        [side === "front" ? "idPhotoFront" : side === "back" ? "idPhotoBack" : "photoUrl"]: e.target?.result as string 
+      }))
       set(false)
     }
     reader.readAsDataURL(file)
@@ -510,52 +514,54 @@ export default function ReceptionDashboard() {
                     </div>
                   </div>
 
-                  {/* ID Photo */}
-                  <div>
-                    <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">ID Photo</label>
+                  {/* Photos & Documents */}
+                  <div className="space-y-4 bg-[#0f1110] border border-white/5 rounded-2xl p-5">
+                    <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest flex items-center gap-2 border-b border-white/5 pb-3">
+                      <IdCard size={13} className="text-[#d4af37]" /> Guest Photos & ID
+                    </label>
 
-                    {/* Mode toggle */}
-                    <div className="flex gap-1 bg-[#0f1110] border border-white/5 p-1 rounded-xl w-fit mb-3">
-                      <button type="button" onClick={() => setPhotoUploadMode("url")}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${photoUploadMode === "url" ? "bg-[#d4af37]/10 text-[#f3cf7a] border border-[#d4af37]/30" : "text-gray-500 hover:text-gray-300"}`}>
-                        <Link2 size={11} /> URL
-                      </button>
-                      <button type="button" onClick={() => setPhotoUploadMode("file")}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${photoUploadMode === "file" ? "bg-[#d4af37]/10 text-[#f3cf7a] border border-[#d4af37]/30" : "text-gray-500 hover:text-gray-300"}`}>
-                        <Upload size={11} /> File
-                      </button>
+                    {/* Guest Profile URL */}
+                    <div>
+                      <p className="text-[9px] font-black text-gray-600 uppercase tracking-widest mb-1.5">1. Guest Profile Photo (URL or File Upload)</p>
+                      
+                      <div className="flex gap-2">
+                        <input
+                          name="photoUrl"
+                          value={formData.photoUrl}
+                          onChange={handleChange}
+                          placeholder="https://example.com/photo.jpg or Paste/Upload"
+                          className={`${ic} flex-1`}
+                        />
+                        <button type="button" onClick={() => profileRef.current?.click()}
+                          className="bg-[#1a1c1b] border border-white/10 text-white rounded-xl px-4 py-3 flex items-center justify-center gap-2 hover:bg-[#d4af37]/20 hover:text-[#f3cf7a] transition-all whitespace-nowrap min-w-[120px]">
+                          {uploadingProfile ? <RefreshCw size={14} className="animate-spin text-[#d4af37]" /> : <Upload size={14} />}
+                          <span className="text-[10px] font-black uppercase tracking-widest">{uploadingProfile ? "Processing" : "Upload File"}</span>
+                        </button>
+                        <input ref={profileRef} type="file" accept="image/*" className="hidden" 
+                          onChange={e => { if (e.target.files?.[0]) handlePhotoUpload(e.target.files[0], "profile") }} />
+                      </div>
+
+                      {formData.photoUrl && (
+                        <div className="relative rounded-xl overflow-hidden border border-white/10 h-36 w-36 mt-3">
+                          <img src={formData.photoUrl} alt="Guest Photo"
+                            className="w-full h-full object-cover"
+                            onError={e => { (e.target as HTMLImageElement).src = "" }} />
+                          <button type="button" onClick={() => setFormData(p => ({ ...p, photoUrl: "" }))}
+                            className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-0.5 hover:bg-red-500 shadow-lg">
+                            <X size={11} />
+                          </button>
+                        </div>
+                      )}
                     </div>
 
-                    {/* URL mode */}
-                    {photoUploadMode === "url" && (
-                      <div className="space-y-3">
-                        <div>
-                          <p className="text-[9px] font-black text-gray-600 uppercase tracking-widest mb-1.5">Photo URL</p>
-                          <input
-                            name="photoUrl"
-                            value={formData.photoUrl}
-                            onChange={handleChange}
-                            placeholder="https://example.com/photo.jpg"
-                            className={ic}
-                          />
-                        </div>
-                        {formData.photoUrl && (
-                          <div className="relative rounded-xl overflow-hidden border border-white/10 h-36 w-36">
-                            <img src={formData.photoUrl} alt="Guest Photo"
-                              className="w-full h-full object-cover"
-                              onError={e => { (e.target as HTMLImageElement).src = "" }} />
-                            <button type="button" onClick={() => setFormData(p => ({ ...p, photoUrl: "" }))}
-                              className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-0.5 hover:bg-red-500">
-                              <X size={11} />
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    )}
+                    <div className="h-px w-full bg-white/5" />
 
                     {/* File mode — front & back */}
-                    {photoUploadMode === "file" && (
-                      <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <p className="text-[9px] font-black text-gray-600 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+                        2. ID Card Upload <span className="text-gray-500 font-normal normal-case tracking-normal">(Optional fallback if URL is empty or unavailable)</span>
+                      </p>
+                      <div className="grid grid-cols-2 gap-3 mt-2">
                         {(["front", "back"] as const).map(side => {
                           const val     = side === "front" ? formData.idPhotoFront : formData.idPhotoBack
                           const loading = side === "front" ? uploadingFront : uploadingBack
@@ -563,29 +569,31 @@ export default function ReceptionDashboard() {
                           const key     = side === "front" ? "idPhotoFront" : "idPhotoBack"
                           return (
                             <div key={side}>
-                              <p className="text-[9px] font-black text-gray-600 uppercase tracking-widest mb-1.5">{side === "front" ? "Front" : "Back"}</p>
                               <input ref={ref} type="file" accept="image/*" className="hidden"
-                                onChange={e => e.target.files?.[0] && handlePhotoUpload(e.target.files[0], side)} />
+                                onChange={e => { if (e.target.files?.[0]) handlePhotoUpload(e.target.files[0], side) }} />
                               {val ? (
-                                <div className="relative rounded-xl overflow-hidden border border-white/10 h-24">
+                                <div className="relative rounded-xl overflow-hidden border border-[#d4af37]/30 h-24 shadow-inner">
                                   <img src={val} alt={`ID ${side}`} className="w-full h-full object-cover" />
                                   <button type="button" onClick={() => setFormData(p => ({ ...p, [key]: "" }))}
-                                    className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-0.5 hover:bg-red-500">
+                                    className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-0.5 hover:bg-red-500 shadow-xl">
                                     <X size={11} />
                                   </button>
+                                  <div className="absolute bottom-0 left-0 right-0 bg-black/60 backdrop-blur-sm text-center py-1">
+                                    <span className="text-[8px] font-black text-white uppercase tracking-widest">{side} Image Saved</span>
+                                  </div>
                                 </div>
                               ) : (
                                 <button type="button" onClick={() => ref.current?.click()}
-                                  className="w-full h-24 border border-dashed border-white/10 rounded-xl flex flex-col items-center justify-center gap-1.5 text-gray-600 hover:border-[#d4af37]/30 hover:text-gray-400 transition-all">
-                                  {loading ? <RefreshCw size={16} className="animate-spin" /> : <Upload size={16} />}
-                                  <span className="text-[9px] font-black uppercase tracking-widest">Upload {side === "front" ? "Front" : "Back"}</span>
+                                  className="w-full h-24 border border-dashed border-white/10 rounded-xl flex flex-col items-center justify-center gap-1.5 text-gray-600 hover:border-[#d4af37]/30 hover:text-gray-400 hover:bg-white/5 transition-all">
+                                  {loading ? <RefreshCw size={16} className="animate-spin text-[#d4af37]" /> : <Upload size={16} />}
+                                  <span className="text-[9px] font-black uppercase tracking-widest">Upload {side}</span>
                                 </button>
                               )}
                             </div>
                           )
                         })}
                       </div>
-                    )}
+                    </div>
                   </div>
 
                   {/* Floor + Room */}
