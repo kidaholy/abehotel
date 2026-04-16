@@ -85,7 +85,6 @@ export function BentoNavbar() {
         { label: t("nav.stock"), href: "/admin/stock" },
         { label: t("nav.reports"), href: "/admin/reports" },
         {label: t("nav.services"), href: "/admin/services"},
-        {label: "Bar", href: "/bar"},
         {label: t("nav.settings"), href: "/admin/settings"}
     ]
 
