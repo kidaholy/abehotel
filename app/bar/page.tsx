@@ -198,7 +198,7 @@ export default function BarDisplayPage() {
   }
 
   return (
-    <ProtectedRoute requiredRoles={["bar", "admin"]}>
+    <ProtectedRoute requiredRoles={["bar", "admin"]} requiredPermissions={["bar:access"]}>
       <div className={`min-h-screen bg-[#0f1110] text-white flex flex-col ${isKioskMode ? 'p-0' : 'p-6'}`}>
         {!isKioskMode && <BentoNavbar />}
 

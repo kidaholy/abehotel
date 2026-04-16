@@ -62,7 +62,7 @@ export default function StockInventoryPage() {
         showStatus: true,
     })
 
-    const { token } = useAuth()
+    const { token, hasPermission } = useAuth()
     const { t } = useLanguage()
     const { confirmationState, confirm, closeConfirmation, notificationState, notify, closeNotification } = useConfirmation()
 
@@ -293,7 +293,7 @@ export default function StockInventoryPage() {
     }
 
     return (
-        <ProtectedRoute requiredRoles={["admin"]}>
+        <ProtectedRoute requiredRoles={["admin"]} requiredPermissions={["stock:view"]}>
             <div className="min-h-screen bg-[#0f1110] p-6 text-white selection:bg-[#c5a059] selection:text-[#0f1110]">
                 <div className="max-w-7xl mx-auto space-y-6">
                     <BentoNavbar />
@@ -422,8 +422,8 @@ export default function StockInventoryPage() {
                                                             </td>
                                                             <td className="py-5 text-right pr-6">
                                                                 <div className="flex justify-end gap-2">
-                                                                    <button onClick={() => handleEditStock(item)} className="p-2 text-[#f3cf7a] hover:text-[#f3cf7a] hover:bg-[#1a1c1b] border border-[#d4af37]/30 hover:border-[#d4af37]/50 rounded-lg transition-all"><Edit2 size={16} /></button>
-                                                                    <button onClick={() => deleteStockItem(item._id)} className="p-2 text-red-500 hover:text-red-400 hover:bg-red-950/50 border border-red-500/30 hover:border-red-500/50 rounded-lg transition-all"><Trash2 size={16} /></button>
+                                                                    {hasPermission("stock:update") && <button onClick={() => handleEditStock(item)} className="p-2 text-[#f3cf7a] hover:text-[#f3cf7a] hover:bg-[#1a1c1b] border border-[#d4af37]/30 hover:border-[#d4af37]/50 rounded-lg transition-all"><Edit2 size={16} /></button>}
+                                                                    {hasPermission("stock:delete") && <button onClick={() => deleteStockItem(item._id)} className="p-2 text-red-500 hover:text-red-400 hover:bg-red-950/50 border border-red-500/30 hover:border-red-500/50 rounded-lg transition-all"><Trash2 size={16} /></button>}
                                                                 </div>
                                                             </td>
                                                         </tr>

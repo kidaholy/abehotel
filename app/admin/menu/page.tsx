@@ -23,7 +23,7 @@ export default function AdminMenuPage() {
   const { t } = useLanguage()
 
   return (
-    <ProtectedRoute requiredRoles={["admin"]}>
+    <ProtectedRoute requiredRoles={["admin"]} requiredPermissions={["services:view"]}>
       <div className="min-h-screen bg-[#0f1110] p-6 selection:bg-[#d4af37] selection:text-[#0f1110]">
         <div className="max-w-7xl mx-auto space-y-6">
           <BentoNavbar />

@@ -7,6 +7,7 @@ export interface TokenPayload {
     email?: string
     role: string
     floorId?: string
+    permissions?: string[]
     [key: string]: any
 }
 

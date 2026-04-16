@@ -10,9 +10,10 @@ import { useLanguage } from "@/context/language-context"
 interface ProtectedRouteProps {
   children: React.ReactNode
   requiredRoles?: string[]
+  requiredPermissions?: string[]
 }
 
-export function ProtectedRoute({ children, requiredRoles }: ProtectedRouteProps) {
+export function ProtectedRoute({ children, requiredRoles, requiredPermissions }: ProtectedRouteProps) {
   const { isAuthenticated, loading, user } = useAuth()
   const router = useRouter()
   const { t } = useLanguage()
@@ -21,11 +22,18 @@ export function ProtectedRoute({ children, requiredRoles }: ProtectedRouteProps)
     if (!loading) {
       if (!isAuthenticated) {
         router.push("/login")
-      } else if (requiredRoles && user && !requiredRoles.includes(user.role)) {
-        router.push("/unauthorized")
+      } else if (requiredRoles && user) {
+        if (user.role === "custom" && requiredPermissions) {
+          const hasPermission = requiredPermissions.some(p => user.permissions?.includes(p))
+          if (!hasPermission) {
+            router.push("/unauthorized")
+          }
+        } else if (!requiredRoles.includes(user.role)) {
+          router.push("/unauthorized")
+        }
       }
     }
-  }, [isAuthenticated, loading, user, requiredRoles, router])
+  }, [isAuthenticated, loading, user, requiredRoles, requiredPermissions, router])
 
   if (loading) {
     return (
@@ -42,8 +50,13 @@ export function ProtectedRoute({ children, requiredRoles }: ProtectedRouteProps)
     return null
   }
 
-  if (requiredRoles && user && !requiredRoles.includes(user.role)) {
-    return null
+  if (requiredRoles && user) {
+    if (user.role === "custom" && requiredPermissions) {
+      const hasPermission = requiredPermissions.some(p => user.permissions?.includes(p))
+      if (!hasPermission) return null
+    } else if (!requiredRoles.includes(user.role)) {
+      return null
+    }
   }
 
   return <>{children}</>

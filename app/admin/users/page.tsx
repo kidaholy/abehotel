@@ -19,7 +19,8 @@ interface User {
   email: string
   password: string
   plainPassword?: string
-  role: "admin" | "chef" | "bar" | "cashier" | "display" | "store_keeper" | "reception"
+  role: "admin" | "chef" | "bar" | "cashier" | "display" | "store_keeper" | "reception" | "custom"
+  permissions?: string[]
   isActive: boolean
   floorId?: string
   assignedCategories?: string[]
@@ -42,14 +43,15 @@ export default function AdminUsersPage() {
     name: "",
     email: "",
     password: "",
-    role: "cashier" as "admin" | "chef" | "bar" | "cashier" | "display" | "store_keeper" | "reception",
+    role: "cashier" as "admin" | "chef" | "bar" | "cashier" | "display" | "store_keeper" | "reception" | "custom",
     floorId: "",
     assignedCategories: [] as string[],
+    permissions: [] as string[],
   })
   const [floors, setFloors] = useState<Floor[]>([])
   const [categories, setCategories] = useState<{ _id: string, name: string }[]>([])
 
-  const { token, user: currentUser } = useAuth()
+  const { token, user: currentUser, hasPermission } = useAuth()
   const { t } = useLanguage()
   const { confirmationState, confirm, closeConfirmation, notificationState, notify, closeNotification } = useConfirmation()
   const [revealedPasswords, setRevealedPasswords] = useState<Record<string, boolean>>({})
@@ -239,6 +241,7 @@ export default function AdminUsersPage() {
       role: userToEdit.role,
       floorId: userToEdit.floorId || "",
       assignedCategories: userToEdit.assignedCategories || [],
+      permissions: userToEdit.permissions || [],
     })
     setShowForm(true)
   }
@@ -252,12 +255,13 @@ export default function AdminUsersPage() {
       role: "cashier",
       floorId: "",
       assignedCategories: [],
+      permissions: [],
     })
     setShowForm(false)
   }
 
   return (
-    <ProtectedRoute requiredRoles={["admin"]}>
+    <ProtectedRoute requiredRoles={["admin"]} requiredPermissions={["users:view"]}>
       <div className="min-h-screen bg-[#0f1110] p-6 text-white selection:bg-[#c5a059] selection:text-[#0f1110]">
         <div className="max-w-7xl mx-auto space-y-6">
           <BentoNavbar />
@@ -269,12 +273,14 @@ export default function AdminUsersPage() {
                 <div className="relative z-10">
                   <h1 className="text-2xl md:text-3xl font-playfair italic text-[#f3cf7a] mb-2 flex items-center gap-3"><Users size={24} /> {t("adminUsers.title")}</h1>
                   <p className="text-gray-400 text-[10px] uppercase font-light tracking-widest mb-6">{t("adminUsers.totalActiveStaff")}: {users.length}</p>
-                  <button
-                    onClick={() => { resetForm(); setShowForm(true); }}
-                    className="w-full bg-gradient-to-b from-[#f3cf7a] to-[#b38822] text-[#2a1708] border border-[#f5db8b] px-6 py-4 rounded-xl font-bold text-xs uppercase tracking-widest shadow-[0_4px_15px_rgba(212,175,55,0.2)] hover:shadow-[0_4px_25px_rgba(212,175,55,0.4)] transition-all flex items-center justify-center gap-2 transform active:scale-95"
-                  >
-                    <Plus size={16} /> {t("adminUsers.addNewMember")}
-                  </button>
+                  {hasPermission("users:create") && (
+                    <button
+                      onClick={() => { resetForm(); setShowForm(true); }}
+                      className="w-full bg-gradient-to-b from-[#f3cf7a] to-[#b38822] text-[#2a1708] border border-[#f5db8b] px-6 py-4 rounded-xl font-bold text-xs uppercase tracking-widest shadow-[0_4px_15px_rgba(212,175,55,0.2)] hover:shadow-[0_4px_25px_rgba(212,175,55,0.4)] transition-all flex items-center justify-center gap-2 transform active:scale-95"
+                    >
+                      <Plus size={16} /> {t("adminUsers.addNewMember")}
+                    </button>
+                  )}
                 </div>
                 <div className="absolute -bottom-4 -right-4 opacity-5 transform group-hover:rotate-12 group-hover:scale-110 transition-transform duration-500">
                   <Users size={96} />
@@ -310,10 +316,11 @@ export default function AdminUsersPage() {
                         : u.role === "bar"
                           ? { color: "bg-blue-500/20 text-blue-400 border border-blue-500/30", label: "Bar" }
                           : u.role === "display"
-                            ? { color: "bg-purple-500/20 text-purple-400 border border-purple-500/30", label: "Display" } :
-                            u.role === "store_keeper" ? { color: "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30", label: "Store Keeper" } :
-                            u.role === "reception" ? { color: "bg-blue-500/20 text-blue-400 border border-blue-500/30", label: "Reception" }
-                              : { color: "bg-[#d4af37]/20 text-[#d4af37] border border-[#d4af37]/30", label: "Cashier" }
+                            ? { color: "bg-purple-500/20 text-purple-400 border border-purple-500/30", label: "Display" }
+                            : u.role === "store_keeper" ? { color: "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30", label: "Store Keeper" }
+                            : u.role === "reception" ? { color: "bg-blue-500/20 text-blue-400 border border-blue-500/30", label: "Reception" }
+                            : u.role === "custom" ? { color: "bg-pink-500/20 text-pink-400 border border-pink-500/30", label: "Custom" }
+                            : { color: "bg-[#d4af37]/20 text-[#d4af37] border border-[#d4af37]/30", label: "Cashier" }
 
                       return (
                         <div key={u._id} className={`bg-[#0f1110] rounded-2xl p-5 border transition-all flex flex-col relative group ${!u.isActive ? 'opacity-50 grayscale border-dashed border-white/5' : 'border-white/10 hover:border-[#d4af37]/30 hover:shadow-[0_4px_20px_rgba(212,175,55,0.1)]'}`}>
@@ -330,6 +337,7 @@ export default function AdminUsersPage() {
                              u.role === "display"      ? <Monitor size={28} /> :
                              u.role === "store_keeper" ? <Package size={28} /> :
                              u.role === "reception"    ? <ConciergeBell size={28} /> :
+                             u.role === "custom"       ? <Pencil size={28} /> :
                                                          <Coffee size={28} />}
                           </div>
                           {(u.role === "chef" || u.role === "bar") && u.assignedCategories && u.assignedCategories.length > 0 && (
@@ -385,7 +393,7 @@ export default function AdminUsersPage() {
                               {badge.label}
                             </span>
                             <div className="flex gap-2">
-                              {!isMe && (
+                              {hasPermission("users:update") && !isMe && (
                                 <button
                                   onClick={() => handleToggleStatus(u)}
                                   title={u.isActive ? "Deactivate User" : "Activate User"}
@@ -394,8 +402,10 @@ export default function AdminUsersPage() {
                                   {u.isActive ? <EyeOff size={14} /> : <Eye size={14} />}
                                 </button>
                               )}
-                              <button onClick={() => handleEdit(u)} className="w-8 h-8 md:w-9 md:h-9 bg-[#0f1110] border border-white/10 rounded-xl flex items-center justify-center shadow-sm hover:scale-110 active:scale-95 transition-all hover:border-[#d4af37]/30 hover:text-[#f3cf7a]"><Pencil size={14} /></button>
-                              {!isMe && (
+                              {hasPermission("users:update") && (
+                                <button onClick={() => handleEdit(u)} className="w-8 h-8 md:w-9 md:h-9 bg-[#0f1110] border border-white/10 rounded-xl flex items-center justify-center shadow-sm hover:scale-110 active:scale-95 transition-all hover:border-[#d4af37]/30 hover:text-[#f3cf7a]"><Pencil size={14} /></button>
+                              )}
+                              {hasPermission("users:delete") && !isMe && (
                                 <button onClick={() => handleDelete(u)} className="w-8 h-8 md:w-9 md:h-9 bg-[#0f1110] border border-white/10 rounded-xl flex items-center justify-center shadow-sm hover:bg-red-950/50 hover:border-red-500/50 hover:text-red-500 hover:scale-110 active:scale-95 transition-all"><Trash2 size={14} /></button>
                               )}
                             </div>
@@ -446,14 +456,14 @@ export default function AdminUsersPage() {
                   <div className="space-y-2">
                     <label className="text-[10px] font-light uppercase tracking-widest text-gray-400 ml-2">{t("adminUsers.accessLevel")}</label>
                     <div className="flex flex-wrap gap-2">
-                      {["cashier", "chef", "bar", "admin", "display", "store_keeper", "reception"].map(r => (
+                      {["cashier", "chef", "bar", "admin", "display", "store_keeper", "reception", "custom"].map(r => (
                         <button
                           key={r}
                           type="button"
                           onClick={() => setFormData({ ...formData, role: r as any })}
-                          className={`flex-1 min-w-[120px] py-3 rounded-xl font-bold text-[9px] uppercase tracking-widest transition-all border ${formData.role === r ? "bg-[#1a1c1b] text-[#f3cf7a] border-[#d4af37]/30 shadow-[0_4px_15px_rgba(212,175,55,0.15)]" : "bg-[#0f1110] text-gray-500 border-white/5 hover:bg-[#1a1c1b]"}`}
+                          className={`flex-1 min-w-[100px] py-3 rounded-xl font-bold text-[9px] uppercase tracking-widest transition-all border ${formData.role === r ? "bg-[#1a1c1b] text-[#f3cf7a] border-[#d4af37]/30 shadow-[0_4px_15px_rgba(212,175,55,0.15)]" : "bg-[#0f1110] text-gray-500 border-white/5 hover:bg-[#1a1c1b]"}`}
                         >
-                          {r === "display" ? "Display" : r === "reception" ? "Reception" : t(`adminUsers.${r}`)}
+                          {r === "display" ? "Display" : r === "reception" ? "Reception" : r === "custom" ? "Custom" : t(`adminUsers.${r}`)}
                         </button>
                       ))}
                     </div>
@@ -472,6 +482,87 @@ export default function AdminUsersPage() {
                           <option key={floor._id} value={floor._id}>Floor #{floor.floorNumber}</option>
                         ))}
                       </select>
+                    </div>
+                  )}
+
+                  {formData.role === "custom" && (
+                    <div className="space-y-4 animate-fade-in bg-[#0f1110] p-6 rounded-[2.5rem] border border-[#d4af37]/20">
+                      <div className="flex justify-between items-center px-1">
+                        <label className="text-[9px] font-black uppercase tracking-widest text-[#f3cf7a]">Granular Privileges</label>
+                      </div>
+                      
+                      <div className="max-h-[300px] overflow-y-auto pr-2 custom-scrollbar space-y-4">
+                        {[
+                          { category: "Overview", items: [{ id: "overview:view", label: "View Dashboard" }] },
+                          { category: "Orders", items: [ { id: "orders:view", label: "View Orders" }, { id: "orders:create", label: "Create Orders" }, { id: "orders:update", label: "Update Orders" }, { id: "orders:delete", label: "Delete Orders" } ] },
+                          { category: "Users", items: [ { id: "users:view", label: "View Users" }, { id: "users:create", label: "Create Users" }, { id: "users:update", label: "Update Users" }, { id: "users:delete", label: "Delete Users" } ] },
+                          { category: "Store", items: [ { id: "store:view", label: "View Store" }, { id: "store:create", label: "Add Items" }, { id: "store:update", label: "Edit Items" }, { id: "store:delete", label: "Delete Items" }, { id: "store:transfer", label: "Transfer Stock" } ] },
+                          { category: "Stock", items: [ { id: "stock:view", label: "View Stock" }, { id: "stock:create", label: "Add Stock" }, { id: "stock:update", label: "Update Stock" }, { id: "stock:delete", label: "Delete Stock" } ] },
+                          { category: "Reports", items: [
+                            { id: "reports:financial_summary", label: "Financial Summary" },
+                            { id: "reports:order_history", label: "Order History" },
+                            { id: "reports:inventory_investment", label: "Inventory Investment" },
+                            { id: "reports:store_investment", label: "Store Investment" },
+                            { id: "reports:menu_item_sales", label: "Menu Item Sales" },
+                            { id: "reports:cashier_insights", label: "Cashier Insights" }
+                          ] },
+                          { category: "Services", items: [ { id: "services:view", label: "View Services" }, { id: "services:create", label: "Add Services" }, { id: "services:update", label: "Edit Services" }, { id: "services:delete", label: "Delete Services" } ] },
+                          { category: "Settings", items: [ { id: "settings:view", label: "View Settings" }, { id: "settings:update", label: "Update Settings" } ] },
+                          { category: "Interfaces", items: [ { id: "cashier:access", label: "Cashier POS" }, { id: "chef:access", label: "Chef Board" }, { id: "bar:access", label: "Bar Board" }, { id: "reception:access", label: "Reception" }, { id: "display:access", label: "Display Board" } ] }
+                        ].map((group) => (
+                          <div key={group.category} className="bg-[#151716] p-4 rounded-2xl border border-white/5 space-y-3">
+                            <h4 className="text-[10px] font-black uppercase tracking-widest text-[#f3cf7a]/70 flex items-center justify-between">
+                              {group.category}
+                              <button 
+                                type="button"
+                                onClick={() => {
+                                  let newPerms = [...formData.permissions];
+                                  const allGroupIds = group.items.map(i => i.id);
+                                  const hasAll = allGroupIds.every(id => newPerms.includes(id));
+                                  if (hasAll) {
+                                    newPerms = newPerms.filter(p => !allGroupIds.includes(p));
+                                  } else {
+                                    const missing = allGroupIds.filter(id => !newPerms.includes(id));
+                                    newPerms = [...newPerms, ...missing];
+                                  }
+                                  setFormData({ ...formData, permissions: newPerms });
+                                }}
+                                className="text-[8px] px-2 py-1 rounded bg-[#1a1c1b] hover:bg-[#d4af37]/20 text-[#f3cf7a] transition-colors"
+                              >
+                                Toggle All
+                              </button>
+                            </h4>
+                            <div className="grid grid-cols-2 gap-2">
+                              {group.items.map(perm => {
+                                const isSelected = formData.permissions.includes(perm.id)
+                                return (
+                                  <button
+                                    key={perm.id}
+                                    type="button"
+                                    onClick={() => {
+                                      const perms = [...formData.permissions]
+                                      if (isSelected) {
+                                        setFormData({ ...formData, permissions: perms.filter(p => p !== perm.id) })
+                                      } else {
+                                        setFormData({ ...formData, permissions: [...perms, perm.id] })
+                                      }
+                                    }}
+                                    className={`text-left p-2.5 rounded-xl text-[9px] font-bold uppercase tracking-widest transition-all flex items-center gap-2 border ${isSelected
+                                      ? "bg-[#1a1c1b] text-[#f3cf7a] border-[#d4af37]/30 shadow-[0_4px_15px_rgba(212,175,55,0.15)]"
+                                      : "bg-[#0f1110] text-gray-500 border-white/5 hover:border-white/10 hover:text-gray-300 shadow-sm"
+                                      }`}
+                                  >
+                                    <div className={`w-5 h-5 rounded-lg flex items-center justify-center transition-colors shrink-0 ${isSelected ? "bg-[#d4af37]/20 text-[#f3cf7a]" : "bg-[#151716] border border-white/5 text-gray-600"}`}>
+                                      {isSelected && <Check size={10} />}
+                                    </div>
+                                    <span className="truncate whitespace-normal leading-snug">{perm.label}</span>
+                                  </button>
+                                )
+                              })}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
 

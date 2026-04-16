@@ -242,7 +242,7 @@ export default function MenuPage() {
 
   if (user?.role === "cashier") {
     return (
-      <ProtectedRoute requiredRoles={["cashier"]}>
+      <ProtectedRoute requiredRoles={["cashier"]} requiredPermissions={["services:view", "cashier:access"]}>
         <div className="min-h-screen bg-white p-4 font-sans text-slate-800">
           <div className="max-w-7xl mx-auto">
             <BentoNavbar />

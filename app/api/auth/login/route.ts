@@ -53,7 +53,8 @@ export async function POST(request: Request) {
       id: user._id,
       email: user.email,
       role: user.role,
-      floorId: user.floorId
+      floorId: user.floorId,
+      permissions: user.permissions
     })
 
     // Record login time (fire and forget)

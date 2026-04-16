@@ -20,16 +20,25 @@ interface MenuSalesItem {
     revenue: number;
 }
 
-const SLIDES = [
-    { id: "financial", label: "Financial Summary", icon: FileText, color: "#d4af37", bg: "bg-gradient-to-r from-[#d4af37] to-[#f3cf7a]" },
-    { id: "orders", label: "Order History", icon: ShoppingCart, color: "#c5a059", bg: "bg-gradient-to-r from-[#d4af37] to-[#f3cf7a]" },
-    { id: "inventory", label: "Inventory Investment", icon: Clock, color: "#b38822", bg: "bg-gradient-to-r from-[#d4af37] to-[#f3cf7a]" },
-    { id: "store", label: "Store Investment", icon: Package, color: "#d4af37", bg: "bg-gradient-to-r from-[#d4af37] to-[#f3cf7a]" },
-    { id: "menu-sales", label: "Menu Item Sales", icon: ShoppingCart, color: "#f3cf7a", bg: "bg-gradient-to-r from-[#d4af37] to-[#f3cf7a]" },
-    { id: "cashier-insights", label: "Cashier Insights", icon: Users, color: "#d4af37", bg: "bg-gradient-to-r from-[#c5a059] to-[#f3cf7a]" },
+const ALL_SLIDES = [
+    { id: "financial", label: "Financial Summary", icon: FileText, color: "#d4af37", bg: "bg-gradient-to-r from-[#d4af37] to-[#f3cf7a]", permission: "reports:financial_summary" },
+    { id: "orders", label: "Order History", icon: ShoppingCart, color: "#c5a059", bg: "bg-gradient-to-r from-[#d4af37] to-[#f3cf7a]", permission: "reports:order_history" },
+    { id: "inventory", label: "Inventory Investment", icon: Clock, color: "#b38822", bg: "bg-gradient-to-r from-[#d4af37] to-[#f3cf7a]", permission: "reports:inventory_investment" },
+    { id: "store", label: "Store Investment", icon: Package, color: "#d4af37", bg: "bg-gradient-to-r from-[#d4af37] to-[#f3cf7a]", permission: "reports:store_investment" },
+    { id: "menu-sales", label: "Menu Item Sales", icon: ShoppingCart, color: "#f3cf7a", bg: "bg-gradient-to-r from-[#d4af37] to-[#f3cf7a]", permission: "reports:menu_item_sales" },
+    { id: "cashier-insights", label: "Cashier Insights", icon: Users, color: "#d4af37", bg: "bg-gradient-to-r from-[#c5a059] to-[#f3cf7a]", permission: "reports:cashier_insights" },
 ]
 
 export default function ReportsPage() {
+    const { token, user, hasPermission } = useAuth()
+    
+    // Dynamically filter slides so users only see ones they're allowed to see
+    const SLIDES = React.useMemo(() => {
+        if (!user) return []
+        if (user.role === "admin" || (user.role === "custom" && user.permissions?.includes("reports:view"))) return ALL_SLIDES;
+        return ALL_SLIDES.filter(s => hasPermission(s.permission))
+    }, [user, hasPermission])
+
     const [timeRange, setTimeRange] = useState("week")
     const [activeSlide, setActiveSlide] = useState(0)
     const [animating, setAnimating] = useState(false)
@@ -51,7 +60,6 @@ export default function ReportsPage() {
     const [activeCashierIdx, setActiveCashierIdx] = useState(0)
 
     // Context
-    const { token } = useAuth()
     const { t } = useLanguage()
     const { settings } = useSettings()
 
@@ -441,7 +449,7 @@ export default function ReportsPage() {
 
     if (!initialized && loadingSlide) {
         return (
-            <ProtectedRoute requiredRoles={["admin"]}>
+            <ProtectedRoute requiredRoles={["admin"]} requiredPermissions={["reports:view", "reports:financial_summary", "reports:order_history", "reports:inventory_investment", "reports:store_investment", "reports:menu_item_sales", "reports:cashier_insights"]}>
                 <div className="min-h-screen bg-[#0f1110] p-6 text-white">
                     <div className="max-w-7xl mx-auto space-y-4">
                         <BentoNavbar />
@@ -458,11 +466,21 @@ export default function ReportsPage() {
         )
     }
 
-    const slide = SLIDES[activeSlide]
+    if (!SLIDES || SLIDES.length === 0) {
+        return (
+            <ProtectedRoute requiredRoles={["admin"]} requiredPermissions={["reports:view", "reports:financial_summary", "reports:order_history", "reports:inventory_investment", "reports:store_investment", "reports:menu_item_sales", "reports:cashier_insights"]}>
+                <div className="min-h-screen bg-[#0f1110] flex items-center justify-center text-white">
+                    <p className="text-gray-500 text-sm">No report sections available. Please check permissions.</p>
+                </div>
+            </ProtectedRoute>
+        )
+    }
+
+    const slide = SLIDES[activeSlide] || SLIDES[0]
     const SlideIcon = slide.icon
 
     return (
-        <ProtectedRoute requiredRoles={["admin"]}>
+        <ProtectedRoute requiredRoles={["admin"]} requiredPermissions={["reports:view", "reports:financial_summary", "reports:order_history", "reports:inventory_investment", "reports:store_investment", "reports:menu_item_sales", "reports:cashier_insights"]}>
             <style>{`
                 @keyframes slideInRight { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
                 @keyframes slideInLeft  { from { opacity: 0; transform: translateX(-40px); } to { opacity: 1; transform: translateX(0); } }
@@ -599,7 +617,7 @@ export default function ReportsPage() {
                                     }`}
                             >
                                 {/* ── FINANCIAL SUMMARY ── */}
-                                {activeSlide === 0 && (
+                                {slide.id === "financial" && (
                                     <div className="bg-[#151716] rounded-2xl p-4 sm:p-6 shadow-2xl border border-white/5 space-y-6">
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-3">
@@ -756,7 +774,7 @@ export default function ReportsPage() {
                                 )}
 
                                 {/* ── ORDER HISTORY ── */}
-                                {activeSlide === 1 && (
+                                {slide.id === "orders" && (
                                     <div className="bg-[#151716] rounded-2xl p-4 sm:p-6 shadow-2xl border border-white/5 space-y-6">
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-3">
@@ -919,7 +937,7 @@ export default function ReportsPage() {
                                 )}
 
                                 {/* ── INVENTORY INVESTMENT ── */}
-                                {activeSlide === 2 && (
+                                {slide.id === "inventory" && (
                                     <div className="bg-[#151716] rounded-2xl p-4 sm:p-6 shadow-2xl border border-white/5 space-y-6 flex flex-col h-full min-h-0">
                                         <div className="flex items-center justify-between shrink-0">
                                             <div className="flex items-center gap-3">
@@ -1040,7 +1058,7 @@ export default function ReportsPage() {
                                 )}
 
                                 {/* ── STORE INVESTMENT ── */}
-                                {activeSlide === 3 && (
+                                {slide.id === "store" && (
                                     <div className="bg-[#151716] rounded-2xl p-4 sm:p-6 shadow-2xl border border-white/5 space-y-6 flex flex-col h-full min-h-0">
                                         <div className="flex items-center justify-between shrink-0">
                                             <div className="flex items-center gap-3">
@@ -1140,7 +1158,7 @@ export default function ReportsPage() {
                                 )}
 
                                 {/* ── MENU ITEM SALES ── */}
-                                {activeSlide === 4 && (
+                                {slide.id === "menu-sales" && (
                                     <div className="bg-[#151716] rounded-2xl p-4 sm:p-6 shadow-2xl border border-white/5 flex flex-col min-h-0 h-full space-y-6">
                                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shrink-0">
                                             <div className="flex items-center gap-3">
@@ -1248,7 +1266,7 @@ export default function ReportsPage() {
                                 )}
 
                                 {/* ── CASHIER INSIGHTS ── */}
-                                {activeSlide === 5 && (
+                                {slide.id === "cashier-insights" && (
                                     <div className="bg-[#151716] rounded-2xl p-4 sm:p-6 shadow-2xl border border-white/5 space-y-6 flex flex-col h-full min-h-0">
                                         <div className="flex items-center justify-between shrink-0">
                                             <div className="flex items-center gap-3">

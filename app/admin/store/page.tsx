@@ -98,7 +98,7 @@ interface FixedAsset {
 }
 
 export default function StorePage() {
-    const { token, user } = useAuth()
+    const { token, user, hasPermission } = useAuth()
     const [activeTab, setActiveTab] = useState<"inventory" | "categories" | "fixed-assets" | "expenses" | "transfers">("inventory")
 
     useEffect(() => {
@@ -1035,7 +1035,7 @@ export default function StorePage() {
     console.log(`💰 Total Store Value: ${totalStats.storeValue}, Total Items: ${totalStats.totalItems}`)
 
     return (
-        <ProtectedRoute requiredRoles={["admin", "store_keeper"]}>
+        <ProtectedRoute requiredRoles={["admin", "store_keeper"]} requiredPermissions={["store:view"]}>
             <div className="min-h-screen bg-[#0f1110] p-6 text-white selection:bg-[#c5a059] selection:text-[#0f1110]">
                 <div className="max-w-7xl mx-auto space-y-6">
                     <BentoNavbar />
@@ -1242,14 +1242,16 @@ export default function StorePage() {
                                                         </td>
                                                         <td className="py-5 text-right pr-4">
                                                             <div className="flex justify-end gap-2">
-                                                                <button
-                                                                    onClick={() => openTransferModal(item)}
-                                                                    disabled={(item.storeQuantity || 0) <= 0}
-                                                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-[#0f1110] text-[#f3cf7a] hover:bg-[#1a1c1b] rounded-lg transition-all font-bold text-[9px] uppercase tracking-widest disabled:opacity-30 border border-[#d4af37]/30"
-                                                                >
-                                                                    <ChevronRight size={12} /> Transfer
-                                                                </button>
-                                                                {user?.role === "admin" && (
+                                                                {(user?.role === "admin" || hasPermission("store:transfer")) && (
+                                                                    <button
+                                                                        onClick={() => openTransferModal(item)}
+                                                                        disabled={(item.storeQuantity || 0) <= 0}
+                                                                        className="flex items-center gap-1.5 px-3 py-1.5 bg-[#0f1110] text-[#f3cf7a] hover:bg-[#1a1c1b] rounded-lg transition-all font-bold text-[9px] uppercase tracking-widest disabled:opacity-30 border border-[#d4af37]/30"
+                                                                    >
+                                                                        <ChevronRight size={12} /> Transfer
+                                                                    </button>
+                                                                )}
+                                                                {(user?.role === "admin" || hasPermission("store:update")) && (
                                                                     <>
                                                                         <button
                                                                             onClick={() => { setRestockingItem(item); setShowRestockModal(true); }}
@@ -1260,10 +1262,12 @@ export default function StorePage() {
                                                                         <button onClick={() => handleEditStock(item)} className="p-2 hover:bg-[#1a1c1b] rounded-lg text-gray-400 hover:text-[#f3cf7a] transition-colors border border-transparent hover:border-[#d4af37]/30">
                                                                             <Edit2 size={16} />
                                                                         </button>
-                                                                        <button onClick={() => deleteStockItem(item._id)} className="p-2 hover:bg-red-950/50 rounded-lg text-gray-400 hover:text-red-500 transition-colors border border-transparent hover:border-red-500/30">
-                                                                            <Trash2 size={16} />
-                                                                        </button>
                                                                     </>
+                                                                )}
+                                                                {(user?.role === "admin" || hasPermission("store:delete")) && (
+                                                                    <button onClick={() => deleteStockItem(item._id)} className="p-2 hover:bg-red-950/50 rounded-lg text-gray-400 hover:text-red-500 transition-colors border border-transparent hover:border-red-500/30">
+                                                                        <Trash2 size={16} />
+                                                                    </button>
                                                                 )}
                                                             </div>
                                                         </td>

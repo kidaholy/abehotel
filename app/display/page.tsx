@@ -54,7 +54,7 @@ export default function OrderDisplayPage() {
     const readyOrders = orders.filter((o) => o.status === "ready")
 
     return (
-        <ProtectedRoute requiredRoles={["display", "admin"]}>
+        <ProtectedRoute requiredRoles={["display", "admin"]} requiredPermissions={["display:access"]}>
             <div className="min-h-screen bg-gray-50 text-gray-900 overflow-hidden p-6 flex flex-col font-sans">
                 {/* Header */}
                 <div className="flex justify-between items-center mb-8 bg-white p-6 rounded-3xl shadow-sm border border-gray-100">

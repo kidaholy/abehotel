@@ -5,7 +5,8 @@ interface IUser {
   email: string
   password: string
   plainPassword?: string
-  role: "admin" | "cashier" | "chef" | "bar" | "display" | "store_keeper" | "reception"
+  role: "admin" | "cashier" | "chef" | "bar" | "display" | "store_keeper" | "reception" | "custom"
+  permissions?: string[]
   isActive: boolean
   floorId?: mongoose.Types.ObjectId | string
   assignedCategories?: string[]
@@ -22,7 +23,8 @@ const userSchema = new Schema<IUser>(
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     plainPassword: { type: String },
-    role: { type: String, enum: ["admin", "cashier", "chef", "bar", "display", "store_keeper", "reception"], default: "cashier" },
+    role: { type: String, enum: ["admin", "cashier", "chef", "bar", "display", "store_keeper", "reception", "custom"], default: "cashier" },
+    permissions: [{ type: String }],
     isActive: { type: Boolean, default: true },
     floorId: { type: Schema.Types.ObjectId, ref: "Floor" },
     assignedCategories: [{ type: String }],

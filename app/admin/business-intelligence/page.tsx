@@ -145,7 +145,7 @@ export default function BusinessIntelligencePage() {
 
   if (loading) {
     return (
-      <ProtectedRoute requiredRoles={["admin"]}>
+      <ProtectedRoute requiredRoles={["admin"]} requiredPermissions={["reports:view"]}>
         <div className="min-h-screen bg-[#151716] p-4 flex items-center justify-center">
           <div className="text-center">
             <div className="text-6xl animate-bounce mb-4">🧠</div>
@@ -157,7 +157,7 @@ export default function BusinessIntelligencePage() {
   }
 
   return (
-    <ProtectedRoute requiredRoles={["admin"]}>
+    <ProtectedRoute requiredRoles={["admin"]} requiredPermissions={["reports:view"]}>
       <div className="min-h-screen bg-[#151716] p-4 font-sans text-slate-800">
         <div className="max-w-7xl mx-auto">
           <BentoNavbar />

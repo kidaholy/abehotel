@@ -84,7 +84,7 @@ export default function ChefOrdersPage() {
   const filteredOrders = filterStatus === "all" ? orders : orders.filter((o) => o.status === filterStatus)
 
   return (
-    <ProtectedRoute requiredRoles={["chef"]}>
+    <ProtectedRoute requiredRoles={["chef"]} requiredPermissions={["chef:access"]}>
       <div className="min-h-screen bg-background">
         <SidebarNav />
         <main className="md:ml-64">

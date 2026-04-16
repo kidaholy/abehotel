@@ -48,7 +48,7 @@ export default function TransactionsPage() {
   const avgTransaction = totalRevenue / (orders.length || 1)
 
   return (
-    <ProtectedRoute requiredRoles={["admin"]}>
+    <ProtectedRoute requiredRoles={["admin"]} requiredPermissions={["cashier:access", "reports:view"]}>
       <div className="min-h-screen bg-[#0f1110] p-6 text-white selection:bg-[#d4af37] selection:text-[#0f1110]">
         <div className="max-w-7xl mx-auto space-y-6">
           <BentoNavbar />

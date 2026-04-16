@@ -78,7 +78,7 @@ export default function RoomOrdersPage() {
   }
 
   return (
-    <ProtectedRoute requiredRoles={["cashier", "admin", "super-admin"]}>
+    <ProtectedRoute requiredRoles={["cashier", "admin", "super-admin"]} requiredPermissions={["cashier:access"]}>
       <div className="min-h-screen bg-[#0f1110] p-1 md:p-6 overflow-x-hidden text-white selection:bg-[#c5a059] selection:text-[#0f1110]">
         <div className="max-w-[1900px] mx-auto md:space-y-6 w-full overflow-hidden">
           <div className="mb-4 md:mb-0"><BentoNavbar /></div>

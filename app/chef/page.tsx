@@ -195,7 +195,7 @@ export default function KitchenDisplayPage() {
   // Kiosk / fullscreen mode — only the order grid
   if (isKioskMode) {
     return (
-      <ProtectedRoute requiredRoles={["chef"]}>
+      <ProtectedRoute requiredRoles={["chef"]} requiredPermissions={["chef:access"]}>
         <div className="fixed inset-0 bg-black z-50 flex flex-col overflow-hidden">
           {/* Minimal top bar */}
           <div className="flex items-center justify-between px-6 py-3 bg-[#0f1110] border-b border-white/5 shrink-0">
@@ -251,7 +251,7 @@ export default function KitchenDisplayPage() {
   }
 
   return (
-    <ProtectedRoute requiredRoles={["chef"]}>
+    <ProtectedRoute requiredRoles={["chef"]} requiredPermissions={["chef:access"]}>
       <div className="min-h-screen bg-black p-6 text-white selection:bg-[#d4af37] selection:text-[#0f1110]">
         <div className="max-w-7xl mx-auto space-y-6">
           <BentoNavbar />

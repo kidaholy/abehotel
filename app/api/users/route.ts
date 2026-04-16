@@ -10,7 +10,7 @@ export async function GET(request: Request) {
     const decoded = await validateSession(request)
     console.log("📋 Admin fetching users:", decoded.email || decoded.id)
 
-    if (decoded.role !== "admin") {
+    if (decoded.role !== "admin" && !(decoded.role === "custom" && decoded.permissions?.includes("users:view"))) {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 })
     }
 
@@ -40,15 +40,15 @@ export async function POST(request: Request) {
     const decoded = await validateSession(request)
     console.log("🔐 Admin creating user:", decoded.email || decoded.id)
 
-    if (decoded.role !== "admin") {
+    if (decoded.role !== "admin" && !(decoded.role === "custom" && decoded.permissions?.includes("users:create"))) {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 })
     }
 
     await connectDB()
     console.log("📊 Database connected for user creation")
 
-    const { name, email, role, password, floorId, assignedCategories } = await request.json()
-    console.log("📝 User data received:", { name, email, role, passwordLength: password?.length, assignedCategories })
+    const { name, email, role, password, floorId, assignedCategories, permissions } = await request.json()
+    console.log("📝 User data received:", { name, email, role, passwordLength: password?.length, assignedCategories, permissions })
 
     if (!name || !email || !role || !password) {
       return NextResponse.json({ message: "All fields required" }, { status: 400 })
@@ -72,6 +72,7 @@ export async function POST(request: Request) {
       password: hashedPassword,
       plainPassword: password, // Store plain password for admin view
       role,
+      permissions: (role === "custom" && permissions) ? permissions : undefined,
       isActive: true,
       floorId: floorId || undefined,
       assignedCategories: (role === 'chef' && assignedCategories) ? assignedCategories : undefined,

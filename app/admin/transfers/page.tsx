@@ -167,7 +167,7 @@ export default function TransfersPage() {
     )
 
     return (
-        <ProtectedRoute requiredRoles={["admin", "store_keeper"]}>
+        <ProtectedRoute requiredRoles={["admin", "store_keeper"]} requiredPermissions={["stock:view", "store:view"]}>
             <div className="min-h-screen bg-[#0f1110] p-6">
                 <div className="max-w-7xl mx-auto space-y-6">
                     <BentoNavbar />

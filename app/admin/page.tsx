@@ -34,7 +34,7 @@ export default function AdminDashboardPage() {
 
   if (error) {
     return (
-      <ProtectedRoute requiredRoles={["admin"]}>
+      <ProtectedRoute requiredRoles={["admin"]} requiredPermissions={["overview:view"]}>
         <div className="min-h-screen bg-[#0f1110] p-6 flex items-center justify-center">
           <Card className="bg-[#151716] border-red-900/50 max-w-md shadow-2xl">
             <CardContent className="p-6 text-center">
@@ -53,7 +53,7 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <ProtectedRoute requiredRoles={["admin"]}>
+    <ProtectedRoute requiredRoles={["admin"]} requiredPermissions={["overview:view"]}>
       <div className="min-h-screen bg-[#0f1110] p-6 text-white selection:bg-[#d4af37] selection:text-[#0f1110]">
         <div className="max-w-7xl mx-auto space-y-6">
           <BentoNavbar />

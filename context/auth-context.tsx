@@ -8,7 +8,8 @@ interface User {
   id: string
   name: string
   email: string
-  role: "admin" | "cashier" | "chef" | "bar" | "display" | "store_keeper" | "reception"
+  role: "admin" | "cashier" | "chef" | "bar" | "display" | "store_keeper" | "reception" | "custom"
+  permissions?: string[]
   floorId?: string
   floorNumber?: string
 }
@@ -21,6 +22,7 @@ interface AuthContextType {
   logout: () => void
   isAuthenticated: boolean
   hasRole: (roles: string[]) => boolean
+  hasPermission: (permission: string) => boolean
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -142,7 +144,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       reception: "/reception",
       bar: "/bar",
     }
-    router.push(roleRoutes[data.user.role] || "/login")
+    
+    let defaultRoute = roleRoutes[data.user.role] || "/login"
+    if (data.user.role === "custom" && data.user.permissions) {
+      if (data.user.permissions.includes("admin_dashboard")) defaultRoute = "/admin"
+      else if (data.user.permissions.includes("access_cashier")) defaultRoute = "/cashier"
+      else if (data.user.permissions.includes("access_chef")) defaultRoute = "/chef"
+      else if (data.user.permissions.includes("access_bar")) defaultRoute = "/bar"
+      else if (data.user.permissions.includes("access_reception")) defaultRoute = "/reception"
+    }
+
+    router.push(defaultRoute)
   }
 
   const logout = () => {
@@ -170,6 +182,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         logout,
         isAuthenticated: !!token,
         hasRole: (roles) => (user ? roles.includes(user.role) : false),
+        hasPermission: (permission) => {
+          if (!user) return false;
+          if (user.role === 'admin') return true; // Hardcoded fallback admins
+          if (user.role === 'custom' && user.permissions) return user.permissions.includes(permission);
+          return false;
+        }
       }}
     >
       {children}

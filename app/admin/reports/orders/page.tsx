@@ -200,7 +200,7 @@ export default function OrdersReportPage() {
 
     if (loading) {
         return (
-            <ProtectedRoute requiredRoles={["admin"]}>
+            <ProtectedRoute requiredRoles={["admin"]} requiredPermissions={["reports:view"]}>
                 <div className="min-h-screen bg-[#0f1110] p-8">
                     <div className="max-w-7xl mx-auto">
                         <div className="p-20 text-center">
@@ -215,7 +215,7 @@ export default function OrdersReportPage() {
 
     if (error) {
         return (
-            <ProtectedRoute requiredRoles={["admin"]}>
+            <ProtectedRoute requiredRoles={["admin"]} requiredPermissions={["reports:view"]}>
                 <div className="min-h-screen bg-[#0f1110] p-8">
                     <div className="max-w-7xl mx-auto">
                         <div className="p-20 text-center">
@@ -234,7 +234,7 @@ export default function OrdersReportPage() {
     }
 
     return (
-        <ProtectedRoute requiredRoles={["admin"]}>
+        <ProtectedRoute requiredRoles={["admin"]} requiredPermissions={["reports:view"]}>
             <div className="min-h-screen bg-[#0f1110] p-4 sm:p-6 md:p-8 font-sans print:bg-white print:p-0">
                 <div className="max-w-7xl mx-auto space-y-6">
                     {/* Header */}

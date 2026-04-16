@@ -24,57 +24,6 @@ export async function GET(request: Request) {
       checks.database.status = "✅ Connected"
       checks.database.details = "MongoDB Atlas connection successful"
 
-      // 🛠️ MIGRATION: Normalize all categories in the system
-      console.log("🛠️ Starting category normalization migration...")
-      const cats = await Category.find({})
-      for (const cat of cats) {
-        const normalized = cat.name.trim().normalize("NFC")
-        if (cat.name !== normalized) {
-          cat.name = normalized
-          await cat.save()
-        }
-      }
-
-      const users = await User.find({ role: "chef" })
-      for (const user of users) {
-        if (user.assignedCategories && user.assignedCategories.length > 0) {
-          const normalized = user.assignedCategories.map((c: string) => c.trim().normalize("NFC"))
-          if (JSON.stringify(user.assignedCategories) !== JSON.stringify(normalized)) {
-            user.assignedCategories = normalized
-            await user.save()
-          }
-        }
-      }
-
-      const menuItems = await MenuItem.find({})
-      const menuMap = new Map()
-      for (const item of menuItems) {
-        const normalized = item.category.trim().normalize("NFC")
-        menuMap.set(item._id.toString(), { category: normalized, name: item.name })
-        if (item.category !== normalized) {
-          item.category = normalized
-          await item.save()
-        }
-      }
-
-      const ordersToFix = await Order.find({ status: { $in: ["pending", "preparing", "ready"] } })
-      for (const order of ordersToFix) {
-        let orderChanged = false
-        for (const item of order.items) {
-          const menuInfo = menuMap.get(item.menuItemId)
-          if (menuInfo) {
-            const normalized = menuInfo.category
-            if (!item.category || item.category !== normalized) {
-              item.category = normalized
-              orderChanged = true
-            }
-          }
-        }
-        if (orderChanged) {
-          await order.save()
-        }
-      }
-      console.log("✅ Category normalization and Order backfill complete")
 
     } catch (error) {
       checks.database.status = "❌ Failed"

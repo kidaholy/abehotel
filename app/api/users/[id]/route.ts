@@ -14,7 +14,7 @@ export async function GET(request: Request, context: any) {
 
     const decoded = await validateSession(request)
 
-    if (decoded.role !== "admin") {
+    if (decoded.role !== "admin" && !(decoded.role === "custom" && decoded.permissions?.includes("users:view"))) {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 })
     }
 
@@ -50,7 +50,7 @@ export async function PUT(request: Request, context: any) {
     const decoded = await validateSession(request)
     console.log("🔄 Admin updating user:", decoded.email || decoded.id)
 
-    if (decoded.role !== "admin") {
+    if (decoded.role !== "admin" && !(decoded.role === "custom" && decoded.permissions?.includes("users:update"))) {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 })
     }
 
@@ -66,8 +66,8 @@ export async function PUT(request: Request, context: any) {
       return NextResponse.json({ message: "Invalid JSON in request body" }, { status: 400 })
     }
 
-    const { name, email, role, password, isActive, floorId, assignedCategories, canManageReception } = requestBody
-    console.log("📝 Update data received:", { name, email, role, isActive, hasPassword: !!password, assignedCategories })
+    const { name, email, role, password, isActive, floorId, assignedCategories, canManageReception, permissions } = requestBody
+    console.log("📝 Update data received:", { name, email, role, isActive, hasPassword: !!password, assignedCategories, permissions })
     console.log("🔍 Looking for user with ID:", params?.id)
 
     // Validate required fields
@@ -164,6 +164,7 @@ export async function PUT(request: Request, context: any) {
     if (typeof isActive === 'boolean') updateData.isActive = isActive
     if (floorId !== undefined) updateData.floorId = floorId || null
     if (assignedCategories !== undefined) updateData.assignedCategories = assignedCategories
+    if (typeof permissions !== 'undefined') updateData.permissions = permissions
 
     // Hash new password if provided
     if (password) {
@@ -256,7 +257,7 @@ export async function DELETE(request: Request, context: any) {
     const decoded = await validateSession(request)
     console.log("🗑️ Admin deleting user:", decoded.email || decoded.id)
 
-    if (decoded.role !== "admin") {
+    if (decoded.role !== "admin" && !(decoded.role === "custom" && decoded.permissions?.includes("users:delete"))) {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 })
     }
 
