@@ -64,7 +64,7 @@ interface MenuItem {
     preparationTime?: number
 }
 
-export default function PublicMenuPage() {
+export default function PublicVip1MenuPage() {
     const [menuItems, setMenuItems] = useState<MenuItem[]>([])
     const [mainCategoryFilter, setMainCategoryFilter] = useState<'Food' | 'Drinks'>('Food')
     const [categoryFilter, setCategoryFilter] = useState("all")
@@ -75,15 +75,15 @@ export default function PublicMenuPage() {
         const fetchMenu = async () => {
             try {
                 setLoading(true)
-                const res = await fetch("/api/public/menu")
+                const res = await fetch("/api/public/vip1-menu")
                 if (res.ok) {
                     const data = await res.json()
                     setMenuItems(data)
                 } else {
-                    setError("Failed to load menu")
+                    setError("Failed to load VIP 1 menu")
                 }
             } catch {
-                setError("Failed to load menu. Please check your connection.")
+                setError("Failed to load VIP 1 menu. Please check your connection.")
             } finally {
                 setLoading(false)
             }
@@ -101,14 +101,14 @@ export default function PublicMenuPage() {
         })
 
     return (
-        <div className="min-h-screen bg-[#0A0A0A] text-white selection:bg-[#D4AF37] selection:text-black">
+        <div className="min-h-screen bg-[#0A0A0A] text-white">
             {/* Hero Header */}
             <div className="relative overflow-hidden bg-gradient-to-b from-[#1A1A1A] to-[#0A0A0A] border-b border-[#D4AF37]/20">
                 <div className="absolute inset-0 opacity-10">
-                    <div className="absolute top-4 left-10 text-[#D4AF37] animate-pulse" style={{ animationDelay: '0s' }}><UtensilsCrossed size={48} /></div>
+                    <div className="absolute top-4 left-10 text-[#D4AF37] animate-pulse" style={{ animationDelay: '0s' }}><Coffee size={48} /></div>
                     <div className="absolute top-8 right-20 text-[#D4AF37] animate-pulse" style={{ animationDelay: '0.5s' }}><Crown size={40} /></div>
-                    <div className="absolute bottom-4 left-1/3 text-[#D4AF37] animate-pulse" style={{ animationDelay: '1s' }}><Coffee size={32} /></div>
-                    <div className="absolute bottom-2 right-1/4 text-[#D4AF37] animate-pulse" style={{ animationDelay: '1.5s' }}><Pizza size={40} /></div>
+                    <div className="absolute bottom-4 left-1/3 text-[#D4AF37] animate-pulse" style={{ animationDelay: '1s' }}><Martini size={32} /></div>
+                    <div className="absolute bottom-2 right-1/4 text-[#D4AF37] animate-pulse" style={{ animationDelay: '1.5s' }}><Soup size={40} /></div>
                 </div>
                 <div className="relative max-w-5xl mx-auto px-4 py-20 text-center">
                     <motion.div
@@ -118,14 +118,14 @@ export default function PublicMenuPage() {
                     >
                         <div className="flex items-center justify-center gap-4 mb-4">
                             <div className="h-[1px] w-12 bg-gradient-to-r from-transparent to-[#D4AF37]"></div>
-                            <Sparkles size={32} className="text-[#D4AF37]" />
+                            <Crown size={32} className="text-[#D4AF37]" />
                             <div className="h-[1px] w-12 bg-gradient-to-l from-transparent to-[#D4AF37]"></div>
                         </div>
                         <h1 className="text-5xl md:text-7xl font-black text-white mb-4 tracking-tighter uppercase drop-shadow-[0_0_15px_rgba(212,175,55,0.3)]">
-                            Our <span className="text-[#D4AF37]">Selection</span>
+                            VIP 1 <span className="text-[#D4AF37]">Menu</span>
                         </h1>
                         <p className="text-sm md:text-base text-gray-400 font-bold uppercase tracking-[0.3em]">
-                            Exquisite Flavors & Premium Quality
+                            Excellence in every detail
                         </p>
                     </motion.div>
                 </div>
@@ -138,9 +138,9 @@ export default function PublicMenuPage() {
                         <div className="relative w-24 h-24 mb-6">
                             <div className="absolute inset-0 border-2 border-[#D4AF37]/20 rounded-full animate-ping" />
                             <div className="absolute inset-2 border-2 border-t-[#D4AF37] border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin" />
-                            <div className="absolute inset-0 flex items-center justify-center text-[#D4AF37]"><Sparkles size={40} /></div>
+                            <div className="absolute inset-0 flex items-center justify-center text-[#D4AF37]"><Crown size={40} /></div>
                         </div>
-                        <p className="text-[#D4AF37] font-bold text-lg uppercase tracking-widest animate-pulse">Preparing Selection...</p>
+                        <p className="text-[#D4AF37] font-bold text-lg uppercase tracking-widest animate-pulse">Preparing Premium Menu...</p>
                     </div>
                 )}
 
@@ -148,7 +148,7 @@ export default function PublicMenuPage() {
                 {error && (
                     <div className="text-center py-20 bg-[#121212] rounded-[3rem] border border-[#D4AF37]/20">
                         <div className="text-[#D4AF37] mb-6 flex justify-center"><Frown size={72} /></div>
-                        <h2 className="text-3xl font-black text-white mb-3 tracking-tight">Something went wrong</h2>
+                        <h2 className="text-3xl font-black text-white mb-3 tracking-tight">Access Interrupted</h2>
                         <p className="text-gray-400 mb-8 max-w-xs mx-auto">{error}</p>
                         <button
                             onClick={() => window.location.reload()}
@@ -226,8 +226,8 @@ export default function PublicMenuPage() {
                         {filteredItems.length === 0 && (
                             <div className="text-center py-24 bg-[#121212] rounded-[3rem] border border-white/5 shadow-inner">
                                 <div className="text-[#D4AF37]/20 mb-6 flex justify-center"><Utensils size={80} /></div>
-                                <h2 className="text-2xl font-black text-gray-400 uppercase tracking-widest">Nothing Found</h2>
-                                <p className="text-gray-600 mt-2 font-bold uppercase text-[10px] tracking-[0.3em]">No items in this category yet</p>
+                                <h2 className="text-2xl font-black text-gray-400 uppercase tracking-widest">Minimalism</h2>
+                                <p className="text-gray-600 mt-2 font-bold uppercase text-[10px] tracking-[0.3em]">No selections available in this category</p>
                             </div>
                         )}
 
@@ -316,7 +316,7 @@ export default function PublicMenuPage() {
                             <div className="inline-flex flex-col items-center gap-4">
                                 <div className="flex items-center gap-4">
                                     <div className="h-[1px] w-8 bg-white/10"></div>
-                                    <Sparkles size={24} className="text-[#D4AF37] opacity-50" />
+                                    <Crown size={24} className="text-[#D4AF37] opacity-50" />
                                     <div className="h-[1px] w-8 bg-white/10"></div>
                                 </div>
                                 <div className="bg-[#121212]/50 backdrop-blur-sm px-8 py-4 rounded-[2rem] border border-[#D4AF37]/10 shadow-2xl">

@@ -621,6 +621,7 @@ export default function AdminServicesPage() {
                         title="Standard Menu Management"
                         apiBaseUrl="/api/admin/menu"
                         categoryType="menu"
+                        publicMenuUrl="/public-menu"
                       />
                     )}
 

@@ -22,6 +22,7 @@ export default function Vip1MenuPage() {
             title="VIP 1 Menu Management"
             apiBaseUrl="/api/admin/vip1-menu"
             categoryType="vip1-menu"
+            publicMenuUrl="/public-menu/vip1"
           />
         </div>
       </div>

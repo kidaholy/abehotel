@@ -75,6 +75,7 @@ interface MenuManagementSectionProps {
   apiBaseUrl?: string
   categoryType?: string
   title?: string
+  publicMenuUrl?: string
 }
 
 export function MenuManagementSection({ 
@@ -83,7 +84,8 @@ export function MenuManagementSection({
   showTitle = true,
   apiBaseUrl = "/api/admin/menu",
   categoryType = "menu",
-  title
+  title,
+  publicMenuUrl = "/public-menu"
 }: MenuManagementSectionProps) {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([])
   const [stockItems, setStockItems] = useState<any[]>([])
@@ -590,7 +592,9 @@ export function MenuManagementSection({
   const handleGenerateQr = useCallback(async () => {
     setQrGenerating(true)
     try {
-      const menuUrl = `https://abehotel.vercel.app/public-menu`
+      const origin = typeof window !== 'undefined' ? window.location.origin : 'https://abehotel.vercel.app'
+      const menuUrl = publicMenuUrl.startsWith('http') ? publicMenuUrl : `${origin}${publicMenuUrl}`
+      
       const dataUrl = await QRCode.toDataURL(menuUrl, {
         width: 512,
         margin: 2,
@@ -1317,7 +1321,7 @@ export function MenuManagementSection({
               </div>
 
               <p className="text-[10px] font-bold text-gray-600 mb-8 text-center font-mono break-all px-4 opacity-50">
-                https://abehotel.vercel.app/public-menu
+                {typeof window !== 'undefined' ? window.location.origin : 'https://abehotel.vercel.app'}{publicMenuUrl}
               </p>
 
               <div className="flex gap-3 w-full">
