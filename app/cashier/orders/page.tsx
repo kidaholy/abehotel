@@ -80,11 +80,11 @@ export default function CashierOrdersPage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'completed': return 'bg-green-50 text-green-700 border-green-200'
-      case 'preparing': return 'bg-blue-50 text-blue-700 border-blue-200'
-      case 'ready': return 'bg-teal-50 text-teal-700 border-teal-200'
-      case 'cancelled': return 'bg-red-50 text-red-700 border-red-200'
-      default: return 'bg-gray-50 text-gray-700 border-gray-200'
+      case 'completed': return 'bg-emerald-900/30 text-emerald-400 border-emerald-500/30'
+      case 'preparing': return 'bg-blue-900/30 text-blue-400 border-blue-500/30'
+      case 'ready': return 'bg-[#d4af37]/10 text-[#f3cf7a] border-[#d4af37]/30'
+      case 'cancelled': return 'bg-red-900/30 text-red-400 border-red-500/30'
+      default: return 'bg-[#0f1110] text-gray-500 border-white/10'
     }
   }
 

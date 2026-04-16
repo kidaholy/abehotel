@@ -100,57 +100,57 @@ export default function PublicMenuPage() {
         })
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50">
+        <div className="min-h-screen bg-[#F5F1E8]">
             {/* Hero Header */}
-            <div className="relative overflow-hidden bg-gradient-to-r from-[#8B4513] via-[#A0522D] to-[#D2691E]">
-                <div className="absolute inset-0 opacity-10">
+            <div className="relative overflow-hidden bg-gradient-to-r from-[#8B5A2B] via-[#A0522D] to-[#8B4513]">
+                <div className="absolute inset-0 opacity-5">
                     <div className="absolute top-4 left-10 text-[#FFFBF0] animate-bounce" style={{ animationDelay: '0s' }}><Coffee size={48} /></div>
                     <div className="absolute top-8 right-20 text-[#FFFBF0] animate-bounce" style={{ animationDelay: '0.5s' }}><Cake size={40} /></div>
                     <div className="absolute bottom-4 left-1/3 text-[#FFFBF0] animate-bounce" style={{ animationDelay: '1s' }}><Croissant size={32} /></div>
                     <div className="absolute bottom-2 right-1/4 text-[#FFFBF0] animate-bounce" style={{ animationDelay: '1.5s' }}><Martini size={40} /></div>
                 </div>
-                <div className="relative max-w-5xl mx-auto px-4 py-10 text-center">
+                <div className="relative max-w-5xl mx-auto px-4 py-16 text-center">
                     <motion.div
                         initial={{ opacity: 0, y: -20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.6 }}
                     >
-                        <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-2 tracking-tight drop-shadow-lg flex items-center justify-center gap-2">
-                            <Utensils size={36} /> Our Menu
+                        <h1 className="text-5xl md:text-6xl font-extrabold text-white mb-3 tracking-tight drop-shadow-lg flex items-center justify-center gap-3">
+                            <Utensils size={40} /> Our Menu
                         </h1>
-                        <p className="text-lg text-white/80 font-medium">
+                        <p className="text-lg text-white/90 font-medium">
                             Fresh & delicious — crafted with love
                         </p>
                     </motion.div>
                 </div>
                 {/* Wave separator */}
                 <svg viewBox="0 0 1440 60" className="w-full -mb-1" preserveAspectRatio="none">
-                    <path d="M0,30 C360,60 720,0 1080,30 C1260,45 1380,15 1440,30 L1440,60 L0,60 Z" fill="#FFFBF0" />
+                    <path d="M0,30 C360,60 720,0 1080,30 C1260,45 1380,15 1440,30 L1440,60 L0,60 Z" fill="#F5F1E8" />
                 </svg>
             </div>
 
-            <div className="max-w-5xl mx-auto px-4 py-6">
+            <div className="max-w-5xl mx-auto px-4 py-8">
                 {/* Loading */}
                 {loading && (
                     <div className="flex flex-col items-center justify-center py-20">
                         <div className="relative w-20 h-20 mb-4">
-                            <div className="absolute inset-0 border-4 border-amber-200 rounded-full animate-ping" />
-                            <div className="absolute inset-2 border-4 border-t-[#8B4513] border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin" />
-                            <div className="absolute inset-0 flex items-center justify-center text-[#8B4513]"><Coffee size={32} /></div>
+                            <div className="absolute inset-0 border-4 border-[#D4A574] rounded-full animate-ping" />
+                            <div className="absolute inset-2 border-4 border-t-[#8B5A2B] border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin" />
+                            <div className="absolute inset-0 flex items-center justify-center text-[#8B5A2B]"><Coffee size={32} /></div>
                         </div>
-                        <p className="text-[#8B4513] font-semibold text-lg">Loading menu...</p>
+                        <p className="text-[#8B5A2B] font-semibold text-lg">Loading menu...</p>
                     </div>
                 )}
 
                 {/* Error */}
                 {error && (
                     <div className="text-center py-16">
-                    <div className="text-gray-200 mb-4 flex justify-center"><Frown size={64} /></div>
-                        <h2 className="text-2xl font-bold text-red-500 mb-2">Oops!</h2>
-                        <p className="text-gray-500 mb-6">{error}</p>
+                    <div className="text-[#D4A574] mb-4 flex justify-center"><Frown size={64} /></div>
+                        <h2 className="text-2xl font-bold text-[#8B5A2B] mb-2">Oops!</h2>
+                        <p className="text-gray-600 mb-6">{error}</p>
                         <button
                             onClick={() => window.location.reload()}
-                            className="px-6 py-3 bg-[#8B4513] text-white rounded-full font-bold hover:bg-[#A0522D] transition-colors shadow-lg"
+                            className="px-6 py-3 bg-[#8B5A2B] text-white rounded-full font-bold hover:bg-[#A0522D] transition-colors shadow-lg flex items-center justify-center gap-2 mx-auto"
                         >
                             <RefreshCw size={18} /> Try Again
                         </button>
@@ -160,18 +160,18 @@ export default function PublicMenuPage() {
                 {!loading && !error && (
                     <>
                         {/* Food / Drinks Tabs */}
-                        <div className="flex justify-center gap-3 mb-6">
+                        <div className="flex justify-center gap-4 mb-8">
                             {(['Food', 'Drinks'] as const).map(tab => (
                                 <button
                                     key={tab}
                                     onClick={() => { setMainCategoryFilter(tab); setCategoryFilter('all') }}
                                     className={`flex items-center gap-2 px-8 py-3 rounded-full font-extrabold text-base transition-all duration-300 shadow-md ${mainCategoryFilter === tab
-                                        ? 'bg-[#8B4513] text-white shadow-xl scale-105 ring-2 ring-[#D2691E]/50'
-                                        : 'bg-white text-gray-500 hover:bg-amber-50 hover:text-[#8B4513] border border-gray-200'
+                                        ? 'bg-[#8B5A2B] text-white shadow-lg scale-105 ring-2 ring-[#D4A574]/50'
+                                        : 'bg-white text-gray-600 hover:bg-[#F5F1E8] hover:text-[#8B5A2B] border border-[#D4A574]/30'
                                         }`}
                                 >
                                     {tab === 'Food' ? <Utensils size={20} /> : <Coffee size={20} />} {tab}
-                                    <span className="text-xs opacity-70 bg-black/10 px-2 py-0.5 rounded-full">
+                                    <span className="text-xs opacity-70 bg-[#8B5A2B]/10 px-2 py-0.5 rounded-full">
                                         {menuItems.filter(i => (i.mainCategory || 'Food') === tab).length}
                                     </span>
                                 </button>
@@ -179,7 +179,7 @@ export default function PublicMenuPage() {
                         </div>
 
                         {/* Sub-category Slider (Slide View) */}
-                        <div className="mb-8 relative px-10">
+                        <div className="mb-10 relative px-10">
                             <Carousel
                                 opts={{
                                     align: "start",
@@ -195,8 +195,8 @@ export default function PublicMenuPage() {
                                                 className={cn(
                                                     "flex items-center gap-2 px-5 py-2.5 rounded-full font-bold whitespace-nowrap text-sm transition-all duration-300 border shadow-sm flex-shrink-0",
                                                     categoryFilter === cat
-                                                        ? "bg-[#8B4513] text-white border-[#8B4513] shadow-md scale-105"
-                                                        : "bg-white text-gray-500 hover:bg-amber-50 hover:text-[#8B4513] border-gray-200"
+                                                        ? "bg-[#8B5A2B] text-white border-[#8B5A2B] shadow-md scale-105"
+                                                        : "bg-white text-gray-600 hover:bg-[#F5F1E8] hover:text-[#8B5A2B] border-[#D4A574]/30"
                                                 )}
                                             >
                                                 <span>{cat === "all" ? <Sparkles size={16} /> : getCategoryIcon(cat)}</span>
@@ -206,8 +206,8 @@ export default function PublicMenuPage() {
                                     ))}
                                 </CarouselContent>
                                 <div className="hidden md:block">
-                                    <CarouselPrevious className="-left-12 size-8 bg-white/80 hover:bg-white text-[#8B4513] border-none shadow-md" />
-                                    <CarouselNext className="-right-12 size-8 bg-white/80 hover:bg-white text-[#8B4513] border-none shadow-md" />
+                                    <CarouselPrevious className="-left-12 size-8 bg-white/80 hover:bg-white text-[#8B5A2B] border-none shadow-md" />
+                                    <CarouselNext className="-right-12 size-8 bg-white/80 hover:bg-white text-[#8B5A2B] border-none shadow-md" />
                                 </div>
                             </Carousel>
                         </div>
@@ -215,9 +215,9 @@ export default function PublicMenuPage() {
                         {/* Empty */}
                         {filteredItems.length === 0 && (
                             <div className="text-center py-20">
-                                <div className="text-gray-200 mb-4 flex justify-center opacity-40"><Utensils size={64} /></div>
-                                <h2 className="text-2xl font-bold text-gray-400">No items found</h2>
-                                <p className="text-gray-400 mt-1">Try a different category</p>
+                                <div className="text-[#D4A574] mb-4 flex justify-center opacity-40"><Utensils size={64} /></div>
+                                <h2 className="text-2xl font-bold text-gray-500">No items found</h2>
+                                <p className="text-gray-500 mt-1">Try a different category</p>
                             </div>
                         )}
 
@@ -236,10 +236,10 @@ export default function PublicMenuPage() {
                                             animate={{ opacity: 1, y: 0 }}
                                             exit={{ opacity: 0, scale: 0.95 }}
                                             transition={{ duration: 0.2, delay: idx * 0.03 }}
-                                            className="group bg-white rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden border border-gray-100 flex items-center p-3 gap-4"
+                                            className="group bg-white rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden border border-[#D4A574]/20 flex items-center p-4 gap-4"
                                         >
                                             {/* Compact Image */}
-                                            <div className="relative w-24 h-24 rounded-xl overflow-hidden shrink-0 bg-amber-50 flex items-center justify-center">
+                                            <div className="relative w-24 h-24 rounded-xl overflow-hidden shrink-0 bg-[#F5F1E8] flex items-center justify-center">
                                                 {item.image ? (
                                                     <Image
                                                         src={item.image}
@@ -249,35 +249,33 @@ export default function PublicMenuPage() {
                                                         sizes="100px"
                                                     />
                                                 ) : (
-                                                    getCategoryIcon(item.category)
+                                                    <span className="text-[#D4A574]">{getCategoryIcon(item.category)}</span>
                                                 )}
-
-                                                {/* Price Overlay for Mobile accessibility if needed, but we put it on right */}
                                             </div>
 
                                             {/* Details */}
                                             <div className="flex-grow min-w-0">
-                                                <div className="flex justify-between items-start mb-0.5">
-                                                    <h3 className="text-base font-bold text-gray-800 transition-colors group-hover:text-[#8B4513] truncate pr-2">
+                                                <div className="flex justify-between items-start mb-1">
+                                                    <h3 className="text-base font-bold text-gray-800 transition-colors group-hover:text-[#8B5A2B] truncate pr-2">
                                                         {item.menuId ? `#${item.menuId} ` : ""}{item.name}
                                                     </h3>
-                                                    <span className="text-base font-extrabold text-[#8B4513] whitespace-nowrap">
+                                                    <span className="text-base font-extrabold text-[#8B5A2B] whitespace-nowrap">
                                                         {item.price} Br
                                                     </span>
                                                 </div>
 
                                                 {item.description && (
-                                                    <p className="text-xs text-gray-500 line-clamp-2 mb-2 leading-relaxed">
+                                                    <p className="text-xs text-gray-600 line-clamp-2 mb-2 leading-relaxed">
                                                         {item.description}
                                                     </p>
                                                 )}
 
                                                 <div className="flex items-center gap-3">
-                                                    <span className="inline-flex items-center px-2 py-0.5 bg-amber-50 text-[#8B4513] text-[10px] font-bold rounded-md border border-amber-100/50 uppercase tracking-tighter">
+                                                    <span className="inline-flex items-center px-2 py-0.5 bg-[#F5F1E8] text-[#8B5A2B] text-[10px] font-bold rounded-md border border-[#D4A574]/30 uppercase tracking-tighter">
                                                         {item.category}
                                                     </span>
                                                     {item.preparationTime && (
-                                                        <span className="flex items-center gap-1 text-[10px] text-gray-400 font-medium">
+                                                        <span className="flex items-center gap-1 text-[10px] text-gray-500 font-medium">
                                                             <Timer size={10} /> {item.preparationTime} min
                                                         </span>
                                                     )}
@@ -285,7 +283,7 @@ export default function PublicMenuPage() {
                                             </div>
 
                                             {/* Selection Indicator/Arrow */}
-                                            <div className="text-amber-200 group-hover:text-[#8B4513] transition-colors pr-1">
+                                            <div className="text-[#D4A574] group-hover:text-[#8B5A2B] transition-colors pr-1">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6" /></svg>
                                             </div>
                                         </motion.div>
@@ -296,9 +294,9 @@ export default function PublicMenuPage() {
 
                         {/* Footer */}
                         <div className="text-center mt-12 pb-8">
-                            <div className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm px-6 py-3 rounded-full shadow-sm border border-gray-100">
-                                <Coffee size={18} className="text-[#8B4513]" />
-                                <span className="text-sm text-gray-500 font-medium">Powered by Abekut</span>
+                            <div className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm px-6 py-3 rounded-full shadow-sm border border-[#D4A574]/20">
+                                <Coffee size={18} className="text-[#8B5A2B]" />
+                                <span className="text-sm text-gray-600 font-medium">Powered by Abekut</span>
                             </div>
                         </div>
                     </>

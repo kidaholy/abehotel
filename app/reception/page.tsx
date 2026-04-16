@@ -71,6 +71,16 @@ function GuestCard({ s, rooms, token, notify, fetchSubmissions, setExtendGuest, 
   }
   const gd = calcGuestDuration()
 
+  // Remaining days: positive = days left, negative = overdue
+  const calcRemainingDays = () => {
+    if (!s.checkOut || (s.status !== "check_in" && s.status !== "guests")) return null
+    const now = new Date()
+    const outDate = new Date(`${s.checkOut}T${s.checkOutTime || "12:00"}`)
+    const diffMs = outDate.getTime() - now.getTime()
+    return Math.ceil(diffMs / (1000 * 60 * 60 * 24))
+  }
+  const remainingDays = calcRemainingDays()
+
   return (
     <div key={s._id} className="relative bg-[#151716] rounded-[2rem] border border-white/5 overflow-hidden group hover:border-[#d4af37]/30 transition-all flex flex-col shadow-2xl">
       {/* Top Accent Bar */}
@@ -154,16 +164,47 @@ function GuestCard({ s, rooms, token, notify, fetchSubmissions, setExtendGuest, 
             </div>
           )}
 
-          {/* Row 3: Dates */}
-          <div className="flex flex-wrap items-center gap-2 border-t border-white/5 pt-3">
-            <div className="p-1.5 bg-[#1a1c1b] rounded-lg border border-white/5">
-               <Calendar size={12} className="text-[#d4af37]" />
+          {/* Row 3: Dates + Remaining Days */}
+          <div className="space-y-2 border-t border-white/5 pt-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="p-1.5 bg-[#1a1c1b] rounded-lg border border-white/5">
+                 <Calendar size={12} className="text-[#d4af37]" />
+              </div>
+              <span className="text-[10px] font-bold text-gray-300">{s.checkIn} → {s.checkOut || "?"}</span>
+              {s.guests && (
+                <span className="ml-auto text-[9px] font-black px-2 py-0.5 bg-[#1a1c1b] text-gray-500 rounded uppercase tracking-widest border border-white/5">
+                  {s.guests} Guest{parseInt(s.guests) > 1 ? "s" : ""}
+                </span>
+              )}
             </div>
-            <span className="text-[10px] font-bold text-gray-300">{s.checkIn} → {s.checkOut || "?"}</span>
-            {s.guests && (
-              <span className="ml-auto text-[9px] font-black px-2 py-0.5 bg-[#1a1c1b] text-gray-500 rounded uppercase tracking-widest border border-white/5">
-                {s.guests} Guest{parseInt(s.guests) > 1 ? "s" : ""}
-              </span>
+
+            {/* Remaining Days Badge */}
+            {remainingDays !== null && (
+              <div className={`flex items-center justify-between px-4 py-2.5 rounded-xl border ${
+                remainingDays < 0
+                  ? "bg-red-950/40 border-red-500/30"
+                  : remainingDays === 0
+                  ? "bg-amber-950/40 border-amber-500/30"
+                  : remainingDays <= 2
+                  ? "bg-orange-950/30 border-orange-500/20"
+                  : "bg-emerald-950/30 border-emerald-500/20"
+              }`}>
+                <span className={`text-[9px] font-black uppercase tracking-widest ${
+                  remainingDays < 0 ? "text-red-400" : remainingDays === 0 ? "text-amber-400" : remainingDays <= 2 ? "text-orange-400" : "text-emerald-400"
+                }`}>
+                  {remainingDays < 0 ? "⚠ Overdue" : remainingDays === 0 ? "⚡ Due Today" : "🕐 Remaining"}
+                </span>
+                <span className={`text-lg font-black ${
+                  remainingDays < 0 ? "text-red-400" : remainingDays === 0 ? "text-amber-400" : remainingDays <= 2 ? "text-orange-300" : "text-emerald-400"
+                }`}>
+                  {remainingDays < 0 ? Math.abs(remainingDays) : remainingDays}
+                  <span className={`text-[10px] ml-1 font-bold ${
+                    remainingDays < 0 ? "text-red-600" : remainingDays === 0 ? "text-amber-600" : "text-emerald-700"
+                  }`}>
+                    {remainingDays < 0 ? "day(s) past checkout" : remainingDays === 1 ? "day left" : "days left"}
+                  </span>
+                </span>
+              </div>
             )}
           </div>
         </div>
