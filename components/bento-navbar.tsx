@@ -54,7 +54,7 @@ export function BentoNavbar() {
 
     // Check if cashier is assigned to any floor
     useEffect(() => {
-        if (user?.role !== "cashier" || !token) {
+        if (!user || !token) {
             setIsRoomServiceHandler(false)
             return
         }
@@ -85,6 +85,7 @@ export function BentoNavbar() {
         { label: t("nav.stock"), href: "/admin/stock" },
         { label: t("nav.reports"), href: "/admin/reports" },
         {label: t("nav.services"), href: "/admin/services"},
+        ...(isRoomServiceHandler ? [{ label: "Room Orders", href: "/cashier/room-orders" }] : []),
         {label: t("nav.settings"), href: "/admin/settings"}
     ]
 

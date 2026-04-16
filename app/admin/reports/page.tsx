@@ -177,27 +177,60 @@ export default function ReportsPage() {
     const cashierRevenueMap = filteredOrders
         .filter(o => o.status !== "cancelled" && !o.isDeleted)
         .reduce((acc, o) => {
-            const cashierName = o.createdBy?.name || "Unknown";
-            const key = cashierName;
+            const floorNum = (o.floorNumber || "OTHER").trim().toUpperCase();
+            let managementGroup = "Unknown Management";
             
-            if (!acc[key]) acc[key] = { total: 0, breakdowns: {} as Record<string, number> };
+            if (floorNum === "01" || floorNum.includes("ROOMS")) {
+                managementGroup = "Room Management";
+            } else if (floorNum === "02") {
+                managementGroup = "Floor 2 Management";
+            } else if (floorNum === "GROUND") {
+                managementGroup = "Ground Floor Management";
+            } else {
+                managementGroup = `${floorNum} Management`;
+            }
+
+            const key = managementGroup;
+            
+            if (!acc[key]) {
+                acc[key] = { 
+                    total: 0, 
+                    breakdowns: {} as Record<string, number>,
+                    staff: new Set<string>()
+                };
+            }
             
             acc[key].total += (o.totalAmount || 0);
+            if (o.createdBy?.name) acc[key].staff.add(o.createdBy.name);
 
             const floorLabel = o.floorNumber || "Other";
             acc[key].breakdowns[floorLabel] = (acc[key].breakdowns[floorLabel] || 0) + (o.totalAmount || 0);
             
             return acc;
-        }, {} as Record<string, { total: number, breakdowns: Record<string, number> }>);
+        }, {} as Record<string, { total: number, breakdowns: Record<string, number>, staff: Set<string> }>);
 
     const cashierRevenue = Object.entries(cashierRevenueMap)
-        .map(([name, data]: [string, any]) => ({ name, amount: data.total, breakdowns: data.breakdowns }))
+        .map(([group, data]: [string, any]) => {
+            const staffList = Array.from(data.staff).join(", ");
+            // Use staff names as primary, group in brackets
+            return { 
+                name: staffList ? `${staffList} (${group})` : group, 
+                amount: data.total, 
+                breakdowns: data.breakdowns 
+            }
+        })
         .sort((a, b) => b.amount - a.amount);
 
     const menuItemSalesMap = filteredOrders.reduce((acc, order) => {
         if (order.status === 'cancelled' || order.isDeleted) return acc;
-        const cashierName = order.createdBy?.name || "Unknown";
-        const cashierLabel = cashierName;
+        const floorNum = (order.floorNumber || "OTHER").trim().toUpperCase();
+        let managementGroup = "Unknown Management";
+        if (floorNum === "01" || floorNum.includes("ROOMS")) managementGroup = "Room Management";
+        else if (floorNum === "02") managementGroup = "Floor 2 Management";
+        else if (floorNum === "GROUND") managementGroup = "Ground Floor Management";
+        else managementGroup = `${floorNum} Management`;
+
+        const cashierLabel = managementGroup;
 
         order.items.forEach((item: any) => {
             const name = item.name;
@@ -624,7 +657,7 @@ export default function ReportsPage() {
                                                     {cashierRevenue.length > 0 && (
                                                         <>
                                                             <tr className="bg-white/[0.02]">
-                                                                <td colSpan={4} className="p-2 pl-4 text-[9px] font-black text-gray-500 uppercase tracking-widest">Cashier Contributions</td>
+                                                                <td colSpan={4} className="p-2 pl-4 text-[9px] font-black text-gray-400 uppercase tracking-widest">Cashier Contributions</td>
                                                             </tr>
                                                             {cashierRevenue.map((c, idx) => (
                                                                 <tr key={idx} className="hover:bg-white/5 transition-colors border-l-2 border-[#d4af37]/30">
@@ -1295,7 +1328,7 @@ export default function ReportsPage() {
                                                     <table className="w-full text-left relative">
                                                         <thead className="bg-[#151716] text-gray-400 uppercase text-[10px] font-bold tracking-widest sticky top-0 z-10 border-b border-white/5">
                                                             <tr>
-                                                                <th className="p-4">Item Sold by {cashierRevenue[activeCashierIdx]?.name.split(' (')[0]}</th>
+                                                                <th className="p-4">Item Sold by {cashierRevenue[activeCashierIdx]?.name}</th>
                                                                 <th className="p-4 text-center">Category</th>
                                                                 <th className="p-4 text-center">Qty</th>
                                                                 <th className="p-4 text-right">Revenue</th>

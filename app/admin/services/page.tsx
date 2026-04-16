@@ -16,6 +16,7 @@ import {
   Trash2, 
   Pencil, 
   X,
+  Check,
   Building,
   RefreshCw,
   Wine,
@@ -45,7 +46,7 @@ import {
   Link
 } from "lucide-react"
 
-type Tab = "menu-standard" | "vip" | "rooms" | "reception"
+type Tab = "menu-standard" | "vip" | "rooms" | "reception" | "room-orders"
 
 interface TabButtonProps {
   active: boolean
@@ -115,6 +116,7 @@ export default function AdminServicesPage() {
   
   // Room Order tracking for Admin
   const [roomOrdersCount, setRoomOrdersCount] = useState(0)
+  const [roomOrders, setRoomOrders] = useState<any[]>([])
   const prevRoomOrdersCount = useRef(0)
   const prevReceptionCount = useRef(0)
 
@@ -311,7 +313,7 @@ export default function AdminServicesPage() {
       const usersRes = await fetch("/api/users", { headers: { Authorization: `Bearer ${token}` } })
       if (usersRes.ok) {
         const users = await usersRes.json()
-        setCashiers(users.filter((u: any) => u.role === 'cashier'))
+        setCashiers(users.filter((u: any) => u.role === 'cashier' || u.role === 'admin'))
       }
     } catch (error) {
       console.error("Fetch error:", error)
@@ -337,6 +339,7 @@ export default function AdminServicesPage() {
         const res = await fetch("/api/room-orders", { headers: { Authorization: `Bearer ${token}` } })
         if (res.ok) {
           const data = await res.json()
+          setRoomOrders(data)
           const newCount = data.length
           if (newCount > prevRoomOrdersCount.current) {
             let plays = 0
@@ -512,6 +515,41 @@ export default function AdminServicesPage() {
     }
   }
 
+  const handleRoomOrderAction = async (orderId: string, action: 'approve' | 'deny') => {
+    if (!token) return
+    try {
+      const newStatus = action === 'approve' ? 'pending' : 'cancelled'
+      const res = await fetch(`/api/orders/${orderId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ status: newStatus })
+      })
+
+      if (res.ok) {
+        notify({
+          title: "Success",
+          message: `Order successfully ${action === 'approve' ? 'approved to kitchen' : 'denied'}.`,
+          type: "success"
+        })
+        // Fetch room orders count/list
+        const res_ = await fetch("/api/room-orders", { headers: { Authorization: `Bearer ${token}` } })
+        if (res_.ok) {
+          const data = await res_.json()
+          setRoomOrders(data)
+          setRoomOrdersCount(data.length)
+        }
+      } else {
+        const err = await res.json()
+        notify({ title: "Error", message: err.message || "Action failed", type: "error" })
+      }
+    } catch (error) {
+      notify({ title: "Error", message: "Network error", type: "error" })
+    }
+  }
+
   const router = useRouter()
 
   return (
@@ -526,6 +564,14 @@ export default function AdminServicesPage() {
             <TabButton active={activeTab === "menu-standard"} onClick={() => setActiveTab("menu-standard")} icon={<Utensils size={16} />} label="Standard Menu" />
             <TabButton active={activeTab === "vip"} onClick={() => setActiveTab("vip")} icon={<Crown size={16} />} label="VIP Menus" />
             <TabButton active={activeTab === "reception"} onClick={() => setActiveTab("reception")} icon={<ConciergeBell size={16} />} label="Reception" />
+            <div className="relative">
+              <TabButton active={activeTab === "room-orders"} onClick={() => setActiveTab("room-orders")} icon={<Utensils size={16} />} label="Room Orders" />
+              {roomOrdersCount > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[8px] font-black rounded-full flex items-center justify-center px-1 shadow-lg border border-[#151716]">
+                  {roomOrdersCount}
+                </span>
+              )}
+            </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
@@ -1004,6 +1050,91 @@ export default function AdminServicesPage() {
                                 </div>
                               )
                             })
+                        )}
+                      </div>
+                    )}
+
+                    {/* Room Orders Tab Content */}
+                    {activeTab === "room-orders" && (
+                      <div className="space-y-6">
+                        <div className="flex items-center justify-between mb-8">
+                          <div>
+                            <h2 className="text-2xl font-playfair italic font-bold text-[#f3cf7a] flex items-center gap-3">
+                              Room Order <span className="text-white">Approvals</span> <ConciergeBell className="text-[#d4af37]" />
+                            </h2>
+                            <p className="text-gray-500 font-bold uppercase tracking-widest text-[10px] mt-1">Review guest requests before kitchen preparation</p>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-1">Queue Status</span>
+                            <span className="text-2xl font-black text-[#f3cf7a]">{roomOrders.length} <span className="text-xs text-gray-600">PENDING</span></span>
+                          </div>
+                        </div>
+
+                        {roomOrders.length === 0 ? (
+                          <div className="flex flex-col items-center justify-center py-32 bg-[#0f1110] rounded-[2rem] border border-white/5">
+                            <Check className="h-16 w-16 text-emerald-500/20 mb-4" />
+                            <h3 className="text-xl font-bold text-gray-600 uppercase tracking-widest">All Orders Handled</h3>
+                            <p className="text-gray-700 mt-2 text-xs font-medium">No new room requests waiting for approval.</p>
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                            {roomOrders.map(order => (
+                              <div key={order._id} className="bg-[#0f1110] rounded-3xl border border-white/10 overflow-hidden shadow-2xl flex flex-col group hover:border-[#d4af37]/30 transition-all">
+                                <div className="bg-[#1a1c1b] p-5 border-b border-white/5 flex items-start justify-between">
+                                  <div>
+                                    <div className="flex items-center gap-3 mb-1">
+                                      <div className="bg-[#d4af37]/10 p-2 rounded-xl border border-[#d4af37]/20">
+                                        <ConciergeBell size={18} className="text-[#d4af37]" />
+                                      </div>
+                                      <div>
+                                        <h3 className="text-2xl font-black text-white leading-tight">{order.tableNumber}</h3>
+                                        <p className="text-[9px] font-black text-[#f3cf7a] uppercase tracking-widest mt-0.5">Floor #{order.floorNumber}</p>
+                                      </div>
+                                    </div>
+                                    <p className="text-[10px] uppercase font-bold tracking-widest text-gray-500 flex items-center gap-1.5 mt-2">
+                                      <Clock size={12} /> {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    </p>
+                                  </div>
+                                  <div className="bg-[#0f1110] px-4 py-2 rounded-xl border border-white/5 text-right">
+                                    <p className="text-[8px] uppercase font-black tracking-widest text-gray-600 mb-0.5">Total</p>
+                                    <p className="text-md font-black text-[#f3cf7a]">{order.totalAmount} Br</p>
+                                  </div>
+                                </div>
+
+                                <div className="p-6 flex-1 overflow-y-auto custom-scrollbar" style={{ maxHeight: "250px" }}>
+                                  <div className="space-y-4">
+                                    {order.items.map((item: any, i: number) => (
+                                      <div key={i} className="flex justify-between items-start gap-3 border-b border-white/5 pb-3 last:border-0 last:pb-0">
+                                        <div>
+                                          <p className="font-bold text-gray-200 text-sm leading-tight">{item.quantity}x {item.name}</p>
+                                          {item.notes && <p className="text-[10px] text-orange-400 font-bold mt-1 bg-orange-500/10 px-2 py-0.5 rounded-lg w-fit border border-orange-500/20 shadow-sm">Note: {item.notes}</p>}
+                                        </div>
+                                        <p className="text-xs font-black text-white">{item.price * item.quantity} Br</p>
+                                      </div>
+                                    ))}
+                                  </div>
+
+                                  {order.notes && order.notes !== "Room Service App Order" && (
+                                    <div className="mt-5 bg-[#1a1c1b] border border-white/5 p-4 rounded-xl flex items-start gap-3 text-gray-400">
+                                      <MessageSquare size={14} className="mt-0.5 shrink-0 text-gray-500" />
+                                      <p className="text-xs italic">"{order.notes}"</p>
+                                    </div>
+                                  )}
+                                </div>
+
+                                <div className="p-4 bg-[#0f1110] border-t border-white/5 grid grid-cols-2 gap-3 shrink-0">
+                                  <button onClick={() => handleRoomOrderAction(order._id, 'deny')}
+                                    className="flex items-center justify-center gap-2 bg-[#151716] hover:bg-red-950/30 text-gray-500 hover:text-red-400 border border-transparent hover:border-red-900/40 rounded-2xl py-3.5 font-bold text-[10px] uppercase tracking-widest transition-all">
+                                    <XCircle size={16} /> Deny
+                                  </button>
+                                  <button onClick={() => handleRoomOrderAction(order._id, 'approve')}
+                                    className="flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600/20 to-emerald-500/20 hover:from-emerald-600/40 hover:to-emerald-500/40 text-emerald-400 border border-emerald-500/30 rounded-2xl py-3.5 font-bold text-[10px] uppercase tracking-widest transition-all shadow-lg hover:shadow-emerald-500/10">
+                                    <CheckCircle2 size={16} /> Approve
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
                         )}
                       </div>
                     )}
