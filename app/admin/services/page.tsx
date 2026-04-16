@@ -829,37 +829,15 @@ export default function AdminServicesPage() {
                                     r.status === 'rejected' ? 'bg-red-500' : 
                                     r.status === 'check_out' ? 'bg-purple-500' : 'bg-yellow-500'
                                   }`} />
-                                  
-                                  {/* Profile Image Banner Overlay */}
-                                  <div className="w-full h-40 min-h-[160px] flex-shrink-0 relative bg-[#0f1110] border-b border-white/5 overflow-hidden">
-                                     {r.photoUrl || r.idPhotoFront ? (
-                                       <img src={r.photoUrl || r.idPhotoFront} alt={r.guestName} className="w-full h-full object-cover" />
-                                     ) : (
-                                       <div className="w-full h-full flex items-center justify-center opacity-10">
-                                         <Users size={64} className="text-[#d4af37]" />
-                                       </div>
-                                     )}
-                                     <div className="absolute inset-0 bg-gradient-to-t from-[#151716] via-transparent to-transparent" />
-                                  </div>
-
-                                  {/* Circular Avatar Overlap */}
-                                  <div className="relative h-6 w-full px-5">
-                                    <div className="absolute -top-10 left-5 w-20 h-20 rounded-2xl border-4 border-[#151716] bg-[#1a1c1b] overflow-hidden shadow-2xl flex-shrink-0 z-20">
-                                      {r.photoUrl ? (
-                                        <img src={r.photoUrl} alt={r.guestName} className="w-full h-full object-cover" />
-                                      ) : (
-                                        <div className="w-full h-full flex items-center justify-center">
-                                          <Users size={32} className="text-gray-700" />
-                                        </div>
-                                      )}
-                                    </div>
+                                                                {/* Delete Button */}
+                                  <div className="absolute top-4 right-4 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
                                     <button onClick={() => handleReceptionDelete(r._id)} 
-                                      className="absolute right-5 -top-5 opacity-0 group-hover:opacity-100 p-2 bg-red-950/50 hover:bg-red-600 text-red-500 hover:text-white rounded-xl border border-red-500/30 transition-all shadow-xl z-20">
+                                      className="p-2 bg-red-950/50 hover:bg-red-600 text-red-500 hover:text-white rounded-xl border border-red-500/30 transition-all shadow-xl">
                                       <Trash2 size={14} />
                                     </button>
                                   </div>
 
-                                  <div className="p-5 flex flex-col gap-4 mt-4">
+                                  <div className="p-5 flex flex-col gap-4">
                                     {/* Header: Name & Status */}
                                     <div className="flex items-start justify-between gap-4">
                                       <div className="flex flex-col gap-0.5">
