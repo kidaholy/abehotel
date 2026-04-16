@@ -129,6 +129,7 @@ export default function AdminServicesPage() {
   const [reviewNote, setReviewNote] = useState("")
   const [actioning, setActioning] = useState(false)
   const [extendDate, setExtendDate] = useState("")
+  const receptionDatePickerRef = useRef<HTMLInputElement>(null)
 
   const INQUIRY_TYPES: Record<string, { label: string; icon: any }> = {
     check_in:     { label: "Check-In",       icon: <Hotel size={13} /> },
@@ -151,7 +152,7 @@ export default function AdminServicesPage() {
 
   const fetchReception = async () => {
     if (!token) return
-    setReceptionLoading(true)
+    if (receptionRequests.length === 0) setReceptionLoading(true)
     try {
       const res = await fetch("/api/reception-requests", { headers: { Authorization: `Bearer ${token}` } })
       if (res.ok) {
@@ -649,9 +650,18 @@ export default function AdminServicesPage() {
                              <button onClick={() => setReceptionDateFilter("week")} className={`px-3 py-2 rounded-lg transition-all ${receptionDateFilter === "week" ? "bg-[#d4af37]/10 text-[#f3cf7a]" : "hover:text-gray-300"}`}>Week</button>
                              <button onClick={() => setReceptionDateFilter("year")} className={`px-3 py-2 rounded-lg transition-all ${receptionDateFilter === "year" ? "bg-[#d4af37]/10 text-[#f3cf7a]" : "hover:text-gray-300"}`}>Year</button>
                              <div className="relative flex items-center">
-                                <input type="date" value={customReceptionDate} onChange={e => { setCustomReceptionDate(e.target.value); setReceptionDateFilter("custom"); }} 
-                                       className="opacity-0 absolute inset-0 w-full h-full cursor-pointer [color-scheme:dark]" />
-                                <button className={`px-3 py-2 rounded-lg transition-all flex items-center gap-1 ${receptionDateFilter === "custom" ? "bg-[#d4af37]/10 text-[#f3cf7a]" : "hover:text-gray-300"}`}>
+                                <input 
+                                  ref={receptionDatePickerRef}
+                                  type="date" 
+                                  value={customReceptionDate} 
+                                  onChange={e => { setCustomReceptionDate(e.target.value); setReceptionDateFilter("custom"); }} 
+                                  className="sr-only" 
+                                />
+                                <button 
+                                  type="button"
+                                  onClick={() => (receptionDatePickerRef.current as any)?.showPicker?.() ?? receptionDatePickerRef.current?.click()}
+                                  className={`px-3 py-2 rounded-lg transition-all flex items-center gap-1 ${receptionDateFilter === "custom" ? "bg-[#d4af37]/10 text-[#f3cf7a]" : "hover:text-gray-300"}`}
+                                >
                                    <Calendar size={12} /> {receptionDateFilter === "custom" && customReceptionDate ? customReceptionDate : "Pick Date"}
                                 </button>
                              </div>

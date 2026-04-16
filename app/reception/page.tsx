@@ -325,12 +325,12 @@ export default function ReceptionDashboard() {
 
   const fetchSubmissions = useCallback(async () => {
     try {
-      setLoadingSubmissions(true)
+      if (submissions.length === 0) setLoadingSubmissions(true)
       const res = await fetch("/api/reception-requests", { headers: { Authorization: `Bearer ${token}` } })
       if (res.ok) setSubmissions(await res.json())
     } catch { /* silent */ }
     finally { setLoadingSubmissions(false) }
-  }, [token])
+  }, [token, submissions.length])
 
   const fetchMetadata = useCallback(async () => {
     try {
