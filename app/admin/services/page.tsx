@@ -119,6 +119,7 @@ export default function AdminServicesPage() {
   const [roomOrders, setRoomOrders] = useState<any[]>([])
   const prevRoomOrdersCount = useRef(0)
   const prevReceptionCount = useRef(0)
+  const receptionInitialLoad = useRef(true)
 
   // Reception state
   const [receptionRequests, setReceptionRequests] = useState<any[]>([])
@@ -154,7 +155,7 @@ export default function AdminServicesPage() {
 
   const fetchReception = async () => {
     if (!token) return
-    if (receptionRequests.length === 0) setReceptionLoading(true)
+    if (receptionInitialLoad.current) setReceptionLoading(true)
     try {
       const res = await fetch("/api/reception-requests", { headers: { Authorization: `Bearer ${token}` } })
       if (res.ok) {
@@ -170,6 +171,7 @@ export default function AdminServicesPage() {
         }
         setReceptionRequests(data)
         prevReceptionCount.current = pendingCount
+        receptionInitialLoad.current = false
       }
     } catch { /* silent */ }
     finally { setReceptionLoading(false) }
@@ -325,6 +327,7 @@ export default function AdminServicesPage() {
   useEffect(() => { fetchData() }, [fetchData])
   useEffect(() => {
     if (activeTab === "reception") {
+      receptionInitialLoad.current = true
       fetchReception()
       const interval = setInterval(fetchReception, 15000)
       return () => clearInterval(interval)
