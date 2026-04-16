@@ -432,14 +432,25 @@ export default function ReceptionDashboard() {
       } else {
         const err = await res.json()
         notify({ title: "Error", message: err.message || "Failed", type: "error" })
-      }
+          }
     } catch { notify({ title: "Error", message: "Network error", type: "error" }) }
     setExtending(false)
   }
 
-  const filteredRooms = formData.floorId
-    ? rooms.filter(r => String(r.floorId?._id || r.floorId) === String(formData.floorId))
-    : rooms
+  // Rooms currently held by guests who have checked in but not yet checked out
+  const occupiedRoomNumbers = new Set(
+    submissions
+      .filter(s => s.status === "check_in" && s.roomNumber)
+      .map(s => s.roomNumber)
+  )
+
+  const filteredRooms = rooms.filter(r => {
+    // If the form's selected floor is set, filter by floor
+    if (formData.floorId && String(r.floorId?._id || r.floorId) !== String(formData.floorId)) return false
+    // Exclude rooms occupied by currently checked-in guests
+    return !occupiedRoomNumbers.has(r.roomNumber)
+  })
+
 
   // shared input class — dark theme
   const ic = "w-full bg-[#0f1110] border border-white/10 text-white rounded-xl px-4 py-3 text-sm font-medium outline-none focus:border-[#d4af37]/50 focus:ring-0 transition-all placeholder:text-gray-600"
