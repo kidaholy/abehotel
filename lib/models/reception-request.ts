@@ -60,6 +60,12 @@ const receptionRequestSchema = new Schema<IReceptionRequest>(
   { timestamps: true }
 )
 
+// Performance indexes for fast queries
+receptionRequestSchema.index({ status: 1, createdAt: -1 })
+receptionRequestSchema.index({ createdAt: -1 })
+receptionRequestSchema.index({ submittedBy: 1 })
+receptionRequestSchema.index({ roomNumber: 1 })
+
 if (mongoose.models.ReceptionRequest) {
   delete mongoose.models.ReceptionRequest
 }

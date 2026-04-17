@@ -157,10 +157,12 @@ export default function AdminServicesPage() {
     if (!token) return
     if (receptionInitialLoad.current) setReceptionLoading(true)
     try {
-      const res = await fetch("/api/reception-requests", { headers: { Authorization: `Bearer ${token}` } })
+      const res = await fetch("/api/reception-requests?limit=500", { headers: { Authorization: `Bearer ${token}` } })
       if (res.ok) {
         const data = await res.json()
-        const pendingCount = data.filter((r: any) => r.status === "pending").length
+        // Handle both old array format and new paginated format
+        const requests = Array.isArray(data) ? data : (data.data || [])
+        const pendingCount = requests.filter((r: any) => r.status === "pending").length
         if (pendingCount > prevReceptionCount.current) {
           let plays = 0
           const interval = setInterval(() => {
@@ -169,7 +171,7 @@ export default function AdminServicesPage() {
             if (plays >= 5) clearInterval(interval)
           }, 1500)
         }
-        setReceptionRequests(data)
+        setReceptionRequests(requests)
         prevReceptionCount.current = pendingCount
         receptionInitialLoad.current = false
       }

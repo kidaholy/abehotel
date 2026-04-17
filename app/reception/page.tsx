@@ -367,8 +367,12 @@ export default function ReceptionDashboard() {
   const fetchSubmissions = useCallback(async () => {
     try {
       if (submissions.length === 0) setLoadingSubmissions(true)
-      const res = await fetch("/api/reception-requests", { headers: { Authorization: `Bearer ${token}` } })
-      if (res.ok) setSubmissions(await res.json())
+      const res = await fetch("/api/reception-requests?limit=500", { headers: { Authorization: `Bearer ${token}` } })
+      if (res.ok) {
+        const data = await res.json()
+        // Handle both old array format and new paginated format
+        setSubmissions(Array.isArray(data) ? data : (data.data || []))
+      }
     } catch { /* silent */ }
     finally { setLoadingSubmissions(false) }
   }, [token, submissions.length])

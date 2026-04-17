@@ -6,32 +6,72 @@ import { validateSession } from "@/lib/auth"
 // GET all requests (admin) or own submissions (reception)
 export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url)
+    const limit = Math.min(Number(searchParams.get('limit')) || 100, 500) // Max 500
+    const skip = Number(searchParams.get('skip')) || 0
+    const status = searchParams.get('status') // Filter by status
+    const searchTerm = searchParams.get('search') // Search by name/phone/room
+    
     const decoded = await validateSession(request)
     
     try {
       await connectDB()
     } catch (dbError: any) {
-      // Database unreachable - return empty array with 200 status
       console.warn("⚠️ Reception requests - DB unreachable, returning empty array")
       return NextResponse.json([])
     }
 
-    let requests
+    let query: any = {}
+    
+    // Build query based on role
     if (decoded.role === "admin") {
-      requests = await ReceptionRequest.find({}).sort({ createdAt: -1 }).lean()
+      // Admin sees all requests
+      if (status && status !== "all") {
+        query.status = status
+      }
     } else if (decoded.role === "reception") {
       // Reception staff sees all approved guests + their own submissions
-      requests = await ReceptionRequest.find({
-        $or: [
-          { submittedBy: decoded.id },
-          { status: { $in: ["guests", "check_in", "check_out", "rejected"] } }
-        ]
-      }).sort({ createdAt: -1 }).lean()
+      query.$or = [
+        { submittedBy: decoded.id },
+        { status: { $in: ["guests", "check_in", "check_out", "rejected"] } }
+      ]
+      if (status && status !== "all") {
+        query.status = status
+      }
     } else {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 })
     }
 
-    return NextResponse.json(requests.map(r => ({ ...r, _id: r._id?.toString() })))
+    // Search filter
+    if (searchTerm) {
+      const searchRegex = new RegExp(searchTerm, 'i')
+      query.$or = [
+        ...(query.$or || []),
+        { guestName: searchRegex },
+        { phone: searchRegex },
+        { roomNumber: searchRegex },
+        { faydaId: searchRegex }
+      ]
+    }
+
+    // Execute query with pagination
+    const requests = await ReceptionRequest.find(query)
+      .select('-idPhotoFront -idPhotoBack') // Exclude large photo fields from list
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .skip(skip)
+      .lean()
+
+    // Get total count for pagination
+    const total = await ReceptionRequest.countDocuments(query)
+
+    return NextResponse.json({
+      data: requests.map(r => ({ ...r, _id: r._id?.toString() })),
+      total,
+      limit,
+      skip,
+      hasMore: skip + limit < total
+    })
   } catch (error: any) {
     const status = error.message?.includes("Unauthorized") ? 401 : 500
     return NextResponse.json({ message: "Failed to get requests" }, { status })

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import { ProtectedRoute } from "@/components/protected-route"
 import { BentoNavbar } from "@/components/bento-navbar"
 import { useAuth } from "@/context/auth-context"
@@ -47,18 +47,53 @@ export default function AdminReceptionPage() {
   const [newCheckOut, setNewCheckOut] = useState("")
   const [extending, setExtending] = useState(false)
 
+  // Optimized fetch with pagination
   const fetchRequests = useCallback(async () => {
     try {
       setLoading(true)
-      const res = await fetch("/api/reception-requests", { headers: { Authorization: `Bearer ${token}` } })
-      if (res.ok) setRequests(await res.json())
-    } catch { /* silent */ }
+      const statusParam = filter !== "all" ? `&status=${filter}` : ""
+      const searchParam = searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : ""
+      const url = `/api/reception-requests?limit=100${statusParam}${searchParam}`
+      console.log(`📡 [ADMIN] Fetching requests with URL: ${url}`)
+      const res = await fetch(url, { 
+        headers: { Authorization: `Bearer ${token}` } 
+      })
+      if (res.ok) {
+        const data = await res.json()
+        console.log(`📡 [ADMIN] Received ${data.data?.length || 0} requests, total: ${data.total}`)
+        setRequests(data.data || [])
+      } else {
+        console.error(`❌ [ADMIN] API error:`, res.status)
+      }
+    } catch (error) {
+      console.error(`❌ [ADMIN] Fetch error:`, error)
+    }
     finally { setLoading(false) }
-  }, [token])
+  }, [token, filter, searchQuery])
 
-  useEffect(() => { if (token) fetchRequests() }, [token, fetchRequests])
+  // Auto-refresh every 30 seconds (like cashier)
+  useEffect(() => {
+    if (token) {
+      console.log(`🔄 [ADMIN] useEffect triggered, fetching with filter: ${filter}`)
+      fetchRequests()
+    }
+    const interval = setInterval(() => {
+      console.log(`🔄 [ADMIN] Auto-refresh interval triggered`)
+      fetchRequests()
+    }, 30000)
+    return () => clearInterval(interval)
+  }, [token, filter, searchQuery])
 
-  const handleAction = async (id: string, status: string) => {
+  // Refresh when tab becomes active
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) fetchRequests()
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
+  }, [fetchRequests])
+
+  const handleAction = useCallback(async (id: string, status: string) => {
     const label = status === "check_in" ? "Approve Arrival" : status === "check_out" ? "Approve Check-Out" : status === "rejected" ? "Reject" : "Apply"
     const confirmed = await confirm({
       title: `${label} Request`,
@@ -71,25 +106,48 @@ export default function AdminReceptionPage() {
     
     setActioning(true)
     try {
+      console.log(`📤 [ADMIN] Approving request ${id} with status: ${status}`)
       const res = await fetch(`/api/reception-requests/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ status, reviewNote }),
       })
       if (res.ok) {
+        const data = await res.json()
+        console.log(`✅ [ADMIN] Approval successful, response:`, data)
         notify({ title: "Success", message: "Request updated successfully", type: "success" })
         setSelected(null)
         setReviewNote("")
-        fetchRequests()
+        
+        // Determine the new filter based on the status being set
+        let newFilter: keyof typeof FILTER_LABELS = "all"
+        if (status === "check_out") {
+          newFilter = "check_out"
+          console.log(`🔄 [ADMIN] Setting filter to: check_out`)
+        } else if (status === "check_in") {
+          newFilter = "check_in"
+          console.log(`🔄 [ADMIN] Setting filter to: check_in`)
+        } else if (status === "rejected") {
+          newFilter = "rejected"
+          console.log(`🔄 [ADMIN] Setting filter to: rejected`)
+        }
+        
+        // Update filter state
+        setFilter(newFilter)
+        console.log(`🔄 [ADMIN] Filter state updated to: ${newFilter}`)
       } else {
         const err = await res.json()
+        console.error(`❌ [ADMIN] Approval failed:`, err)
         notify({ title: "Error", message: err.message || "Failed to update", type: "error" })
       }
-    } catch { notify({ title: "Error", message: "Network error", type: "error" }) }
+    } catch (error) {
+      console.error(`❌ [ADMIN] Network error:`, error)
+      notify({ title: "Error", message: "Network error", type: "error" })
+    }
     setActioning(false)
-  }
+  }, [token, confirm, notify])
 
-  const handleExtend = async () => {
+  const handleExtend = useCallback(async () => {
     if (!extendGuest || !newCheckOut) return
     setExtending(true)
     try {
@@ -114,30 +172,23 @@ export default function AdminReceptionPage() {
       }
     } catch { notify({ title: "Error", message: "Network error", type: "error" }) }
     setExtending(false)
-  }
+  }, [extendGuest, newCheckOut, token, notify, fetchRequests])
 
-  const q = searchQuery.toLowerCase()
-  const searchFiltered = requests.filter(r => 
-    !searchQuery || (
-      r.guestName?.toLowerCase().includes(q) ||
-      r.phone?.toLowerCase().includes(q) ||
-      r.roomNumber?.toString().includes(q) ||
-      r.faydaId?.toLowerCase().includes(q)
-    )
-  )
+  // Memoized filtered results
+  const filteredRequests = useMemo(() => {
+    return requests
+  }, [requests])
 
-  const filteredRequests = searchFiltered.filter(r => {
-    if (filter === "all") return true
-    return r.status === filter
-  })
-
-  const counts: Record<string, number> = {
-    all: searchFiltered.length,
-    pending: searchFiltered.filter(r => r.status === "pending").length,
-    check_in: searchFiltered.filter(r => r.status === "check_in").length,
-    rejected: searchFiltered.filter(r => r.status === "rejected").length,
-    check_out: searchFiltered.filter(r => r.status === "check_out").length,
-  }
+  // Calculate counts based on current filter
+  const counts: Record<string, number> = useMemo(() => {
+    return {
+      all: requests.length,
+      pending: requests.filter(r => r.status === "pending").length,
+      check_in: requests.filter(r => r.status === "check_in").length,
+      rejected: requests.filter(r => r.status === "rejected").length,
+      check_out: requests.filter(r => r.status === "check_out").length,
+    }
+  }, [requests])
 
   return (
     <ProtectedRoute requiredRoles={["admin"]} requiredPermissions={["reception:access"]}>

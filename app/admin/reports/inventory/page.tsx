@@ -44,6 +44,7 @@ export default function NetWorthReportPage() {
 
   const fetchReportData = async () => {
     setLoading(true);
+    const startTime = Date.now();
     try {
       // Fetch Current Stock for Valuation
       const stockRes = await fetch("/api/stock", {
@@ -71,6 +72,13 @@ export default function NetWorthReportPage() {
         console.log("Stock Usage Data:", usage); // Debug log
         console.log("Stock Analysis:", usage?.stockAnalysis); // Debug log
         setPeriodData({ sales, usage });
+      }
+
+      // Ensure minimum 1.5 second loading time for better UX
+      const elapsedTime = Date.now() - startTime;
+      const remainingDelay = Math.max(0, 1500 - elapsedTime);
+      if (remainingDelay > 0) {
+        await new Promise(resolve => setTimeout(resolve, remainingDelay));
       }
     } catch (error) {
       console.error("Failed to fetch report data", error);

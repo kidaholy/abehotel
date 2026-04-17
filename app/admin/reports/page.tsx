@@ -75,6 +75,7 @@ export default function ReportsPage() {
 
     const fetchAllData = async () => {
         setLoadingSlide(true)
+        const startTime = Date.now()
         try {
             let salesUrl = `/api/reports/sales?period=${timeRange}`
             let ordersUrl = getOrdersUrl(timeRange)
@@ -96,6 +97,14 @@ export default function ReportsPage() {
             if (ordersRes.ok) setOrders(await ordersRes.json())
 
             setInitialized(true)
+
+            // Ensure minimum 1.5 second loading time for better UX
+            const elapsedTime = Date.now() - startTime
+            const remainingDelay = Math.max(0, 1500 - elapsedTime)
+            if (remainingDelay > 0) {
+                await new Promise(resolve => setTimeout(resolve, remainingDelay))
+            }
+
             setLoadingSlide(false)
 
             // Secondary data in background — don't block render

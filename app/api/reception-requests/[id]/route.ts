@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { connectDB } from "@/lib/db"
 import ReceptionRequest from "@/lib/models/reception-request"
+import Room from "@/lib/models/room"
 import { validateSession } from "@/lib/auth"
 
 // PUT - admin approves/denies OR reception requests extension
@@ -44,8 +45,24 @@ export async function PUT(request: Request, context: any) {
 
     if (!updated) return NextResponse.json({ message: "Request not found" }, { status: 404 })
 
+    // If check-out is approved, release the room (set status to available)
+    if (status === "check_out" && updated.roomNumber) {
+      console.log(`🔑 Releasing room ${updated.roomNumber} for guest ${updated.guestName}`)
+      const roomUpdate = await Room.findOneAndUpdate(
+        { roomNumber: updated.roomNumber },
+        { status: "available" },
+        { new: true }
+      )
+      if (roomUpdate) {
+        console.log(`✅ Room ${updated.roomNumber} successfully released to available status`)
+      } else {
+        console.warn(`⚠️ Room ${updated.roomNumber} not found in database`)
+      }
+    }
+
     return NextResponse.json({ message: `Request ${status}`, request: { ...updated.toObject(), _id: updated._id.toString() } })
   } catch (error: any) {
+    console.error("❌ Reception request update error:", error)
     const status = error.message?.includes("Unauthorized") ? 401 : 500
     return NextResponse.json({ message: "Failed to update request" }, { status })
   }
