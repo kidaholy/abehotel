@@ -54,6 +54,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "All fields required" }, { status: 400 })
     }
 
+    // Validate role
+    if (!['admin', 'cashier', 'chef', 'display', 'store_keeper', 'reception', 'bar', 'custom'].includes(role)) {
+      console.log("❌ Invalid role:", role)
+      return NextResponse.json({ message: "Invalid role" }, { status: 400 })
+    }
+
     // Check if user exists
     const existingUser = await User.findOne({ email })
     if (existingUser) {

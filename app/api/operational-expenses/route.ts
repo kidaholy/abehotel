@@ -11,7 +11,7 @@ export async function GET(request: Request) {
         const period = searchParams.get("period") || "month"
 
         const decoded = await validateSession(request)
-        if (decoded.role !== "admin" && decoded.role !== "super-admin" && decoded.role !== "store_keeper") {
+        if (decoded.role !== "admin" && decoded.role !== "super-admin" && decoded.role !== "store_keeper" && !(decoded.role === "custom" && decoded.permissions?.includes("store:view"))) {
             return NextResponse.json({ message: "Forbidden" }, { status: 403 })
         }
 
@@ -61,7 +61,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
     try {
         const decoded = await validateSession(request)
-        if (decoded.role !== "admin" && decoded.role !== "super-admin") {
+        if (decoded.role !== "admin" && decoded.role !== "super-admin" && !(decoded.role === "custom" && decoded.permissions?.includes("store:create"))) {
             return NextResponse.json({ message: "Forbidden" }, { status: 403 })
         }
 
@@ -103,7 +103,7 @@ export async function DELETE(request: Request) {
         const id = searchParams.get("id")
 
         const decoded = await validateSession(request)
-        if (decoded.role !== "admin" && decoded.role !== "super-admin") {
+        if (decoded.role !== "admin" && decoded.role !== "super-admin" && !(decoded.role === "custom" && decoded.permissions?.includes("store:delete"))) {
             return NextResponse.json({ message: "Forbidden" }, { status: 403 })
         }
 

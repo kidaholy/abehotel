@@ -23,12 +23,17 @@ export function ProtectedRoute({ children, requiredRoles, requiredPermissions }:
       if (!isAuthenticated) {
         router.push("/login")
       } else if (requiredRoles && user) {
-        if (user.role === "custom" && requiredPermissions) {
-          const hasPermission = requiredPermissions.some(p => user.permissions?.includes(p))
-          if (!hasPermission) {
-            router.push("/unauthorized")
+        // For custom roles, check if they have the required permissions
+        if (user.role === "custom") {
+          if (requiredPermissions && Array.isArray(requiredPermissions) && requiredPermissions.length > 0) {
+            const hasPermission = requiredPermissions.some(p => user.permissions?.includes(p))
+            if (!hasPermission) {
+              router.push("/unauthorized")
+            }
           }
+          // If no specific permissions required, allow custom roles through
         } else if (!requiredRoles.includes(user.role)) {
+          // For non-custom roles, check if their role is in the required roles list
           router.push("/unauthorized")
         }
       }
@@ -51,10 +56,15 @@ export function ProtectedRoute({ children, requiredRoles, requiredPermissions }:
   }
 
   if (requiredRoles && user) {
-    if (user.role === "custom" && requiredPermissions) {
-      const hasPermission = requiredPermissions.some(p => user.permissions?.includes(p))
-      if (!hasPermission) return null
+    // For custom roles, check if they have the required permissions
+    if (user.role === "custom") {
+      if (requiredPermissions && Array.isArray(requiredPermissions) && requiredPermissions.length > 0) {
+        const hasPermission = requiredPermissions.some(p => user.permissions?.includes(p))
+        if (!hasPermission) return null
+      }
+      // If no specific permissions required, allow custom roles through
     } else if (!requiredRoles.includes(user.role)) {
+      // For non-custom roles, check if their role is in the required roles list
       return null
     }
   }

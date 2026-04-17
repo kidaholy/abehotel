@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import React, { useEffect, useState } from "react"
 import { ProtectedRoute } from "@/components/protected-route"
 import { BentoNavbar } from "@/components/bento-navbar"
 import { useAuth } from "@/context/auth-context"
@@ -35,7 +35,13 @@ export default function ReportsPage() {
     // Dynamically filter slides so users only see ones they're allowed to see
     const SLIDES = React.useMemo(() => {
         if (!user) return []
+        // Admin or custom role with reports:view permission gets all reports
         if (user.role === "admin" || (user.role === "custom" && user.permissions?.includes("reports:view"))) return ALL_SLIDES;
+        // Custom role with any specific report permission can see those reports
+        if (user.role === "custom" && user.permissions) {
+            return ALL_SLIDES.filter(s => user.permissions?.includes(s.permission))
+        }
+        // Other roles use hasPermission check
         return ALL_SLIDES.filter(s => hasPermission(s.permission))
     }, [user, hasPermission])
 

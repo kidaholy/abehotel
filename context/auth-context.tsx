@@ -143,15 +143,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       store_keeper: "/admin/store",
       reception: "/reception",
       bar: "/bar",
+      custom: "/admin", // Default route for custom roles
     }
     
-    let defaultRoute = roleRoutes[data.user.role] || "/login"
-    if (data.user.role === "custom" && data.user.permissions) {
-      if (data.user.permissions.includes("admin_dashboard")) defaultRoute = "/admin"
-      else if (data.user.permissions.includes("access_cashier")) defaultRoute = "/cashier"
-      else if (data.user.permissions.includes("access_chef")) defaultRoute = "/chef"
-      else if (data.user.permissions.includes("access_bar")) defaultRoute = "/bar"
-      else if (data.user.permissions.includes("access_reception")) defaultRoute = "/reception"
+    let defaultRoute = roleRoutes[data.user.role] || "/admin"
+    
+    // For custom roles, check permissions to determine the best route
+    if (data.user.role === "custom" && data.user.permissions && Array.isArray(data.user.permissions)) {
+      if (data.user.permissions.includes("overview:view")) defaultRoute = "/admin"
+      else if (data.user.permissions.includes("cashier:access")) defaultRoute = "/cashier"
+      else if (data.user.permissions.includes("chef:access")) defaultRoute = "/chef"
+      else if (data.user.permissions.includes("bar:access")) defaultRoute = "/bar"
+      else if (data.user.permissions.includes("reception:access")) defaultRoute = "/reception"
+      else if (data.user.permissions.includes("store:view")) defaultRoute = "/admin/store"
+      else if (data.user.permissions.includes("display:access")) defaultRoute = "/display"
     }
 
     router.push(defaultRoute)

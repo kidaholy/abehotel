@@ -103,12 +103,38 @@ export function BentoNavbar() {
     ]
     const receptionLinks = [{ label: "Reception Desk", href: "/reception" }]
 
+    // Build custom role links based on permissions
+    const getCustomRoleLinks = () => {
+        if (!user?.permissions) return guestLinks
+        const perms = user.permissions
+        const customLinks: typeof adminLinks = []
+        
+        if (perms.includes("overview:view")) customLinks.push({ label: t("nav.overview"), href: "/admin" })
+        if (perms.includes("orders:view")) customLinks.push({ label: t("nav.orders"), href: "/admin/orders" })
+        if (perms.includes("users:view")) customLinks.push({ label: t("nav.users"), href: "/admin/users" })
+        if (perms.includes("store:view")) customLinks.push({ label: t("nav.store"), href: "/admin/store" })
+        if (perms.includes("stock:view")) customLinks.push({ label: t("nav.stock"), href: "/admin/stock" })
+        if (perms.includes("reports:financial_summary")) customLinks.push({ label: t("nav.reports"), href: "/admin/reports" })
+        if (perms.includes("services:view")) customLinks.push({ label: t("nav.services"), href: "/admin/services" })
+        if (perms.includes("settings:view")) customLinks.push({ label: t("nav.settings"), href: "/admin/settings" })
+        if (perms.includes("cashier:access")) customLinks.push({ label: "Cashier POS", href: "/cashier" })
+        if (perms.includes("chef:access")) customLinks.push({ label: t("nav.kitchen"), href: "/chef" })
+        if (perms.includes("bar:access")) customLinks.push({ label: "Bar Display", href: "/bar" })
+        if (perms.includes("reception:access")) customLinks.push({ label: "Reception Desk", href: "/reception" })
+        if (perms.includes("display:access")) customLinks.push({ label: "Display Board", href: "/display" })
+        if (isRoomServiceHandler) customLinks.push({ label: "Room Orders", href: "/cashier/room-orders" })
+        
+        return customLinks.length > 0 ? customLinks : guestLinks
+    }
+
     const links = user?.role === "admin" ? adminLinks :
         user?.role === "store_keeper" ? storeKeeperLinks :
             user?.role === "cashier" ? cashierLinks :
                 user?.role === "chef" ? [{ label: t("nav.kitchen"), href: "/chef" }] :
                     user?.role === "bar" ? [{ label: "Bar Display", href: "/bar" }] :
-                        user?.role === "reception" ? receptionLinks : guestLinks
+                        user?.role === "reception" ? receptionLinks :
+                            user?.role === "custom" ? getCustomRoleLinks() :
+                                guestLinks
 
     return (
         <>

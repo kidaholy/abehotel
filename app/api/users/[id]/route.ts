@@ -77,7 +77,7 @@ export async function PUT(request: Request, context: any) {
     }
 
     // Validate role
-    if (role && !['admin', 'cashier', 'chef', 'display', 'store_keeper', 'reception'].includes(role)) {
+    if (role && !['admin', 'cashier', 'chef', 'display', 'store_keeper', 'reception', 'bar', 'custom'].includes(role)) {
       console.log("❌ Invalid role:", role)
       return NextResponse.json({ message: "Invalid role" }, { status: 400 })
     }
