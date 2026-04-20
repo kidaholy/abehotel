@@ -152,9 +152,6 @@ export default function StorePage() {
     const [transfersLoading, setTransfersLoading] = useState(false)
     const [transferFilterStatus, setTransferFilterStatus] = useState("all")
     const [transferSearch, setTransferSearch] = useState("")
-    const [showTransferRequestForm, setShowTransferRequestForm] = useState(false)
-    const [transferRequestSaving, setTransferRequestSaving] = useState(false)
-    const [newTransferRequest, setNewTransferRequest] = useState({ stockId: "", quantity: "", notes: "" })
     const [denialModal, setDenialModal] = useState<{ isOpen: boolean; requestId: string; reason: string }>({ isOpen: false, requestId: "", reason: "" })
     const [assetFormData, setAssetFormData] = useState({
         name: "",
@@ -802,26 +799,6 @@ export default function StorePage() {
             if (res.ok) setTransferRequests(await res.json())
         } catch (e) { console.error("Failed to fetch transfers", e) }
         finally { setTransfersLoading(false) }
-    }
-
-    const handleCreateTransferRequest = async () => {
-        setTransferRequestSaving(true)
-        try {
-            const res = await fetch("/api/inventory/transfers", {
-                method: "POST",
-                headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-                body: JSON.stringify({ stockId: newTransferRequest.stockId, quantity: parseFloat(newTransferRequest.quantity), notes: newTransferRequest.notes })
-            })
-            if (res.ok) {
-                setShowTransferRequestForm(false)
-                setNewTransferRequest({ stockId: "", quantity: "", notes: "" })
-                fetchTransferRequests()
-            } else {
-                const err = await res.json()
-                notify({ title: "Request Failed", message: err.message || "Failed to create request", type: "error" })
-            }
-        } catch (e) { console.error("Error creating transfer", e) }
-        finally { setTransferRequestSaving(false) }
     }
 
     const handleTransferAction = async (id: string, action: 'approved' | 'denied', reason?: string) => {
@@ -1596,9 +1573,6 @@ export default function StorePage() {
                                     <div className="space-y-6">
                                         <div className="flex justify-between items-center mb-6">
                                             <h3 className="text-lg font-playfair italic text-[#f3cf7a]">Transfer Requests</h3>
-                                            <button onClick={() => setShowTransferRequestForm(true)} className="bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 font-bold text-[10px] uppercase tracking-widest px-4 py-2 rounded-xl hover:bg-emerald-600/30 transition-all flex items-center gap-2">
-                                                <Plus size={14} /> New Request
-                                            </button>
                                         </div>
                                         {transfersLoading ? (
                                             <div className="text-center py-20 text-[#f3cf7a] text-[10px] font-bold uppercase tracking-widest animate-pulse">Loading requests...</div>
@@ -1956,46 +1930,6 @@ export default function StorePage() {
                     )}
                 </AnimatePresence>
 
-                {/* New Transfer Request Modal */}
-                <AnimatePresence>
-                    {showTransferRequestForm && (
-                        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4">
-                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowTransferRequestForm(false)} className="absolute inset-0 bg-black/60 backdrop-blur-md" />
-                            <motion.div initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 20 }} className="relative bg-[#1a1c1b] border border-white/10 w-full max-w-xl rounded-[2.5rem] p-10 shadow-2xl">
-                                <h2 className="text-2xl font-black text-white tracking-tight flex items-center gap-3 mb-8">
-                                    <ArrowRightLeft className="text-emerald-500 h-7 w-7" />
-                                    New Transfer Request
-                                </h2>
-                                <div className="space-y-6">
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1 block">Select Stock Item</label>
-                                        <div className="relative">
-                                            <select value={newTransferRequest.stockId} onChange={e => setNewTransferRequest({ ...newTransferRequest, stockId: e.target.value })} className="w-full bg-[#0f1110] border border-white/10 rounded-2xl px-5 py-4 text-sm font-bold text-white focus:outline-none focus:border-emerald-500/50 transition-all appearance-none cursor-pointer">
-                                                <option value="">Choose item...</option>
-                                                {stockItems.filter(i => i.trackQuantity && (i.storeQuantity || 0) > 0).map(item => (
-                                                    <option key={item._id} value={item._id}>{item.name} (Store: {item.storeQuantity} {item.unit})</option>
-                                                ))}
-                                            </select>
-                                            <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-500 h-5 w-5 pointer-events-none" />
-                                        </div>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1 block">Quantity to Transfer</label>
-                                        <input type="number" step="any" placeholder="0.00" value={newTransferRequest.quantity} onChange={e => setNewTransferRequest({ ...newTransferRequest, quantity: e.target.value })} className="w-full bg-[#0f1110] border border-white/10 rounded-2xl px-5 py-4 text-xl font-black text-emerald-500 focus:outline-none focus:border-emerald-500/50 transition-all shadow-inner" />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1 block">Purpose / Notes</label>
-                                        <textarea placeholder="Why is this transfer needed?" value={newTransferRequest.notes} onChange={e => setNewTransferRequest({ ...newTransferRequest, notes: e.target.value })} className="w-full bg-[#0f1110] border border-white/10 rounded-2xl px-5 py-4 text-sm font-bold text-white focus:outline-none focus:border-emerald-500/50 transition-all h-28 resize-none shadow-inner" />
-                                    </div>
-                                    <div className="flex gap-4 pt-2">
-                                        <button onClick={handleCreateTransferRequest} disabled={transferRequestSaving || !newTransferRequest.stockId || !newTransferRequest.quantity} className="flex-1 bg-emerald-600 text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-emerald-700 disabled:opacity-50 transition-all shadow-lg shadow-emerald-600/20">Submit Request</button>
-                                        <button onClick={() => setShowTransferRequestForm(false)} className="px-8 text-gray-500 font-bold text-[10px] uppercase tracking-widest hover:text-white transition-colors">Cancel</button>
-                                    </div>
-                                </div>
-                            </motion.div>
-                        </div>
-                    )}
-                </AnimatePresence>
 
                 {/* Confirmations */}
                 <ConfirmationCard

@@ -24,9 +24,10 @@ const STATUS_STYLES: Record<string, string> = {
 }
 
 const FILTER_LABELS: Record<string, { label: string; icon: any }> = {
-  all:       { label: "GUESTS",   icon: <Users size={14} /> },
+  all:       { label: "ALL",      icon: <Users size={14} /> },
   pending:   { label: "PENDING",  icon: <Clock size={14} /> },
-  check_in:  { label: "APPROVED", icon: <CheckCircle2 size={14} /> },
+  check_in:  { label: "CHECK IN", icon: <CheckCircle2 size={14} /> },
+  guests:    { label: "ACTIVE",   icon: <Hotel size={14} /> },
   rejected:  { label: "DENIED",   icon: <XCircle size={14} /> },
   check_out: { label: "CHECK OUT", icon: <Key size={14} /> },
 }
@@ -47,11 +48,12 @@ export default function AdminReceptionPage() {
   const [newCheckOut, setNewCheckOut] = useState("")
   const [extending, setExtending] = useState(false)
 
-  // Optimized fetch with pagination
-  const fetchRequests = useCallback(async () => {
+  // Optimized fetch with pagination - accepts optional filter parameter
+  const fetchRequests = useCallback(async (filterOverride?: keyof typeof FILTER_LABELS, skipLoading = false) => {
     try {
-      setLoading(true)
-      const statusParam = filter !== "all" ? `&status=${filter}` : ""
+      if (!skipLoading) setLoading(true)
+      const activeFilter = filterOverride !== undefined ? filterOverride : filter
+      const statusParam = activeFilter !== "all" ? `&status=${activeFilter}` : ""
       const searchParam = searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : ""
       const url = `/api/reception-requests?limit=100${statusParam}${searchParam}`
       console.log(`📡 [ADMIN] Fetching requests with URL: ${url}`)
@@ -68,7 +70,7 @@ export default function AdminReceptionPage() {
     } catch (error) {
       console.error(`❌ [ADMIN] Fetch error:`, error)
     }
-    finally { setLoading(false) }
+    finally { if (!skipLoading) setLoading(false) }
   }, [token, filter, searchQuery])
 
   // Auto-refresh every 30 seconds (like cashier)
@@ -106,7 +108,61 @@ export default function AdminReceptionPage() {
     
     setActioning(true)
     try {
-      console.log(`📤 [ADMIN] Approving request ${id} with status: ${status}`)
+      // Get the selected request to verify inquiryType
+      const request = requests.find(r => r._id === id)
+      if (!request) {
+        console.error(`❌ [ADMIN] Request not found in local state: ${id}`)
+        notify({ title: "Error", message: "Request not found", type: "error" })
+        return
+      }
+
+      console.log(`📤 [ADMIN] =========================================`)
+      console.log(`📤 [ADMIN] APPROVAL OPERATION STARTED`)
+      console.log(`📤 [ADMIN] Request ID: ${id}`)
+      console.log(`📤 [ADMIN] Guest Name: ${request.guestName}`)
+      console.log(`📤 [ADMIN] Inquiry Type: ${request.inquiryType}`)
+      console.log(`📤 [ADMIN] Current Status: ${request.status}`)
+      console.log(`📤 [ADMIN] Requested Status: ${status}`)
+      console.log(`📤 [ADMIN] Status type: ${status === "check_out" ? "CHECK-OUT" : status === "check_in" ? "CHECK-IN" : status === "guests" ? "COMPLETE CHECK-IN" : "OTHER"}`)
+      console.log(`📤 [ADMIN] =========================================`)
+      
+      // FRONTEND VALIDATION: Ensure inquiryType matches the status being set
+      if (request.inquiryType === "check_out" && status === "check_in") {
+        console.error(`❌ [ADMIN] CRITICAL VALIDATION ERROR: Check-out request cannot be approved as check-in!`)
+        console.error(`❌ [ADMIN] This is a BUG - please report to development team`)
+        notify({ 
+          title: "Validation Error", 
+          message: "Cannot approve check-out request as check-in. This is a system error.", 
+          type: "error" 
+        })
+        setActioning(false)
+        return
+      }
+      
+      if (request.inquiryType === "check_in" && status === "check_out") {
+        console.error(`❌ [ADMIN] CRITICAL VALIDATION ERROR: Check-in request cannot be approved as check-out!`)
+        console.error(`❌ [ADMIN] This is a BUG - please report to development team`)
+        notify({ 
+          title: "Validation Error", 
+          message: "Cannot approve check-in request as check-out. This is a system error.", 
+          type: "error" 
+        })
+        setActioning(false)
+        return
+      }
+      
+      console.log(`✅ [ADMIN] Frontend validation passed: inquiryType=${request.inquiryType}, status=${status}`)
+      console.log(`✅ [ADMIN] Sending API request with status: ${status}`)
+      
+      // OPTIMISTIC UPDATE: Update local state immediately for instant UI feedback
+      const updatedRequest = { ...request, status, reviewNote: reviewNote || request.reviewNote }
+      setRequests(prev => prev.map(r => r._id === id ? updatedRequest : r))
+      console.log(`⚡ [ADMIN] Optimistic UI update applied - status changed to: ${status}`)
+      
+      // Close modal immediately for better UX
+      setSelected(null)
+      setReviewNote("")
+      
       const res = await fetch(`/api/reception-requests/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -114,42 +170,100 @@ export default function AdminReceptionPage() {
       })
       if (res.ok) {
         const data = await res.json()
-        console.log(`✅ [ADMIN] Approval successful, response:`, data)
-        notify({ title: "Success", message: "Request updated successfully", type: "success" })
-        setSelected(null)
-        setReviewNote("")
+        console.log(`✅ [ADMIN] =========================================`)
+        console.log(`✅ [ADMIN] APPROVAL SUCCESSFUL`)
+        console.log(`✅ [ADMIN] Request status updated to: ${status}`)
+        console.log(`✅ [ADMIN] Confirmed status in response: ${data.request?.status}`)
+        console.log(`✅ [ADMIN] Response inquiryType: ${data.request?.inquiryType}`)
+        console.log(`✅ [ADMIN] =========================================`)
         
-        // Determine the new filter based on the status being set
+        notify({ title: "Success", message: "Request updated successfully", type: "success" })
+        
+        // CRITICAL: Determine the new filter based on the inquiryType and status
+        // This ensures check_out requests ALWAYS go to CHECK OUT tab, NEVER to CHECK IN tab
         let newFilter: keyof typeof FILTER_LABELS = "all"
-        if (status === "check_out") {
+        
+        if (status === "guests") {
+          newFilter = "guests"
+          console.log(`🔄 [ADMIN] ✅ CHECK-IN COMPLETED - GUEST NOW ACTIVE`)
+          console.log(`🔄 [ADMIN] Setting filter to: guests (ACTIVE tab)`)
+          console.log(`🔄 [ADMIN] Guest ${request.guestName} is now checked in and staying`)
+          console.log(`🔄 [ADMIN] Inquiry Type: ${request.inquiryType}`)
+          console.log(`🔄 [ADMIN] Final Status: ${status}`)
+        } else if (status === "check_out") {
           newFilter = "check_out"
-          console.log(`🔄 [ADMIN] Setting filter to: check_out`)
+          console.log(`🔄 [ADMIN] ✅ CHECK-OUT APPROVAL DETECTED`)
+          console.log(`🔄 [ADMIN] Setting filter to: check_out (CHECK OUT tab)`)
+          console.log(`🔄 [ADMIN] ⚠️ CONFIRMATION: This request will appear in CHECK OUT tab, NOT CHECK IN tab`)
+          console.log(`🔄 [ADMIN] Inquiry Type: ${request.inquiryType}`)
+          console.log(`🔄 [ADMIN] Final Status: ${status}`)
         } else if (status === "check_in") {
           newFilter = "check_in"
-          console.log(`🔄 [ADMIN] Setting filter to: check_in`)
+          console.log(`🔄 [ADMIN] ✅ CHECK-IN APPROVAL DETECTED`)
+          console.log(`🔄 [ADMIN] Setting filter to: check_in (CHECK IN tab)`)
+          console.log(`🔄 [ADMIN] ⚠️ NOTE: Click 'Complete Check-In' to move guest to ACTIVE tab`)
+          console.log(`🔄 [ADMIN] Inquiry Type: ${request.inquiryType}`)
+          console.log(`🔄 [ADMIN] Final Status: ${status}`)
         } else if (status === "rejected") {
           newFilter = "rejected"
-          console.log(`🔄 [ADMIN] Setting filter to: rejected`)
+          console.log(`🔄 [ADMIN] ✅ REJECTION DETECTED`)
+          console.log(`🔄 [ADMIN] Setting filter to: rejected (DENIED tab)`)
+          console.log(`🔄 [ADMIN] Inquiry Type: ${request.inquiryType}`)
+          console.log(`🔄 [ADMIN] Final Status: ${status}`)
+        } else {
+          console.log(`🔄 [ADMIN] Other status change: ${status}`)
+          console.log(`🔄 [ADMIN] Keeping filter as: all`)
         }
         
         // Update filter state
+        console.log(`🔄 [ADMIN] Changing filter from ${filter} to ${newFilter}`)
         setFilter(newFilter)
-        console.log(`🔄 [ADMIN] Filter state updated to: ${newFilter}`)
+        
+        // Fetch with the new filter immediately (no delay needed with optimistic updates)
+        console.log(`📡 [ADMIN] Fetching requests with new filter: ${newFilter}`)
+        fetchRequests(newFilter, true) // skipLoading=true for seamless UX
       } else {
         const err = await res.json()
-        console.error(`❌ [ADMIN] Approval failed:`, err)
+        console.error(`❌ [ADMIN] =========================================`)
+        console.error(`❌ [ADMIN] APPROVAL FAILED`)
+        console.error(`❌ [ADMIN] Error:`, err)
+        console.error(`❌ [ADMIN] =========================================`)
         notify({ title: "Error", message: err.message || "Failed to update", type: "error" })
+        
+        // ROLLBACK: Revert optimistic update on failure
+        setRequests(prev => prev.map(r => r._id === id ? request : r))
+        console.log(`↩️ [ADMIN] Rollback applied - reverted to original status: ${request.status}`)
       }
     } catch (error) {
-      console.error(`❌ [ADMIN] Network error:`, error)
+      console.error(`❌ [ADMIN] =========================================`)
+      console.error(`❌ [ADMIN] NETWORK ERROR`)
+      console.error(`❌ [ADMIN] Error:`, error)
+      console.error(`❌ [ADMIN] =========================================`)
       notify({ title: "Error", message: "Network error", type: "error" })
+      
+      // ROLLBACK: Revert optimistic update on error
+      const request = requests.find(r => r._id === id)
+      if (request) {
+        setRequests(prev => prev.map(r => r._id === id ? request : r))
+        console.log(`↩️ [ADMIN] Rollback applied - reverted to original status: ${request.status}`)
+      }
     }
     setActioning(false)
-  }, [token, confirm, notify])
+  }, [token, confirm, notify, fetchRequests, requests, filter])
 
   const handleExtend = useCallback(async () => {
     if (!extendGuest || !newCheckOut) return
     setExtending(true)
+    
+    // OPTIMISTIC UPDATE: Update local state immediately
+    const originalGuest = { ...extendGuest }
+    setRequests(prev => prev.map(r => r._id === extendGuest._id ? { ...r, status: "pending", reviewNote: `Extension requested: new check-out ${newCheckOut}`, checkOut: newCheckOut } : r))
+    console.log(`⚡ [ADMIN] Optimistic update for extension - ${extendGuest.guestName} status set to pending`)
+    
+    // Close modal immediately
+    setExtendGuest(null)
+    setNewCheckOut("")
+    
     try {
       const res = await fetch(`/api/reception-requests/${extendGuest._id}`, {
         method: "PUT",
@@ -163,16 +277,23 @@ export default function AdminReceptionPage() {
       })
       if (res.ok) {
         notify({ title: "Extension Requested", message: `New check-out date ${newCheckOut} sent for approval.`, type: "success" })
-        setExtendGuest(null)
-        setNewCheckOut("")
-        fetchRequests()
+        // Refresh in background without loading state
+        fetchRequests(filter, true)
       } else {
         const err = await res.json()
         notify({ title: "Error", message: err.message || "Failed", type: "error" })
+        // ROLLBACK on failure
+        setRequests(prev => prev.map(r => r._id === originalGuest._id ? originalGuest : r))
+        console.log(`↩️ [ADMIN] Rollback applied for extension - reverted ${originalGuest.guestName}`)
       }
-    } catch { notify({ title: "Error", message: "Network error", type: "error" }) }
+    } catch { 
+      notify({ title: "Error", message: "Network error", type: "error" })
+      // ROLLBACK on error
+      setRequests(prev => prev.map(r => r._id === originalGuest._id ? originalGuest : r))
+      console.log(`↩️ [ADMIN] Rollback applied for extension - reverted ${originalGuest.guestName}`)
+    }
     setExtending(false)
-  }, [extendGuest, newCheckOut, token, notify, fetchRequests])
+  }, [extendGuest, newCheckOut, token, notify, fetchRequests, filter])
 
   // Memoized filtered results
   const filteredRequests = useMemo(() => {
@@ -185,6 +306,7 @@ export default function AdminReceptionPage() {
       all: requests.length,
       pending: requests.filter(r => r.status === "pending").length,
       check_in: requests.filter(r => r.status === "check_in").length,
+      guests: requests.filter(r => r.status === "guests").length,
       rejected: requests.filter(r => r.status === "rejected").length,
       check_out: requests.filter(r => r.status === "check_out").length,
     }
@@ -207,7 +329,7 @@ export default function AdminReceptionPage() {
                 <p className="text-gray-500 text-[10px] uppercase font-bold tracking-widest mt-0.5">Global Guest Management Overlook</p>
               </div>
             </div>
-            <button onClick={fetchRequests} disabled={loading} className="p-2 hover:bg-white/5 rounded-lg text-gray-400 hover:text-white transition-all disabled:opacity-30">
+            <button onClick={() => fetchRequests()} disabled={loading} className="p-2 hover:bg-white/5 rounded-lg text-gray-400 hover:text-white transition-all disabled:opacity-30">
               <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
             </button>
           </div>
@@ -376,21 +498,58 @@ export default function AdminReceptionPage() {
                         <div className="mt-auto space-y-4 pt-2">
                            {/* Main Action Button */}
                            <button onClick={() => { setSelected(r); setReviewNote(r.reviewNote || "") }}
-                             className="w-full flex items-center justify-center gap-3 py-3.5 bg-[#1a1c1b] hover:bg-[#202221] border border-white/5 hover:border-[#d4af37]/30 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] text-[#f3cf7a] transition-all shadow-xl group/btn">
-                             <Eye size={16} className="group-hover/btn:scale-110 transition-transform" />
-                             REVIEW
+                             disabled={actioning}
+                             className={`w-full flex items-center justify-center gap-3 py-3.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all shadow-xl group/btn ${
+                               actioning
+                                 ? 'bg-[#1a1c1b]/50 border border-white/5 text-[#f3cf7a]/50 cursor-wait'
+                                 : 'bg-[#1a1c1b] hover:bg-[#202221] border border-white/5 hover:border-[#d4af37]/30 text-[#f3cf7a]'
+                             }`}>
+                             {actioning ? (
+                               <RefreshCw size={16} className="animate-spin" />
+                             ) : (
+                               <Eye size={16} className="group-hover/btn:scale-110 transition-transform" />
+                             )}
+                             {actioning ? 'Processing...' : 'REVIEW'}
                            </button>
 
                            {/* Secondary Context Actions (Horizontal) */}
+                           {r.status === "check_in" && (
+                             <button onClick={() => handleAction(r._id, "guests")}
+                               disabled={actioning}
+                               className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${
+                                 actioning
+                                   ? 'bg-emerald-900/10 border border-emerald-500/20 text-emerald-400/50 cursor-wait'
+                                   : 'bg-emerald-900/20 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-900/30'
+                               }`}>
+                               {actioning ? (
+                                 <RefreshCw size={11} className="animate-spin" />
+                               ) : (
+                                 <CheckCircle2 size={11} />
+                               )}
+                               {actioning ? 'Processing...' : 'Complete Check-In'}
+                             </button>
+                           )}
                            {r.status === "guests" && (
                              <div className="flex gap-2">
                                <button onClick={() => handleAction(r._id, "pending")}
-                                 className="flex-1 flex items-center justify-center gap-2 py-2 bg-red-900/10 border border-red-500/20 rounded-lg text-[9px] font-black uppercase tracking-widest text-red-400 hover:bg-red-900/20 transition-all">
-                                 <Key size={11} /> Check Out
+                                 disabled={actioning}
+                                 className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${
+                                   actioning
+                                     ? 'bg-red-900/10 border border-red-500/20 text-red-400/50 cursor-wait'
+                                     : 'bg-red-900/10 border border-red-500/20 text-red-400 hover:bg-red-900/20'
+                                 }`}>
+                                 {actioning ? <RefreshCw size={11} className="animate-spin" /> : <Key size={11} />}
+                                 {actioning ? 'Processing...' : 'Check Out'}
                                </button>
                                <button onClick={() => { setExtendGuest(r); setNewCheckOut(r.checkOut || "") }}
-                                 className="flex-1 flex items-center justify-center gap-2 py-2 bg-[#d4af37]/10 border border-[#d4af37]/20 rounded-lg text-[9px] font-black uppercase tracking-widest text-[#f3cf7a] hover:bg-[#d4af37]/20 transition-all">
-                                 <Calendar size={11} /> Extend
+                                 disabled={actioning}
+                                 className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${
+                                   actioning
+                                     ? 'bg-[#d4af37]/10 border border-[#d4af37]/20 text-[#f3cf7a]/50 cursor-wait'
+                                     : 'bg-[#d4af37]/10 border border-[#d4af37]/20 text-[#f3cf7a] hover:bg-[#d4af37]/20'
+                                 }`}>
+                                 {actioning ? <RefreshCw size={11} className="animate-spin" /> : <Calendar size={11} />}
+                                 {actioning ? 'Processing...' : 'Extend'}
                                </button>
                              </div>
                            )}
@@ -412,27 +571,27 @@ export default function AdminReceptionPage() {
 
         {/* Detail Sidebar/Modal Overlay */}
         {selected && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm p-4 overflow-hidden"
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm p-2 sm:p-4 overflow-hidden"
             onClick={e => { if (e.target === e.currentTarget) setSelected(null) }}>
-            <div className="bg-[#151716] border border-white/10 rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto relative animate-in zoom-in-95 duration-200">
-              <button onClick={() => setSelected(null)} className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors bg-[#0f1110] p-1.5 rounded-lg border border-white/10">
+            <div className="bg-[#151716] border border-white/10 rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto relative animate-in zoom-in-95 duration-200">
+              <button onClick={() => setSelected(null)} className="absolute top-3 sm:top-4 right-3 sm:right-4 text-gray-500 hover:text-white transition-colors bg-[#0f1110] p-1.5 rounded-lg border border-white/10">
                 <X size={18} />
               </button>
 
-              <div className="p-8 space-y-8">
+              <div className="p-4 sm:p-8 space-y-6 sm:space-y-8">
                 {/* Modal Header */}
                 <div className="space-y-2 border-l-4 border-[#d4af37] pl-4">
-                  <h2 className="text-2xl font-playfair italic font-bold text-[#f3cf7a] leading-none">{selected.guestName}</h2>
-                  <div className="flex items-center gap-3">
-                    <span className={`text-[9px] font-black px-2.5 py-1 rounded-full uppercase border ${STATUS_STYLES[selected.status] || STATUS_STYLES.pending}`}>
+                  <h2 className="text-xl sm:text-2xl font-playfair italic font-bold text-[#f3cf7a] leading-none">{selected.guestName}</h2>
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                    <span className={`text-[8px] sm:text-[9px] font-black px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full uppercase border ${STATUS_STYLES[selected.status] || STATUS_STYLES.pending}`}>
                       {selected.status}
                     </span>
-                    <span className="text-gray-600 text-[10px] font-black uppercase tracking-widest opacity-50">{selected.inquiryType.replace("_", " ")} Request</span>
+                    <span className="text-gray-600 text-[8px] sm:text-[10px] font-black uppercase tracking-widest opacity-50">{selected.inquiryType.replace("_", " ")} Request</span>
                   </div>
                 </div>
 
                 {/* Info Grid */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   {[
                     { label: "Phone", value: selected.phone || "—" },
                     { label: "Fayda ID", value: selected.faydaId || "—" },
@@ -440,9 +599,9 @@ export default function AdminReceptionPage() {
                     { label: "Price", value: `${selected.roomPrice?.toLocaleString()} ETB` },
                     { label: "Stay Dates", value: `${selected.checkIn} → ${selected.checkOut || "—"}`, colSpan: true },
                   ].map((item, idx) => (
-                    <div key={idx} className={`bg-[#0f1110] p-4 rounded-xl border border-white/5 space-y-1 shadow-inner ${item.colSpan ? "col-span-2" : ""}`}>
-                      <p className="text-[9px] font-black uppercase tracking-widest text-gray-600">{item.label}</p>
-                      <p className="text-white font-bold text-sm tracking-tight">{item.value}</p>
+                    <div key={idx} className={`bg-[#0f1110] p-3 sm:p-4 rounded-xl border border-white/5 space-y-1 shadow-inner ${item.colSpan ? "col-span-1 sm:col-span-2" : ""}`}>
+                      <p className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-gray-600">{item.label}</p>
+                      <p className="text-white font-bold text-xs sm:text-sm tracking-tight">{item.value}</p>
                     </div>
                   ))}
                 </div>
@@ -450,37 +609,56 @@ export default function AdminReceptionPage() {
                 {/* Review Section */}
                 <div className="space-y-4">
                   {selected.notes && (
-                    <div className="bg-[#0f1110] rounded-xl p-5 border border-white/5 shadow-inner">
-                      <p className="text-[9px] font-black uppercase tracking-widest text-gray-500 mb-2">Guest's Initial Note</p>
-                      <p className="text-gray-300 text-sm italic font-medium leading-relaxed">"{selected.notes}"</p>
+                    <div className="bg-[#0f1110] rounded-xl p-3 sm:p-5 border border-white/5 shadow-inner">
+                      <p className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-gray-500 mb-2">Guest's Initial Note</p>
+                      <p className="text-gray-300 text-xs sm:text-sm italic font-medium leading-relaxed">"{selected.notes}"</p>
                     </div>
                   )}
 
                   <div className="space-y-2.5">
-                    <label className="block text-[9px] font-black uppercase tracking-widest text-[#d4af37]">Internal Feedback Note</label>
+                    <label className="block text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-[#d4af37]">Internal Feedback Note</label>
                     <textarea value={reviewNote} onChange={e => setReviewNote(e.target.value)} rows={3}
                       placeholder="Add instructions or feedback for reception staff..."
-                      className="w-full bg-[#0f1110] border border-white/10 text-white rounded-xl px-4 py-3 text-sm outline-none focus:border-[#d4af37]/30 resize-none transition-all placeholder:text-gray-700 shadow-inner" />
+                      className="w-full bg-[#0f1110] border border-white/10 text-white rounded-xl px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm outline-none focus:border-[#d4af37]/30 resize-none transition-all placeholder:text-gray-700 shadow-inner" />
                   </div>
 
                   {/* Dynamic Action Buttons */}
                   <div className="pt-2">
                     {selected.status === "pending" && (
-                      <div className="grid grid-cols-3 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
                         <button onClick={() => handleAction(selected._id, "rejected")} disabled={actioning}
-                          className="col-span-1 py-4 bg-red-900/20 border border-red-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest text-red-400 hover:bg-red-900/30 transition-all flex items-center justify-center gap-2 disabled:opacity-50">
-                          <XCircle size={14} /> Deny
+                          className={`col-span-1 py-2.5 sm:py-4 rounded-xl text-[8px] sm:text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1.5 sm:gap-2 ${
+                            actioning
+                              ? 'bg-red-900/10 border border-red-500/20 text-red-400/50 cursor-wait'
+                              : 'bg-red-900/20 border border-red-500/20 text-red-400 hover:bg-red-900/30'
+                          }`}>
+                          {actioning ? (
+                            <RefreshCw size={12} className="sm:w-[14px] sm:h-[14px] animate-spin" />
+                          ) : (
+                            <XCircle size={12} className="sm:w-[14px] sm:h-[14px]" />
+                          )}
+                          {actioning ? 'Processing...' : 'Deny'}
                         </button>
                         <button onClick={() => handleAction(selected._id, selected.inquiryType === "check_out" ? "check_out" : "check_in")} disabled={actioning}
-                          className="col-span-2 py-4 bg-gradient-to-b from-[#f3cf7a] to-[#b38822] text-[#2a1708] border border-[#f5db8b] rounded-xl text-[11px] font-black uppercase tracking-widest shadow-xl hover:shadow-[#d4af37]/10 transition-all flex items-center justify-center gap-2 disabled:opacity-50">
-                          {selected.inquiryType === "check_out" ? <Key size={16} /> : <CheckCircle2 size={16} />}
-                          Approve {selected.inquiryType === "check_out" ? "Departure" : "Arrival"}
+                          className={`col-span-1 sm:col-span-2 py-2.5 sm:py-4 rounded-xl text-[8px] sm:text-[11px] font-black uppercase tracking-widest shadow-xl transition-all flex items-center justify-center gap-1.5 sm:gap-2 ${
+                            actioning
+                              ? 'bg-gradient-to-b from-[#f3cf7a]/50 to-[#b38822]/50 border border-[#f5db8b]/50 text-[#2a1708]/50 cursor-wait'
+                              : 'bg-gradient-to-b from-[#f3cf7a] to-[#b38822] text-[#2a1708] border border-[#f5db8b] hover:shadow-[#d4af37]/10'
+                          }`}>
+                          {actioning ? (
+                            <RefreshCw size={12} className="sm:w-[14px] sm:h-[14px] animate-spin" />
+                          ) : selected.inquiryType === "check_out" ? (
+                            <Key size={12} className="sm:w-[14px] sm:h-[14px]" />
+                          ) : (
+                            <CheckCircle2 size={12} className="sm:w-[14px] sm:h-[14px]" />
+                          )}
+                          {actioning ? 'Processing...' : selected.inquiryType === "check_out" ? "Approve Departure" : "Approve Arrival"}
                         </button>
                       </div>
                     )}
-                    
-                    {!["pending"].includes(selected.status) && (
-                      <div className={`py-5 rounded-xl border text-center text-[11px] font-black uppercase tracking-widest shadow-inner ${STATUS_STYLES[selected.status] || STATUS_STYLES.pending}`}>
+                                      
+                    {!['pending'].includes(selected.status) && (
+                      <div className={`py-3 sm:py-5 rounded-xl border text-center text-[8px] sm:text-[11px] font-black uppercase tracking-widest shadow-inner ${STATUS_STYLES[selected.status] || STATUS_STYLES.pending}`}>
                         {selected.status.replace("_", " ").toUpperCase()} - Finalized Process
                       </div>
                     )}
@@ -493,26 +671,26 @@ export default function AdminReceptionPage() {
 
         {/* Extend Stay Modal */}
         {extendGuest && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-md p-4 overflow-hidden"
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-md p-2 sm:p-4 overflow-hidden"
             onClick={e => { if (e.target === e.currentTarget) setExtendGuest(null) }}>
-            <div className="bg-[#151716] border border-white/10 rounded-2xl shadow-2xl max-w-sm w-full p-8 space-y-6 relative animate-in zoom-in-95 duration-200">
-              <button onClick={() => setExtendGuest(null)} className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors bg-[#0f1110] p-1.5 rounded-lg border border-white/10">
-                <X size={18} />
+            <div className="bg-[#151716] border border-white/10 rounded-2xl shadow-2xl max-w-sm w-full p-4 sm:p-8 space-y-4 sm:space-y-6 relative animate-in zoom-in-95 duration-200">
+              <button onClick={() => setExtendGuest(null)} className="absolute top-2 sm:top-4 right-2 sm:right-4 text-gray-500 hover:text-white transition-colors bg-[#0f1110] p-1 sm:p-1.5 rounded-lg border border-white/10">
+                <X size={16} className="sm:w-[18px] sm:h-[18px]" />
               </button>
 
               <div className="space-y-2 border-l-4 border-[#d4af37] pl-4">
-                <h2 className="text-xl font-playfair italic font-bold text-[#f3cf7a] leading-none">Extend Stay</h2>
-                <p className="text-gray-500 text-[9px] uppercase font-bold tracking-widest">{extendGuest.guestName}</p>
+                <h2 className="text-lg sm:text-xl font-playfair italic font-bold text-[#f3cf7a] leading-none">Extend Stay</h2>
+                <p className="text-gray-500 text-[8px] sm:text-[9px] uppercase font-bold tracking-widest">{extendGuest.guestName}</p>
               </div>
 
               <div className="space-y-4">
                 <div className="space-y-2.5">
-                  <label className="block text-[9px] font-black uppercase tracking-widest text-[#d4af37]">New Check-Out Date</label>
+                  <label className="block text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-[#d4af37]">New Check-Out Date</label>
                   <Popover>
                     <PopoverTrigger asChild>
-                      <button className="w-full bg-[#0f1110] border border-white/10 text-white rounded-xl px-4 py-4 text-sm font-bold flex items-center justify-between hover:border-[#d4af37]/30 transition-all shadow-inner">
+                      <button className="w-full bg-[#0f1110] border border-white/10 text-white rounded-xl px-3 sm:px-4 py-3 sm:py-4 text-xs sm:text-sm font-bold flex items-center justify-between hover:border-[#d4af37]/30 transition-all shadow-inner">
                         {newCheckOut ? format(new Date(newCheckOut), "PPP") : <span className="text-gray-600">Select Date</span>}
-                        <Calendar className="h-4 w-4 text-[#d4af37]" />
+                        <Calendar className="h-3.5 sm:h-4 w-3.5 sm:w-4 text-[#d4af37]" />
                       </button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0 bg-[#0f1110] border-white/10" align="start">
@@ -524,15 +702,28 @@ export default function AdminReceptionPage() {
                   </Popover>
                 </div>
 
-                <div className="pt-4 flex gap-3">
+                <div className="pt-2 sm:pt-4 flex gap-2 sm:gap-3">
                   <button onClick={() => setExtendGuest(null)}
-                    className="flex-1 py-4 bg-[#1a1c1b] border border-white/5 rounded-xl text-[10px] font-black uppercase tracking-widest text-gray-500 hover:border-white/10 transition-all">
+                    disabled={extending}
+                    className={`flex-1 py-2.5 sm:py-4 rounded-xl text-[8px] sm:text-[10px] font-black uppercase tracking-widest transition-all ${
+                      extending
+                        ? 'bg-[#1a1c1b]/50 border border-white/5 text-gray-500/50 cursor-wait'
+                        : 'bg-[#1a1c1b] border border-white/5 text-gray-500 hover:border-white/10'
+                    }`}>
                     Cancel
                   </button>
                   <button onClick={handleExtend} disabled={extending || !newCheckOut}
-                    className="flex-[2] py-4 bg-gradient-to-b from-[#f3cf7a] to-[#b38822] text-[#2a1708] border border-[#f5db8b] rounded-xl text-[11px] font-black uppercase tracking-widest shadow-xl hover:shadow-[#d4af37]/10 transition-all flex items-center justify-center gap-2 disabled:opacity-50">
-                    {extending ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Calendar size={16} />}
-                    Confirm Extension
+                    className={`flex-[2] py-2.5 sm:py-4 rounded-xl text-[8px] sm:text-[11px] font-black uppercase tracking-widest shadow-xl transition-all flex items-center justify-center gap-1.5 sm:gap-2 ${
+                      extending || !newCheckOut
+                        ? 'bg-gradient-to-b from-[#f3cf7a]/50 to-[#b38822]/50 border border-[#f5db8b]/50 text-[#2a1708]/50 cursor-wait'
+                        : 'bg-gradient-to-b from-[#f3cf7a] to-[#b38822] text-[#2a1708] border border-[#f5db8b] hover:shadow-[#d4af37]/10'
+                    }`}>
+                    {extending ? (
+                      <RefreshCw className="h-3.5 sm:h-4 w-3.5 sm:w-4 animate-spin" />
+                    ) : (
+                      <Calendar size={14} className="sm:w-4 sm:h-4" />
+                    )}
+                    {extending ? 'Processing...' : 'Confirm Extension'}
                   </button>
                 </div>
               </div>

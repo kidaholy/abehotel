@@ -61,6 +61,7 @@ export function POSPage({ fixedTier }: POSPageProps) {
   const [searchTerm, setSearchTerm] = useState("")
   const [idSearchTerm, setIdSearchTerm] = useState("")
   const [selectedFloorId, setSelectedFloorId] = useState<string>("")
+  const [floors, setFloors] = useState<any[]>([])
   const [distributions, setDistributions] = useState<string[]>([])
   const [variantModal, setVariantModal] = useState<{ item: MenuItem } | null>(null)
   const [roomOrdersCount, setRoomOrdersCount] = useState(0)
@@ -97,8 +98,9 @@ export function POSPage({ fixedTier }: POSPageProps) {
       try {
         const floorsRes = await fetch("/api/floors", { headers: { Authorization: `Bearer ${token}` } })
         if (floorsRes.ok) {
-          const floors = await floorsRes.json()
-          const assigned = floors.some((f: any) => f.roomServiceCashierId === user.id)
+          const floorsData = await floorsRes.json()
+          setFloors(floorsData)
+          const assigned = floorsData.some((f: any) => f.roomServiceCashierId === user.id)
           setIsRoomServiceHandler(assigned)
           
           if (assigned) {
@@ -221,23 +223,41 @@ export function POSPage({ fixedTier }: POSPageProps) {
         localStorage.setItem('newOrderCreated', Date.now().toString())
         setTimeout(() => {
           if (settings.enable_cashier_printing === "false") { setShowOrderAnimation(false); return }
-          const receiptHtml = getReceiptHTML({
-            orderNumber: data.orderNumber, tableNumber: finalTableNumber,
-            items: snapshotCart.map(item => ({ menuId: item.menuId, name: item.name, quantity: item.quantity, price: item.price })),
-            subtotal, tax, total: totalAmount, paperWidth: 80,
-            appName: settings.app_name, appTagline: settings.app_tagline, vatRate: settings.vat_rate
-          })
-          const iframe = document.createElement('iframe')
-          Object.assign(iframe.style, { position: 'fixed', right: '0', bottom: '0', width: '0', height: '0', border: '0' })
-          document.body.appendChild(iframe)
-          const doc = iframe.contentWindow?.document
-          if (doc) {
-            doc.open(); doc.write(receiptHtml); doc.close()
-            setTimeout(() => {
-              iframe.contentWindow?.focus(); iframe.contentWindow?.print()
-              setTimeout(() => { document.body.removeChild(iframe); setShowOrderAnimation(false) }, 300)
-            }, 300)
+          
+          const currentFloorId = selectedFloorId || user?.floorId
+          const floor = floors.find(f => String(f._id) === String(currentFloorId))
+          const floorName = floor ? (floor.name || `Floor #${floor.floorNumber}`) : ""
+
+          const printSingleReceipt = (copyType: 'KITCHEN' | 'CUSTOMER') => {
+            const receiptHtml = getReceiptHTML({
+              orderNumber: data.orderNumber, tableNumber: finalTableNumber,
+              items: snapshotCart.map(item => ({ menuId: item.menuId, name: item.name, quantity: item.quantity, price: item.price })),
+              subtotal, tax, total: totalAmount, paperWidth: 80,
+              appName: settings.app_name, appTagline: settings.app_tagline, vatRate: settings.vat_rate,
+              floorName,
+              copyType
+            })
+            const iframe = document.createElement('iframe')
+            Object.assign(iframe.style, { position: 'fixed', right: '0', bottom: '0', width: '0', height: '0', border: '0' })
+            document.body.appendChild(iframe)
+            const doc = iframe.contentWindow?.document
+            if (doc) {
+              doc.open(); doc.write(receiptHtml); doc.close()
+              setTimeout(() => {
+                iframe.contentWindow?.focus(); iframe.contentWindow?.print()
+                setTimeout(() => { document.body.removeChild(iframe) }, 500)
+              }, 300)
+            }
           }
+
+          // Trigger Kitchen Copy
+          printSingleReceipt('KITCHEN')
+          
+          // Trigger Customer Copy after a short delay to avoid browser blocking multiple print calls
+          setTimeout(() => {
+            printSingleReceipt('CUSTOMER')
+            setShowOrderAnimation(false)
+          }, 1000)
         }, 800)
       } else {
         const errorData = await response.json()

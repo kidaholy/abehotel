@@ -48,6 +48,8 @@ const EMPTY_FORM = {
 }
 
 function GuestCard({ s, rooms, token, notify, fetchSubmissions, setExtendGuest, setNewCheckOut }: { s: any; rooms: any[]; token: string | null; notify: any; fetchSubmissions: () => void; setExtendGuest: (s: any) => void; setNewCheckOut: (d: string) => void }) {
+  const [actionLoading, setActionLoading] = useState<string | null>(null)
+  
   const STATUS_STYLES: Record<string, string> = {
     pending:   "bg-yellow-900/40 text-yellow-400 border-yellow-500/30",
     guests:    "bg-emerald-900/40 text-emerald-400 border-emerald-500/30",
@@ -221,30 +223,76 @@ function GuestCard({ s, rooms, token, notify, fetchSubmissions, setExtendGuest, 
         <div className="mt-auto flex gap-2 pt-2">
           {s.status === "check_in" && (
             <button type="button"
+              disabled={actionLoading === 'checkin'}
               onClick={async () => {
-                const res = await fetch(`/api/reception-requests/${s._id}`, {
-                  method: "PUT",
-                  headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-                  body: JSON.stringify({ status: "guests", reviewNote: "Check-in completed by reception" }),
-                })
-                if (res.ok) { notify({ title: "Checked In", message: `${s.guestName} is now active.`, type: "success" }); fetchSubmissions() }
+                setActionLoading('checkin')
+                try {
+                  const res = await fetch(`/api/reception-requests/${s._id}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                    body: JSON.stringify({ status: "guests", reviewNote: "Check-in completed by reception" }),
+                  })
+                  if (res.ok) { 
+                    notify({ title: "Checked In", message: `${s.guestName} is now active.`, type: "success" })
+                    fetchSubmissions() 
+                  } else {
+                    const err = await res.json()
+                    notify({ title: "Error", message: err.message || "Failed to check in", type: "error" })
+                  }
+                } catch (error) {
+                  notify({ title: "Error", message: "Network error", type: "error" })
+                } finally {
+                  setActionLoading(null)
+                }
               }}
-              className="flex-1 flex items-center justify-center gap-2 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-emerald-600/20">
-              <CheckCircle2 size={14} /> Check In
+              className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg ${
+                actionLoading === 'checkin' 
+                  ? 'bg-emerald-600/50 cursor-wait opacity-75' 
+                  : 'bg-emerald-600 hover:bg-emerald-500 text-white hover:shadow-emerald-600/20'
+              }`}>
+              {actionLoading === 'checkin' ? (
+                <RefreshCw size={14} className="animate-spin" />
+              ) : (
+                <CheckCircle2 size={14} />
+              )}
+              {actionLoading === 'checkin' ? 'Processing...' : 'Check In'}
             </button>
           )}
           {(s.status === "guests" || s.status === "check_in") && (
             <button type="button"
+              disabled={actionLoading === 'checkout'}
               onClick={async () => {
-                const res = await fetch(`/api/reception-requests/${s._id}`, {
-                  method: "PUT",
-                  headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-                  body: JSON.stringify({ status: "pending", inquiryType: "check_out", reviewNote: "Check-out requested by reception" }),
-                })
-                if (res.ok) { notify({ title: "Departure Requested", message: `Check-out for ${s.guestName} sent to admin for approval.`, type: "success" }); fetchSubmissions() }
+                setActionLoading('checkout')
+                try {
+                  const res = await fetch(`/api/reception-requests/${s._id}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                    body: JSON.stringify({ status: "pending", inquiryType: "check_out", reviewNote: "Check-out requested by reception" }),
+                  })
+                  if (res.ok) { 
+                    notify({ title: "Departure Requested", message: `Check-out for ${s.guestName} sent to admin for approval.`, type: "success" })
+                    fetchSubmissions() 
+                  } else {
+                    const err = await res.json()
+                    notify({ title: "Error", message: err.message || "Failed to request check-out", type: "error" })
+                  }
+                } catch (error) {
+                  notify({ title: "Error", message: "Network error", type: "error" })
+                } finally {
+                  setActionLoading(null)
+                }
               }}
-              className="flex-1 flex items-center justify-center gap-2 py-3 bg-[#1a1c1b] border border-red-500/30 text-red-500 hover:bg-red-900/10 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
-              <Key size={14} /> Check Out
+              className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                actionLoading === 'checkout'
+                  ? 'bg-red-900/20 border border-red-500/30 text-red-400/50 cursor-wait'
+                  : 'bg-[#1a1c1b] border border-red-500/30 text-red-500 hover:bg-red-900/10'
+              }`}>
+              {actionLoading === 'checkout' ? (
+                <RefreshCw size={14} className="animate-spin" />
+              ) : (
+                <Key size={14} />
+              )}
+              {actionLoading === 'checkout' ? 'Processing...' : 'Check Out'}
             </button>
           )}
           {(s.status === "guests" || s.status === "check_in") && (

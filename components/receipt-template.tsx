@@ -21,6 +21,8 @@ interface ReceiptTemplateProps {
   appName?: string
   appTagline?: string
   vatRate?: string
+  floorName?: string
+  copyType?: 'KITCHEN' | 'CUSTOMER'
 }
 
 export const getReceiptHTML = ({
@@ -34,7 +36,9 @@ export const getReceiptHTML = ({
   paperWidth = 80,
   appName = "PRIME ADDIS",
   appTagline = "Coffee & More",
-  vatRate = "0.08"
+  vatRate = "0.08",
+  floorName,
+  copyType
 }: ReceiptTemplateProps) => {
   const widthStr = `${paperWidth}mm`
   const vatPercent = (parseFloat(vatRate) * 100).toFixed(0)
@@ -81,6 +85,11 @@ export const getReceiptHTML = ({
       </head>
       <body>
         <div class="receipt">
+          ${copyType ? `
+            <div class="text-center mb-2" style="font-size: 14px; border: 2px solid black; padding: 4px;">
+              <span class="font-bold">${copyType} COPY</span>
+            </div>
+          ` : ''}
           <div class="text-center mb-4">
             <h1 style="margin:0; font-size: 20px;" class="uppercase">${appName}</h1>
             <p style="margin:5px 0 0 0; font-size: 12px;">${appTagline}</p>
@@ -100,6 +109,12 @@ export const getReceiptHTML = ({
               <span>Table:</span>
               <span class="font-bold">${tableNumber || "N/A"}</span>
             </div>
+            ${floorName ? `
+            <div class="flex justify-between">
+              <span>Floor:</span>
+              <span class="font-bold">${floorName}</span>
+            </div>
+            ` : ""}
           </div>
 
           <div class="border-b border-dashed my-2"></div>
