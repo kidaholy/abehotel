@@ -26,6 +26,7 @@ export interface IReceptionRequest {
   status:
     | "CHECKIN_PENDING"
     | "CHECKIN_APPROVED"
+    | "EXTEND_PENDING"
     | "CHECKOUT_PENDING"
     | "CHECKOUT_APPROVED"
     | "CHECKED_OUT"
@@ -73,6 +74,7 @@ const receptionRequestSchema = new Schema<IReceptionRequest>(
         // Canonical
         "CHECKIN_PENDING",
         "CHECKIN_APPROVED",
+        "EXTEND_PENDING",
         "CHECKOUT_PENDING",
         "CHECKOUT_APPROVED",
         "CHECKED_OUT",

@@ -162,7 +162,7 @@ export default function AdminServicesPage() {
         const data = await res.json()
         // Handle both old array format and new paginated format
         const requests = Array.isArray(data) ? data : (data.data || [])
-        const pendingCount = requests.filter((r: any) => ["CHECKIN_PENDING", "CHECKOUT_PENDING", "pending"].includes(r.status)).length
+        const pendingCount = requests.filter((r: any) => ["CHECKIN_PENDING", "CHECKOUT_PENDING", "EXTEND_PENDING", "pending"].includes(r.status)).length
         if (pendingCount > prevReceptionCount.current) {
           let plays = 0
           const interval = setInterval(() => {
@@ -182,7 +182,8 @@ export default function AdminServicesPage() {
   const handleReceptionAction = async (
     id: string,
     action: "approve" | "deny",
-    inquiryType: "check_in" | "check_out"
+    inquiryType: "check_in" | "check_out",
+    currentStatus?: string
   ) => {
     const label =
       action === "approve"
@@ -208,13 +209,15 @@ export default function AdminServicesPage() {
       // - check_out approve -> CHECKED_OUT
       // - check_out deny    -> CHECKIN_APPROVED (guest remains checked-in)
       const status =
-        inquiryType === "check_out"
-          ? action === "approve"
-            ? "CHECKED_OUT"
-            : "CHECKIN_APPROVED"
-          : action === "approve"
-            ? "CHECKIN_APPROVED"
-            : "REJECTED"
+        currentStatus === "EXTEND_PENDING"
+          ? "CHECKIN_APPROVED"
+          : inquiryType === "check_out"
+            ? action === "approve"
+              ? "CHECKED_OUT"
+              : "CHECKIN_APPROVED"
+            : action === "approve"
+              ? "CHECKIN_APPROVED"
+              : "REJECTED"
 
       const res = await fetch(`/api/reception-requests/${id}`, {
         method: "PUT",
@@ -821,7 +824,7 @@ export default function AdminServicesPage() {
                             if (receptionDateFilter === "custom" && customReceptionDate && !isSameDay(d, new Date(customReceptionDate))) return false;
                           }
                           if (receptionFilter === "all") return true
-                          if (receptionFilter === "pending") return ["CHECKIN_PENDING", "CHECKOUT_PENDING", "pending"].includes(r.status)
+                          if (receptionFilter === "pending") return ["CHECKIN_PENDING", "CHECKOUT_PENDING", "EXTEND_PENDING", "pending"].includes(r.status)
                           if (receptionFilter === "check_in") return ["CHECKIN_APPROVED", "check_in", "ACTIVE", "guests"].includes(r.status)
                           if (receptionFilter === "check_out") return ["CHECKED_OUT", "CHECKOUT_APPROVED", "check_out"].includes(r.status)
                           if (receptionFilter === "rejected") return ["REJECTED", "rejected"].includes(r.status)
@@ -847,7 +850,7 @@ export default function AdminServicesPage() {
                                 if (receptionDateFilter === "custom" && customReceptionDate && !isSameDay(d, new Date(customReceptionDate))) return false;
                               }
                               if (receptionFilter === "all") return true
-                              if (receptionFilter === "pending") return ["CHECKIN_PENDING", "CHECKOUT_PENDING", "pending"].includes(r.status)
+                              if (receptionFilter === "pending") return ["CHECKIN_PENDING", "CHECKOUT_PENDING", "EXTEND_PENDING", "pending"].includes(r.status)
                               if (receptionFilter === "check_in") return ["CHECKIN_APPROVED", "check_in", "ACTIVE", "guests"].includes(r.status)
                               if (receptionFilter === "check_out") return ["CHECKED_OUT", "CHECKOUT_APPROVED", "check_out"].includes(r.status)
                               if (receptionFilter === "rejected") return ["REJECTED", "rejected"].includes(r.status)
@@ -969,13 +972,13 @@ export default function AdminServicesPage() {
                                         <span className="text-[#0f1110] font-black text-[10px] uppercase tracking-[0.2em] relative z-10">Review</span>
                                       </button>
                                       
-                                      {["CHECKIN_PENDING", "CHECKOUT_PENDING", "pending"].includes(r.status) && (
+                                      {["CHECKIN_PENDING", "CHECKOUT_PENDING", "EXTEND_PENDING", "pending"].includes(r.status) && (
                                         <>
-                                          <button onClick={() => handleReceptionAction(r._id, "deny", r.inquiryType)}
+                                          <button onClick={() => handleReceptionAction(r._id, "deny", r.inquiryType, r.status)}
                                             className="px-4 py-3.5 bg-red-900/20 border border-red-500/30 rounded-2xl text-red-500 hover:bg-red-900/40 transition-all flex items-center justify-center">
                                             <XCircle size={18} />
                                           </button>
-                                          <button onClick={() => handleReceptionAction(r._id, "approve", r.inquiryType)}
+                                          <button onClick={() => handleReceptionAction(r._id, "approve", r.inquiryType, r.status)}
                                             className="px-6 py-3.5 bg-emerald-900/20 border border-emerald-500/30 rounded-2xl text-emerald-500 hover:bg-emerald-900/40 transition-all flex items-center justify-center gap-2">
                                             <CheckCircle2 size={18} />
                                             <span className="text-[10px] font-black uppercase tracking-widest">Approve</span>

@@ -14,27 +14,35 @@ export async function PUT(request: Request, context: any) {
     const body = await request.json()
     const { status, reviewNote, checkOut, inquiryType } = body
 
-    // Reception staff can submit an extension request (resets to pending with new checkOut)
+    // Reception staff can request either:
+    // - checkout approval (CHECKOUT_PENDING + inquiryType check_out)
+    // - stay extension approval (EXTEND_PENDING, keeps inquiryType as check_in)
     if (decoded.role === "reception") {
-      // Reception creates checkout workflow by switching to CHECKOUT_PENDING + inquiryType check_out
-      // (also used for extension approvals in this codebase: checkOut date change + admin approval)
-      const allowed = ["CHECKOUT_PENDING", "pending"]
-      if (!allowed.includes(status)) {
-        return NextResponse.json({ message: "Reception can only request checkout approval" }, { status: 403 })
+      const isCheckoutRequest = inquiryType === "check_out" || status === "CHECKOUT_PENDING"
+      const isExtendRequest = status === "EXTEND_PENDING"
+
+      if (!isCheckoutRequest && !isExtendRequest) {
+        return NextResponse.json({ message: "Reception can only request checkout or extension approval" }, { status: 403 })
       }
 
-      const updated = await ReceptionRequest.findByIdAndUpdate(
-        params.id,
-        {
-          status: "CHECKOUT_PENDING",
-          inquiryType: "check_out",
-          reviewNote: reviewNote || "",
-          ...(checkOut ? { checkOut } : {}),
-        },
-        { new: true }
-      )
+      const update: any = {
+        reviewNote: reviewNote || "",
+        ...(checkOut ? { checkOut } : {}),
+      }
+
+      if (isCheckoutRequest) {
+        update.status = "CHECKOUT_PENDING"
+        update.inquiryType = "check_out"
+      } else {
+        update.status = "EXTEND_PENDING"
+      }
+
+      const updated = await ReceptionRequest.findByIdAndUpdate(params.id, update, { new: true })
       if (!updated) return NextResponse.json({ message: "Request not found" }, { status: 404 })
-      return NextResponse.json({ message: "Checkout requested", request: { ...updated.toObject(), _id: updated._id.toString() } })
+      return NextResponse.json({
+        message: isCheckoutRequest ? "Checkout requested" : "Extension requested",
+        request: { ...updated.toObject(), _id: updated._id.toString() },
+      })
     }
 
     // Admin approve/deny
@@ -42,7 +50,7 @@ export async function PUT(request: Request, context: any) {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 })
     }
 
-    if (!["CHECKIN_PENDING", "CHECKIN_APPROVED", "CHECKOUT_PENDING", "CHECKOUT_APPROVED", "CHECKED_OUT", "REJECTED", "guests", "rejected", "check_in", "check_out", "pending", "ACTIVE"].includes(status)) {
+    if (!["CHECKIN_PENDING", "CHECKIN_APPROVED", "EXTEND_PENDING", "CHECKOUT_PENDING", "CHECKOUT_APPROVED", "CHECKED_OUT", "REJECTED", "guests", "rejected", "check_in", "check_out", "pending", "ACTIVE"].includes(status)) {
       console.error(`❌ [API] Invalid status provided: ${status}`)
       return NextResponse.json({ message: "Invalid status" }, { status: 400 })
     }
@@ -108,6 +116,12 @@ export async function PUT(request: Request, context: any) {
 
     if (currentRequest.status === "CHECKOUT_PENDING") {
       if (status === "CHECKOUT_APPROVED") targetStatus = "CHECKED_OUT"
+      if (status === "REJECTED" || status === "rejected") targetStatus = "CHECKIN_APPROVED"
+    }
+
+    // Extension approval/denial: guest remains checked in (CHECKIN_APPROVED)
+    if (currentRequest.status === "EXTEND_PENDING") {
+      if (status === "CHECKIN_APPROVED") targetStatus = "CHECKIN_APPROVED"
       if (status === "REJECTED" || status === "rejected") targetStatus = "CHECKIN_APPROVED"
     }
 

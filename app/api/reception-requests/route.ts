@@ -28,7 +28,7 @@ export async function GET(request: Request) {
       // Admin sees all requests
       if (status && status !== "all") {
         if (status === "pending") {
-          query.status = { $in: ["CHECKIN_PENDING", "CHECKOUT_PENDING", "pending"] }
+          query.status = { $in: ["CHECKIN_PENDING", "CHECKOUT_PENDING", "EXTEND_PENDING", "pending"] }
         } else if (status === "check_in") {
           // Canonical "checked in" bucket
           query.status = { $in: ["CHECKIN_APPROVED", "check_in", "ACTIVE", "guests"] }
@@ -52,7 +52,7 @@ export async function GET(request: Request) {
       ]
       if (status && status !== "all") {
         if (status === "pending") {
-           query.status = { $in: ["CHECKIN_PENDING", "CHECKOUT_PENDING", "pending"] }
+           query.status = { $in: ["CHECKIN_PENDING", "CHECKOUT_PENDING", "EXTEND_PENDING", "pending"] }
         } else if (status === "check_in") {
            query.status = { $in: ["CHECKIN_APPROVED", "check_in", "ACTIVE", "guests"] }
         } else if (status === "guests") {

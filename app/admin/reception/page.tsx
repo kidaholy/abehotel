@@ -400,13 +400,17 @@ export default function AdminReceptionPage() {
                              </button>
 
                              {/* Quick actions for pending approvals */}
-                             {["CHECKIN_PENDING", "CHECKOUT_PENDING", "pending"].includes(r.status) && (
+                             {["CHECKIN_PENDING", "CHECKOUT_PENDING", "EXTEND_PENDING", "pending"].includes(r.status) && (
                                <div className="grid grid-cols-2 gap-2">
                                  <button
                                    onClick={() =>
                                      handleAction(
                                        r._id,
-                                       r.inquiryType === "check_out" ? "CHECKED_OUT" : "CHECKIN_APPROVED",
+                                       r.status === "EXTEND_PENDING"
+                                         ? "CHECKIN_APPROVED"
+                                         : r.inquiryType === "check_out"
+                                           ? "CHECKED_OUT"
+                                           : "CHECKIN_APPROVED",
                                        r.inquiryType === "check_out" ? { checkOut: r.checkOut } : {}
                                      )
                                    }
@@ -421,7 +425,11 @@ export default function AdminReceptionPage() {
                                    onClick={() =>
                                      handleAction(
                                        r._id,
-                                       r.inquiryType === "check_out" ? "CHECKIN_APPROVED_DENY_CHECKOUT" : "REJECTED"
+                                       r.status === "EXTEND_PENDING"
+                                         ? "CHECKIN_APPROVED"
+                                         : r.inquiryType === "check_out"
+                                           ? "CHECKIN_APPROVED_DENY_CHECKOUT"
+                                           : "REJECTED"
                                      )
                                    }
                                    disabled={actioning}
