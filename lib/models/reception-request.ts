@@ -22,7 +22,22 @@ export interface IReceptionRequest {
   paymentReference?: string
   transactionUrl?: string
   notes?: string
-  status: "pending" | "guests" | "rejected" | "check_in" | "check_out"
+  // Canonical lifecycle statuses (new)
+  status:
+    | "CHECKIN_PENDING"
+    | "CHECKIN_APPROVED"
+    | "CHECKOUT_PENDING"
+    | "CHECKOUT_APPROVED"
+    | "CHECKED_OUT"
+    // Denial for check-in (checkout denial should NOT use this)
+    | "REJECTED"
+    // Legacy values kept for backward compatibility with existing DB rows
+    | "pending"
+    | "guests"
+    | "rejected"
+    | "check_in"
+    | "check_out"
+    | "ACTIVE"
   submittedBy?: string
   reviewedBy?: string
   reviewNote?: string
@@ -52,7 +67,26 @@ const receptionRequestSchema = new Schema<IReceptionRequest>(
     paymentReference: { type: String },
     transactionUrl: { type: String },
     notes: { type: String },
-    status: { type: String, enum: ["pending", "guests", "rejected", "check_in", "check_out"], default: "pending" },
+    status: {
+      type: String,
+      enum: [
+        // Canonical
+        "CHECKIN_PENDING",
+        "CHECKIN_APPROVED",
+        "CHECKOUT_PENDING",
+        "CHECKOUT_APPROVED",
+        "CHECKED_OUT",
+        "REJECTED",
+        // Legacy
+        "pending",
+        "guests",
+        "rejected",
+        "check_in",
+        "check_out",
+        "ACTIVE",
+      ],
+      default: "CHECKIN_PENDING",
+    },
     submittedBy: { type: String },
     reviewedBy: { type: String },
     reviewNote: { type: String },

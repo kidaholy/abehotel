@@ -162,7 +162,7 @@ export default function AdminServicesPage() {
         const data = await res.json()
         // Handle both old array format and new paginated format
         const requests = Array.isArray(data) ? data : (data.data || [])
-        const pendingCount = requests.filter((r: any) => r.status === "pending").length
+        const pendingCount = requests.filter((r: any) => ["CHECKIN_PENDING", "CHECKOUT_PENDING", "pending"].includes(r.status)).length
         if (pendingCount > prevReceptionCount.current) {
           let plays = 0
           const interval = setInterval(() => {
@@ -179,18 +179,43 @@ export default function AdminServicesPage() {
     finally { setReceptionLoading(false) }
   }
 
-  const handleReceptionAction = async (id: string, status: "check_in" | "check_out" | "rejected") => {
-    const label = status === "check_in" ? "Approve Arrival" : status === "check_out" ? "Approve Check-Out" : "Reject"
+  const handleReceptionAction = async (
+    id: string,
+    action: "approve" | "deny",
+    inquiryType: "check_in" | "check_out"
+  ) => {
+    const label =
+      action === "approve"
+        ? inquiryType === "check_out"
+          ? "Approve Check-Out"
+          : "Approve Arrival"
+        : inquiryType === "check_out"
+          ? "Deny Check-Out"
+          : "Reject"
     const confirmed = await confirm({
       title: `${label} Request`,
       message: `Are you sure you want to proceed?`,
-      type: status === "rejected" ? "danger" : "success",
+      type: action === "deny" ? "danger" : "success",
       confirmText: label,
       cancelText: "Cancel",
     })
     if (!confirmed) return
     setActioning(true)
     try {
+      // Canonical status transitions:
+      // - check_in approve -> CHECKIN_APPROVED
+      // - check_in deny    -> REJECTED
+      // - check_out approve -> CHECKED_OUT
+      // - check_out deny    -> CHECKIN_APPROVED (guest remains checked-in)
+      const status =
+        inquiryType === "check_out"
+          ? action === "approve"
+            ? "CHECKED_OUT"
+            : "CHECKIN_APPROVED"
+          : action === "approve"
+            ? "CHECKIN_APPROVED"
+            : "REJECTED"
+
       const res = await fetch(`/api/reception-requests/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -752,7 +777,7 @@ export default function AdminServicesPage() {
                                 if (receptionDateFilter === "year" && !isThisYear(d)) return false;
                                 if (receptionDateFilter === "custom" && customReceptionDate && !isSameDay(d, new Date(customReceptionDate))) return false;
                               }
-                              if (f === "pending") return r.status === "pending" || !["guests", "check_in", "check_out", "rejected"].includes(r.status)
+                              if (f === "pending") return ["CHECKIN_PENDING", "CHECKOUT_PENDING", "pending"].includes(r.status)
                               return r.status === f
                             }).length
                             const label = f === "all" ? "GUESTS" : f === "pending" ? "PENDING" : f === "check_in" ? "CHECKED IN" : f === "rejected" ? "DENIED" : "CHECKED OUT"
@@ -796,7 +821,10 @@ export default function AdminServicesPage() {
                             if (receptionDateFilter === "custom" && customReceptionDate && !isSameDay(d, new Date(customReceptionDate))) return false;
                           }
                           if (receptionFilter === "all") return true
-                          if (receptionFilter === "pending") return r.status === "pending" || !["guests", "check_in", "check_out", "rejected"].includes(r.status)
+                          if (receptionFilter === "pending") return ["CHECKIN_PENDING", "CHECKOUT_PENDING", "pending"].includes(r.status)
+                          if (receptionFilter === "check_in") return ["CHECKIN_APPROVED", "check_in", "ACTIVE", "guests"].includes(r.status)
+                          if (receptionFilter === "check_out") return ["CHECKED_OUT", "CHECKOUT_APPROVED", "check_out"].includes(r.status)
+                          if (receptionFilter === "rejected") return ["REJECTED", "rejected"].includes(r.status)
                           return r.status === receptionFilter
                         }).length === 0 ? (
                           <div className="flex flex-col items-center justify-center py-24 text-gray-600">
@@ -819,7 +847,10 @@ export default function AdminServicesPage() {
                                 if (receptionDateFilter === "custom" && customReceptionDate && !isSameDay(d, new Date(customReceptionDate))) return false;
                               }
                               if (receptionFilter === "all") return true
-                              if (receptionFilter === "pending") return r.status === "pending" || !["guests", "check_in", "check_out", "rejected"].includes(r.status)
+                              if (receptionFilter === "pending") return ["CHECKIN_PENDING", "CHECKOUT_PENDING", "pending"].includes(r.status)
+                              if (receptionFilter === "check_in") return ["CHECKIN_APPROVED", "check_in", "ACTIVE", "guests"].includes(r.status)
+                              if (receptionFilter === "check_out") return ["CHECKED_OUT", "CHECKOUT_APPROVED", "check_out"].includes(r.status)
+                              if (receptionFilter === "rejected") return ["REJECTED", "rejected"].includes(r.status)
                               return r.status === receptionFilter
                             }).map(r => {
                               const type = INQUIRY_TYPES[r.inquiryType]
@@ -827,9 +858,11 @@ export default function AdminServicesPage() {
                                 <div key={r._id} className="relative bg-[#151716] rounded-[2rem] border border-white/5 overflow-hidden group hover:border-[#d4af37]/30 transition-all flex flex-col shadow-2xl">
                                   {/* Top Accent Bar */}
                                   <div className={`h-1.5 w-full ${
-                                    r.status === 'check_in' ? 'bg-blue-500' : 
-                                    r.status === 'rejected' ? 'bg-red-500' : 
-                                    r.status === 'check_out' ? 'bg-purple-500' : 'bg-yellow-500'
+                                    (r.status === 'CHECKIN_APPROVED' || r.status === 'check_in' || r.status === 'ACTIVE' || r.status === 'guests') ? 'bg-blue-500' :
+                                    (r.status === 'REJECTED' || r.status === 'rejected') ? 'bg-red-500' :
+                                    (r.status === 'CHECKED_OUT' || r.status === 'CHECKOUT_APPROVED' || r.status === 'check_out') ? 'bg-purple-500' :
+                                    (r.status === 'CHECKOUT_PENDING') ? 'bg-orange-500' :
+                                    'bg-yellow-500'
                                   }`} />
                                                                 {/* Delete Button */}
                                   <div className="absolute top-4 right-4 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -936,13 +969,13 @@ export default function AdminServicesPage() {
                                         <span className="text-[#0f1110] font-black text-[10px] uppercase tracking-[0.2em] relative z-10">Review</span>
                                       </button>
                                       
-                                      {r.status === "pending" && (
+                                      {["CHECKIN_PENDING", "CHECKOUT_PENDING", "pending"].includes(r.status) && (
                                         <>
-                                          <button onClick={() => handleReceptionAction(r._id, "rejected")}
+                                          <button onClick={() => handleReceptionAction(r._id, "deny", r.inquiryType)}
                                             className="px-4 py-3.5 bg-red-900/20 border border-red-500/30 rounded-2xl text-red-500 hover:bg-red-900/40 transition-all flex items-center justify-center">
                                             <XCircle size={18} />
                                           </button>
-                                          <button onClick={() => handleReceptionAction(r._id, r.inquiryType === "check_out" ? "check_out" : "check_in")}
+                                          <button onClick={() => handleReceptionAction(r._id, "approve", r.inquiryType)}
                                             className="px-6 py-3.5 bg-emerald-900/20 border border-emerald-500/30 rounded-2xl text-emerald-500 hover:bg-emerald-900/40 transition-all flex items-center justify-center gap-2">
                                             <CheckCircle2 size={18} />
                                             <span className="text-[10px] font-black uppercase tracking-widest">Approve</span>
@@ -1210,19 +1243,7 @@ export default function AdminServicesPage() {
                     placeholder="Add a note for the reception staff..."
                     className="w-full bg-[#0f1110] border border-white/10 text-white rounded-xl px-4 py-3 text-sm outline-none focus:border-[#d4af37]/50 resize-none placeholder:text-gray-600" />
                 </div>
-                {selectedRequest.status === "pending" ? (
-                  <div className="flex gap-3 pt-2">
-                    <button onClick={() => handleReceptionAction(selectedRequest._id, "rejected")} disabled={actioning}
-                      className="flex-1 flex items-center justify-center gap-2 py-3 bg-red-900/30 border border-red-500/30 rounded-xl text-[10px] font-black uppercase tracking-widest text-red-400 hover:bg-red-900/50 transition-all disabled:opacity-50">
-                      <XCircle size={14} /> Deny
-                    </button>
-                    <button onClick={() => handleReceptionAction(selectedRequest._id, selectedRequest.inquiryType === "check_out" ? "check_out" : "check_in")} disabled={actioning}
-                      className="flex-[2] flex items-center justify-center gap-2 py-3 bg-gradient-to-b from-[#f3cf7a] to-[#b38822] text-[#2a1708] border border-[#f5db8b] rounded-xl text-[10px] font-black uppercase tracking-widest shadow-[0_4px_15px_rgba(212,175,55,0.2)] transition-all disabled:opacity-50">
-                      {selectedRequest.inquiryType === "check_out" ? <Key size={14} /> : <CheckCircle2 size={14} />}
-                      Approve
-                    </button>
-                  </div>
-                ) : selectedRequest.status === "check_in" ? (
+                {selectedRequest.status === "check_in" || selectedRequest.status === "CHECKIN_APPROVED" ? (
                   <div className="space-y-3 pt-2">
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-2">
@@ -1237,15 +1258,13 @@ export default function AdminServicesPage() {
                         </button>
                       </div>
                     </div>
-                    <button onClick={() => handleReceptionAction(selectedRequest._id, "check_out")} disabled={actioning}
-                      className="w-full py-3 bg-purple-900/30 border border-purple-500/30 rounded-xl text-[10px] font-black uppercase tracking-widest text-purple-400 hover:bg-purple-900/50 transition-all flex items-center justify-center gap-2 disabled:opacity-50">
-                      <Key size={14} /> Approve Check-Out
-                    </button>
                   </div>
                 ) : (
                   <div className="flex items-center gap-3">
                     <div className={`flex-1 p-3 rounded-xl border text-center text-[10px] font-black uppercase tracking-widest ${STATUS_STYLES[selectedRequest.status]}`}>
-                      {selectedRequest.status === "check_out" ? "CHECKED OUT - Guest has departed" : "DENIED - Request rejected"}
+                      {["CHECKED_OUT", "CHECKOUT_APPROVED", "check_out"].includes(selectedRequest.status)
+                        ? "CHECKED OUT - Guest has departed"
+                        : "DENIED - Request rejected"}
                     </div>
                     <button onClick={() => handleReceptionDelete(selectedRequest._id)} disabled={actioning}
                       className="p-3 bg-red-900/30 border border-red-500/30 rounded-xl text-red-400 hover:bg-red-900/50 transition-all disabled:opacity-50">

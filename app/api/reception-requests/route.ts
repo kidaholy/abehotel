@@ -27,16 +27,41 @@ export async function GET(request: Request) {
     if (decoded.role === "admin") {
       // Admin sees all requests
       if (status && status !== "all") {
-        query.status = status
+        if (status === "pending") {
+          query.status = { $in: ["CHECKIN_PENDING", "CHECKOUT_PENDING", "pending"] }
+        } else if (status === "check_in") {
+          // Canonical "checked in" bucket
+          query.status = { $in: ["CHECKIN_APPROVED", "check_in", "ACTIVE", "guests"] }
+        } else if (status === "guests") {
+          // Legacy tab name - still map to checked-in guests
+          query.status = { $in: ["CHECKIN_APPROVED", "check_in", "ACTIVE", "guests"] }
+        } else if (status === "check_out") {
+          query.status = { $in: ["CHECKED_OUT", "CHECKOUT_APPROVED", "check_out"] }
+        } else if (status === "rejected") {
+          query.status = { $in: ["REJECTED", "rejected"] }
+        } else {
+          query.status = status
+        }
       }
     } else if (decoded.role === "reception") {
       // Reception staff sees all approved guests + their own submissions
       query.$or = [
         { submittedBy: decoded.id },
-        { status: { $in: ["guests", "check_in", "check_out", "rejected"] } }
+        // Reception staff needs visibility into the lifecycle buckets
+        { status: { $in: ["CHECKIN_APPROVED", "CHECKOUT_PENDING", "CHECKED_OUT", "CHECKOUT_APPROVED", "ACTIVE", "guests", "check_in", "check_out", "REJECTED", "rejected"] } },
       ]
       if (status && status !== "all") {
-        query.status = status
+        if (status === "pending") {
+           query.status = { $in: ["CHECKIN_PENDING", "CHECKOUT_PENDING", "pending"] }
+        } else if (status === "check_in") {
+           query.status = { $in: ["CHECKIN_APPROVED", "check_in", "ACTIVE", "guests"] }
+        } else if (status === "guests") {
+           query.status = { $in: ["CHECKIN_APPROVED", "check_in", "ACTIVE", "guests"] }
+        } else if (status === "check_out") {
+           query.status = { $in: ["CHECKED_OUT", "CHECKOUT_APPROVED", "check_out"] }
+        } else {
+           query.status = status
+        }
       }
     } else {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 })
@@ -65,9 +90,17 @@ export async function GET(request: Request) {
     // Get total count for pagination
     const total = await ReceptionRequest.countDocuments(query)
 
+    // Calculate global overdue count (across all tabs, specifically for 'guests' status)
+    const todayStr = new Date().toISOString().split('T')[0]
+    const overdueCount = await ReceptionRequest.countDocuments({
+      status: { $in: ["CHECKIN_APPROVED", "ACTIVE", "guests", "check_in"] },
+      checkOut: { $lt: todayStr }
+    })
+
     return NextResponse.json({
       data: requests.map(r => ({ ...r, _id: r._id?.toString() })),
       total,
+      overdueCount,
       limit,
       skip,
       hasMore: skip + limit < total
@@ -105,7 +138,7 @@ export async function POST(request: Request) {
     const doc = await ReceptionRequest.create({
       guestName, faydaId, phone, idPhotoFront, idPhotoBack, photoUrl, floorId, roomNumber, roomPrice,
       inquiryType, checkIn, checkOut, checkInTime, checkOutTime, guests, paymentMethod, chequeNumber, paymentReference, transactionUrl, notes,
-      status: "pending",
+      status: inquiryType === "check_out" ? "CHECKOUT_PENDING" : "CHECKIN_PENDING",
       submittedBy: decoded.id
     })
 

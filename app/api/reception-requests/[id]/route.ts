@@ -12,20 +12,29 @@ export async function PUT(request: Request, context: any) {
     await connectDB()
 
     const body = await request.json()
-    const { status, reviewNote, checkOut } = body
+    const { status, reviewNote, checkOut, inquiryType } = body
 
     // Reception staff can submit an extension request (resets to pending with new checkOut)
     if (decoded.role === "reception") {
-      if (status !== "pending") {
-        return NextResponse.json({ message: "Reception can only submit extension requests" }, { status: 403 })
+      // Reception creates checkout workflow by switching to CHECKOUT_PENDING + inquiryType check_out
+      // (also used for extension approvals in this codebase: checkOut date change + admin approval)
+      const allowed = ["CHECKOUT_PENDING", "pending"]
+      if (!allowed.includes(status)) {
+        return NextResponse.json({ message: "Reception can only request checkout approval" }, { status: 403 })
       }
+
       const updated = await ReceptionRequest.findByIdAndUpdate(
         params.id,
-        { status: "pending", reviewNote: reviewNote || "", checkOut: checkOut || undefined },
+        {
+          status: "CHECKOUT_PENDING",
+          inquiryType: "check_out",
+          reviewNote: reviewNote || "",
+          ...(checkOut ? { checkOut } : {}),
+        },
         { new: true }
       )
       if (!updated) return NextResponse.json({ message: "Request not found" }, { status: 404 })
-      return NextResponse.json({ message: "Extension requested", request: { ...updated.toObject(), _id: updated._id.toString() } })
+      return NextResponse.json({ message: "Checkout requested", request: { ...updated.toObject(), _id: updated._id.toString() } })
     }
 
     // Admin approve/deny
@@ -33,8 +42,9 @@ export async function PUT(request: Request, context: any) {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 })
     }
 
-    if (!["guests", "rejected", "check_in", "check_out", "pending"].includes(status)) {
-      return NextResponse.json({ message: "Status must be 'guests', 'rejected', 'check_in', 'check_out', or 'pending'" }, { status: 400 })
+    if (!["CHECKIN_PENDING", "CHECKIN_APPROVED", "CHECKOUT_PENDING", "CHECKOUT_APPROVED", "CHECKED_OUT", "REJECTED", "guests", "rejected", "check_in", "check_out", "pending", "ACTIVE"].includes(status)) {
+      console.error(`❌ [API] Invalid status provided: ${status}`)
+      return NextResponse.json({ message: "Invalid status" }, { status: 400 })
     }
 
     console.log(`📥 [API] =========================================`)
@@ -56,49 +66,60 @@ export async function PUT(request: Request, context: any) {
     console.log(`📋 [API] - Inquiry Type: ${currentRequest.inquiryType}`)
     console.log(`📋 [API] - Current Status: ${currentRequest.status}`)
     console.log(`📋 [API] - Room: ${currentRequest.roomNumber}`)
+    console.log(`📋 [API] - New Inquiry Type (if provided): ${inquiryType || "not changing"}`)
 
-    // CRITICAL VALIDATION: Ensure check_out requests never go to check_in status
-    if (currentRequest.inquiryType === "check_out" && status === "check_in") {
-      console.error(`❌ [API] =========================================`)
-      console.error(`❌ [API] CRITICAL VALIDATION ERROR`)
-      console.error(`❌ [API] Attempting to set check_out request to check_in status!`)
-      console.error(`❌ [API] Request ID: ${params.id}`)
-      console.error(`❌ [API] Guest: ${currentRequest.guestName}`)
-      console.error(`❌ [API] Inquiry Type: ${currentRequest.inquiryType}`)
-      console.error(`❌ [API] Attempted Status: ${status}`)
-      console.error(`❌ [API] This is INVALID - check_out requests must use check_out status`)
-      console.error(`❌ [API] =========================================`)
-      return NextResponse.json({ 
-        message: "ERROR: Check-out requests cannot be set to check_in status. Use check_out status instead.",
-        errorCode: "INVALID_STATUS_TRANSITION"
-      }, { status: 400 })
+    // Use the NEW inquiryType if provided, otherwise use the current one
+    const effectiveInquiryType = inquiryType || currentRequest.inquiryType
+    console.log(`📋 [API] - Effective Inquiry Type for validation: ${effectiveInquiryType}`)
+
+    // RULE: Checkout workflow must never be "approved as check-in".
+    // The only allowed "back to checked-in" transition is DENYING a checkout request:
+    // CHECKOUT_PENDING --(deny)--> CHECKIN_APPROVED
+    if (
+      effectiveInquiryType === "check_out" &&
+      ["CHECKIN_PENDING", "CHECKIN_APPROVED", "check_in"].includes(status) &&
+      !(currentRequest.status === "CHECKOUT_PENDING" && status === "CHECKIN_APPROVED")
+    ) {
+      console.error(`❌ [API] VALIDATION FAILED: Invalid checkout transition to check-in status`)
+      return NextResponse.json({ message: "ERROR: Checkout requests cannot be set to check-in status (except denying checkout)." }, { status: 400 })
     }
 
-    // CRITICAL VALIDATION: Ensure check_in requests never go to check_out status
-    if (currentRequest.inquiryType === "check_in" && status === "check_out") {
-      console.error(`❌ [API] =========================================`)
-      console.error(`❌ [API] CRITICAL VALIDATION ERROR`)
-      console.error(`❌ [API] Attempting to set check_in request to check_out status!`)
-      console.error(`❌ [API] Request ID: ${params.id}`)
-      console.error(`❌ [API] Guest: ${currentRequest.guestName}`)
-      console.error(`❌ [API] Inquiry Type: ${currentRequest.inquiryType}`)
-      console.error(`❌ [API] Attempted Status: ${status}`)
-      console.error(`❌ [API] This is INVALID - check_in requests must use check_in status`)
-      console.error(`❌ [API] =========================================`)
-      return NextResponse.json({ 
-        message: "ERROR: Check-in requests cannot be set to check_out status. Use check_in status instead.",
-        errorCode: "INVALID_STATUS_TRANSITION"
-      }, { status: 400 })
+    // RULE: Check-in workflow shouldn't jump into checkout states unless explicitly switched to check_out.
+    // We still allow existing rows to use legacy ACTIVE/guests/check_in and be switched into CHECKOUT_PENDING.
+    if (
+      effectiveInquiryType === "check_in" &&
+      ["CHECKOUT_PENDING", "CHECKOUT_APPROVED", "CHECKED_OUT", "check_out"].includes(status) &&
+      inquiryType !== "check_out"
+    ) {
+      console.error(`❌ [API] VALIDATION FAILED: Must set inquiryType=check_out before entering checkout workflow`)
+      return NextResponse.json({ message: "ERROR: Set inquiryType to check_out before requesting checkout." }, { status: 400 })
     }
 
     console.log(`✅ [API] Status validation passed`)
     console.log(`✅ [API] Inquiry Type: ${currentRequest.inquiryType}`)
+    console.log(`✅ [API] Effective Inquiry Type: ${effectiveInquiryType}`)
     console.log(`✅ [API] Requested Status: ${status}`)
     console.log(`✅ [API] Transition is VALID`)
 
+    // Canonicalize status updates for the new workflow.
+    // - Admin approving checkout should result in CHECKED_OUT.
+    // - Admin denying checkout should result in CHECKIN_APPROVED.
+    let targetStatus = status
+
+    if (currentRequest.status === "CHECKOUT_PENDING") {
+      if (status === "CHECKOUT_APPROVED") targetStatus = "CHECKED_OUT"
+      if (status === "REJECTED" || status === "rejected") targetStatus = "CHECKIN_APPROVED"
+    }
+
     const updated = await ReceptionRequest.findByIdAndUpdate(
       params.id,
-      { status, reviewNote: reviewNote || "", reviewedBy: decoded.id },
+      {
+        status: targetStatus,
+        reviewNote: reviewNote || "",
+        reviewedBy: decoded.id,
+        ...(inquiryType ? { inquiryType } : {}),
+        ...(checkOut ? { checkOut } : {}),
+      },
       { new: true }
     )
 
@@ -116,38 +137,35 @@ export async function PUT(request: Request, context: any) {
     console.log(`✅ [API] Inquiry Type: ${updated.inquiryType}`)
     console.log(`✅ [API] =========================================`)
     
-    // Special handling for check_in → guests transition (completing check-in)
-    if (currentRequest.status === "check_in" && status === "guests") {
-      console.log(`🏨 [API] =========================================`)
-      console.log(`🏨 [API] CHECK-IN COMPLETED BY ADMIN`)
-      console.log(`🏨 [API] Guest: ${updated.guestName}`)
-      console.log(`🏨 [API] Room: ${updated.roomNumber}`)
-      console.log(`🏨 [API] Status changed: check_in → guests`)
-      console.log(`🏨 [API] Guest is now ACTIVE and staying at the hotel`)
-      console.log(`🏨 [API] =========================================`)
+    // Special handling for check-in completion transition
+    if ((currentRequest.status === "CHECKIN_APPROVED" || currentRequest.status === "check_in") && status === "ACTIVE") {
+      console.log(`🏨 [API] CHECK-IN COMPLETED BY ADMIN: ${updated.guestName}`)
     }
     
     // FINAL VALIDATION: Double-check that the status matches the inquiryType
-    if (updated.inquiryType === "check_out" && updated.status !== "check_out" && updated.status !== "pending" && updated.status !== "rejected" && updated.status !== "guests") {
+    const validCheckOutStatuses = ["CHECKOUT_PENDING", "CHECKOUT_APPROVED", "CHECKED_OUT", "check_out", "pending"]
+    const validCheckInStatuses = ["CHECKIN_PENDING", "CHECKIN_APPROVED", "ACTIVE", "check_in", "guests", "pending", "REJECTED", "rejected"]
+    
+    if (updated.inquiryType === "check_out" && !validCheckOutStatuses.includes(updated.status)) {
       console.error(`❌ [API] =========================================`)
       console.error(`❌ [API] POST-UPDATE VALIDATION ERROR`)
       console.error(`❌ [API] Check-out request has invalid status: ${updated.status}`)
-      console.error(`❌ [API] Expected: check_out, pending, rejected, or guests`)
+      console.error(`❌ [API] Expected one of: ${validCheckOutStatuses.join(", ")}`)
       console.error(`❌ [API] This indicates a DATABASE ERROR`)
       console.error(`❌ [API] =========================================`)
     }
     
-    if (updated.inquiryType === "check_in" && updated.status !== "check_in" && updated.status !== "pending" && updated.status !== "rejected" && updated.status !== "guests") {
+    if (updated.inquiryType === "check_in" && !validCheckInStatuses.includes(updated.status)) {
       console.error(`❌ [API] =========================================`)
       console.error(`❌ [API] POST-UPDATE VALIDATION ERROR`)
       console.error(`❌ [API] Check-in request has invalid status: ${updated.status}`)
-      console.error(`❌ [API] Expected: check_in, pending, rejected, or guests`)
+      console.error(`❌ [API] Expected one of: ${validCheckInStatuses.join(", ")}`)
       console.error(`❌ [API] This indicates a DATABASE ERROR`)
       console.error(`❌ [API] =========================================`)
     }
 
-    // If check-out is approved, release the room (set status to available)
-    if (status === "check_out" && updated.roomNumber) {
+    // If check-out is completed, release the room
+    if (targetStatus === "CHECKED_OUT" && updated.roomNumber) {
       console.log(`🔑 [API] =========================================`)
       console.log(`🔑 [API] ROOM RELEASE OPERATION`)
       console.log(`🔑 [API] Releasing room ${updated.roomNumber}`)
@@ -166,11 +184,11 @@ export async function PUT(request: Request, context: any) {
       } else {
         console.warn(`⚠️ [API] Room ${updated.roomNumber} not found in database`)
       }
-    } else if (status === "check_out") {
-      console.warn(`⚠️ [API] Check-out approved but no room number found for guest: ${updated.guestName}`)
+    } else if (targetStatus === "CHECKED_OUT") {
+      console.warn(`⚠️ [API] Checkout completed but no room number found for guest: ${updated.guestName}`)
     }
 
-    return NextResponse.json({ message: `Request ${status}`, request: { ...updated.toObject(), _id: updated._id.toString() } })
+    return NextResponse.json({ message: `Request ${targetStatus}`, request: { ...updated.toObject(), _id: updated._id.toString() } })
   } catch (error: any) {
     console.error("❌ Reception request update error:", error)
     const status = error.message?.includes("Unauthorized") ? 401 : 500

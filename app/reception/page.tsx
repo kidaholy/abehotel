@@ -35,6 +35,26 @@ const STATUS_STYLES: Record<string, string> = {
   rejected:  "bg-red-900/30 text-red-400 border-red-500/30",
   check_in:  "bg-blue-900/30 text-blue-400 border-blue-500/30",
   check_out: "bg-purple-900/30 text-purple-400 border-purple-500/30",
+  CHECKIN_PENDING:  "bg-yellow-900/30 text-yellow-400 border-yellow-500/30",
+  CHECKIN_APPROVED: "bg-blue-900/30 text-blue-400 border-blue-500/30",
+  ACTIVE:           "bg-emerald-900/30 text-emerald-400 border-emerald-500/30",
+  CHECKOUT_PENDING: "bg-orange-900/30 text-orange-400 border-orange-500/30",
+  CHECKOUT_APPROVED: "bg-purple-900/30 text-purple-400 border-purple-500/30",
+  CHECKED_OUT:      "bg-gray-800/50 text-gray-500 border-gray-700/50",
+}
+
+const STATUS_LABELS: Record<string, string> = {
+  pending:   "PENDING",
+  guests:    "CHECKED IN",
+  rejected:  "REJECTED",
+  check_in:  "CHECK-IN APPROVED",
+  check_out: "CHECKED OUT",
+  CHECKIN_PENDING:  "CHECK-IN PENDING",
+  CHECKIN_APPROVED: "CHECKED IN",
+  ACTIVE:           "CHECKED IN",
+  CHECKOUT_PENDING: "CHECKOUT PENDING",
+  CHECKOUT_APPROVED: "CHECKOUT APPROVED",
+  CHECKED_OUT:      "CHECKED OUT",
 }
 
 interface Room  { _id: string; roomNumber: string; floorId: any; price: number; type: string }
@@ -56,6 +76,9 @@ function GuestCard({ s, rooms, token, notify, fetchSubmissions, setExtendGuest, 
     rejected:  "bg-red-900/40 text-red-400 border-red-500/30",
     check_in:  "bg-blue-900/40 text-blue-400 border-blue-500/30",
     check_out: "bg-purple-900/40 text-purple-400 border-purple-500/30",
+    CHECKIN_APPROVED: "bg-emerald-900/40 text-emerald-400 border-emerald-500/30",
+    CHECKOUT_PENDING: "bg-orange-900/40 text-orange-400 border-orange-500/30",
+    CHECKED_OUT: "bg-gray-800/50 text-gray-500 border-gray-700/50",
   }
 
   const calcGuestDuration = () => {
@@ -75,7 +98,7 @@ function GuestCard({ s, rooms, token, notify, fetchSubmissions, setExtendGuest, 
 
   // Remaining days: positive = days left, negative = overdue
   const calcRemainingDays = () => {
-    if (!s.checkOut || (s.status !== "check_in" && s.status !== "guests")) return null
+    if (!s.checkOut || !["CHECKIN_APPROVED", "check_in", "guests", "ACTIVE"].includes(s.status)) return null
     const now = new Date()
     const outDate = new Date(`${s.checkOut}T${s.checkOutTime || "12:00"}`)
     const diffMs = outDate.getTime() - now.getTime()
@@ -126,7 +149,7 @@ function GuestCard({ s, rooms, token, notify, fetchSubmissions, setExtendGuest, 
             <span className="text-[9px] font-black text-gray-600 uppercase tracking-widest">Guest Profile</span>
           </div>
           <span className={`text-[10px] font-black px-3 py-1 rounded-full uppercase border shadow-sm ${STATUS_STYLES[s.status] || STATUS_STYLES.guests}`}>
-            {s.status === "check_in" ? "APPROVED" : s.status === "rejected" ? "DENIED" : s.status === "guests" ? "ACTIVE" : s.status.replace("_", " ").toUpperCase()}
+            {STATUS_LABELS[s.status] || s.status.replace("_", " ").toUpperCase()}
           </span>
         </div>
 
@@ -221,44 +244,7 @@ function GuestCard({ s, rooms, token, notify, fetchSubmissions, setExtendGuest, 
 
         {/* Actions Row */}
         <div className="mt-auto flex gap-2 pt-2">
-          {s.status === "check_in" && (
-            <button type="button"
-              disabled={actionLoading === 'checkin'}
-              onClick={async () => {
-                setActionLoading('checkin')
-                try {
-                  const res = await fetch(`/api/reception-requests/${s._id}`, {
-                    method: "PUT",
-                    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-                    body: JSON.stringify({ status: "guests", reviewNote: "Check-in completed by reception" }),
-                  })
-                  if (res.ok) { 
-                    notify({ title: "Checked In", message: `${s.guestName} is now active.`, type: "success" })
-                    fetchSubmissions() 
-                  } else {
-                    const err = await res.json()
-                    notify({ title: "Error", message: err.message || "Failed to check in", type: "error" })
-                  }
-                } catch (error) {
-                  notify({ title: "Error", message: "Network error", type: "error" })
-                } finally {
-                  setActionLoading(null)
-                }
-              }}
-              className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg ${
-                actionLoading === 'checkin' 
-                  ? 'bg-emerald-600/50 cursor-wait opacity-75' 
-                  : 'bg-emerald-600 hover:bg-emerald-500 text-white hover:shadow-emerald-600/20'
-              }`}>
-              {actionLoading === 'checkin' ? (
-                <RefreshCw size={14} className="animate-spin" />
-              ) : (
-                <CheckCircle2 size={14} />
-              )}
-              {actionLoading === 'checkin' ? 'Processing...' : 'Check In'}
-            </button>
-          )}
-          {(s.status === "guests" || s.status === "check_in") && (
+          {["CHECKIN_APPROVED", "check_in", "guests", "ACTIVE"].includes(s.status) && (
             <button type="button"
               disabled={actionLoading === 'checkout'}
               onClick={async () => {
@@ -267,7 +253,7 @@ function GuestCard({ s, rooms, token, notify, fetchSubmissions, setExtendGuest, 
                   const res = await fetch(`/api/reception-requests/${s._id}`, {
                     method: "PUT",
                     headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-                    body: JSON.stringify({ status: "pending", inquiryType: "check_out", reviewNote: "Check-out requested by reception" }),
+                    body: JSON.stringify({ status: "CHECKOUT_PENDING", inquiryType: "check_out", reviewNote: "Check-out requested by reception" }),
                   })
                   if (res.ok) { 
                     notify({ title: "Departure Requested", message: `Check-out for ${s.guestName} sent to admin for approval.`, type: "success" })
@@ -295,7 +281,7 @@ function GuestCard({ s, rooms, token, notify, fetchSubmissions, setExtendGuest, 
               {actionLoading === 'checkout' ? 'Processing...' : 'Check Out'}
             </button>
           )}
-          {(s.status === "guests" || s.status === "check_in") && (
+          {["CHECKIN_APPROVED", "check_in", "guests", "ACTIVE"].includes(s.status) && (
             <button type="button"
               onClick={() => { setExtendGuest(s); setNewCheckOut(s.checkOut || "") }}
               className="flex items-center justify-center gap-2 px-6 py-3 bg-[#d4af37]/10 border border-[#d4af37]/30 text-[#f3cf7a] hover:bg-[#d4af37]/20 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
@@ -339,11 +325,7 @@ function SubmissionCard({ s }: { s: any }) {
           </div>
         </div>
         <span className={`text-[9px] font-black px-2.5 py-1 rounded-full uppercase border shrink-0 ${STATUS_STYLES[s.status] || STATUS_STYLES.pending}`}>
-          {s.status === "check_in" ? "APPROVED" : 
-           s.status === "rejected" ? "DENIED" : 
-           s.status === "guests" ? "ACTIVE" : 
-           s.status === "check_out" ? "DONE" : 
-           s.status.replace("_", " ").toUpperCase()}
+          {STATUS_LABELS[s.status] || s.status.replace("_", " ").toUpperCase()}
         </span>
       </div>
 
@@ -393,7 +375,7 @@ export default function ReceptionDashboard() {
   const [submitting, setSubmitting] = useState(false)
   const [submissions, setSubmissions] = useState<any[]>([])
   const [loadingSubmissions, setLoadingSubmissions] = useState(true)
-  const [rightTab, setRightTab] = useState<"submissions" | "guests" | "rejected" | "check_in" | "check_out">("guests")
+  const [rightTab, setRightTab] = useState<"submissions" | "guests" | "rejected" | "check_in" | "check_out">("submissions")
   const [viewMode, setViewMode] = useState<"form" | "status">("form")
   const [searchQuery, setSearchQuery] = useState("")
   const [dateFilter, setDateFilter] = useState<"all" | "today" | "week" | "month" | "year" | "custom">("all")
@@ -512,7 +494,7 @@ export default function ReceptionDashboard() {
         method: "PUT",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({
-          status: "pending",
+          status: "CHECKOUT_PENDING",
           reviewNote: `Extension requested: new check-out ${newCheckOut}`,
           checkOut: newCheckOut,
         }),
@@ -533,7 +515,7 @@ export default function ReceptionDashboard() {
   // Rooms currently held by guests who have checked in but not yet checked out
   const occupiedRoomNumbers = new Set(
     submissions
-      .filter(s => s.status === "check_in" && s.roomNumber)
+      .filter(s => ["CHECKIN_APPROVED", "check_in", "guests", "ACTIVE"].includes(s.status) && s.roomNumber)
       .map(s => s.roomNumber)
   )
 
@@ -950,7 +932,7 @@ export default function ReceptionDashboard() {
 
                   {/* ── Revenue Summary ── */}
                   {(() => {
-                    const approved = filteredSubmissions.filter(s => ["guests","check_in","check_out"].includes(s.status))
+                    const approved = filteredSubmissions.filter((s: any) => ["CHECKIN_APPROVED", "guests", "check_in", "ACTIVE"].includes(s.status))
                     const calcNights = (checkIn?: string, checkOut?: string) => {
                       if (!checkIn || !checkOut) return 1
                       const diff = Math.round((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / 86400000)
@@ -984,25 +966,25 @@ export default function ReceptionDashboard() {
                   {/* Tab bar */}
                   <div className="flex items-center justify-between">
                     <div className="flex gap-1 bg-[#0f1110] border border-white/5 p-1 rounded-xl overflow-x-auto">
-                      <button onClick={() => setRightTab("guests")}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${rightTab === "guests" ? "bg-emerald-900/40 text-emerald-400 border border-emerald-500/30" : "text-gray-500 hover:text-gray-300"}`}>
-                        <Users size={11} /> GUESTS ({filteredSubmissions.length})
-                      </button>
-                      <button onClick={() => setRightTab("check_in")}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${rightTab === "check_in" ? "bg-blue-900/40 text-blue-400 border border-blue-500/30" : "text-gray-500 hover:text-gray-300"}`}>
-                        <CheckCircle2 size={11} /> APPROVED ({filteredSubmissions.filter(s => s.status === "check_in").length})
-                      </button>
-                      <button onClick={() => setRightTab("check_out")}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${rightTab === "check_out" ? "bg-purple-900/40 text-purple-400 border border-purple-500/30" : "text-gray-500 hover:text-gray-300"}`}>
-                        <Key size={11} /> Check-Out ({filteredSubmissions.filter(s => s.status === "check_out").length})
-                      </button>
                       <button onClick={() => setRightTab("submissions")}
                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${rightTab === "submissions" ? "bg-yellow-900/40 text-yellow-400 border border-yellow-500/30" : "text-gray-500 hover:text-gray-300"}`}>
-                        <Clock size={11} /> PENDING ({filteredSubmissions.filter(s => s.status === "pending").length})
+                        <Clock size={11} /> CHECKIN WAITING ({filteredSubmissions.filter(s => ["CHECKIN_PENDING"].includes(s.status)).length})
+                      </button>
+                      <button onClick={() => setRightTab("check_in")}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${rightTab === "check_in" ? "bg-emerald-900/40 text-emerald-400 border border-emerald-500/30" : "text-gray-500 hover:text-gray-300"}`}>
+                        <Hotel size={11} /> CHECKED IN ({filteredSubmissions.filter(s => ["CHECKIN_APPROVED", "check_in", "guests", "ACTIVE"].includes(s.status)).length})
+                      </button>
+                      <button onClick={() => setRightTab("check_out")}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${rightTab === "check_out" ? "bg-orange-900/40 text-orange-400 border border-orange-500/30" : "text-gray-500 hover:text-gray-300"}`}>
+                        <Key size={11} /> CHECKOUT ({filteredSubmissions.filter(s => ["CHECKOUT_PENDING", "CHECKED_OUT", "CHECKOUT_APPROVED", "check_out", "pending"].includes(s.status)).length})
+                      </button>
+                      <button onClick={() => setRightTab("guests")}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${rightTab === "guests" ? "bg-blue-900/40 text-blue-400 border border-blue-500/30" : "text-gray-500 hover:text-gray-300"}`}>
+                        <Users size={11} /> ALL ({filteredSubmissions.length})
                       </button>
                       <button onClick={() => setRightTab("rejected")}
                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${rightTab === "rejected" ? "bg-red-900/40 text-red-400 border border-red-500/30" : "text-gray-500 hover:text-gray-300"}`}>
-                        <XCircle size={11} /> DENIED ({filteredSubmissions.filter(s => s.status === "rejected").length})
+                        <XCircle size={11} /> DENIED ({filteredSubmissions.filter(s => ["REJECTED", "rejected"].includes(s.status)).length})
                       </button>
                     </div>
                     <button onClick={fetchSubmissions} className="text-gray-500 hover:text-[#d4af37] transition-colors ml-2">
@@ -1029,7 +1011,7 @@ export default function ReceptionDashboard() {
                       return (
                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                           {filteredSubmissions.map((s: any) =>
-                            ["guests", "check_in", "check_out"].includes(s.status) ? (
+                            ["CHECKIN_APPROVED", "guests", "check_in", "ACTIVE"].includes(s.status) ? (
                               <GuestCard 
                                 key={s._id} 
                                 s={s} 
@@ -1050,7 +1032,7 @@ export default function ReceptionDashboard() {
 
                     {/* ── CHECK-IN TAB ── */}
                     {rightTab === "check_in" && (() => {
-                      const checkIns = filteredSubmissions.filter(s => s.status === "check_in" || (s.status === "guests" && s.inquiryType === "check_in"))
+                      const checkIns = filteredSubmissions.filter(s => ["CHECKIN_APPROVED", "check_in", "guests", "ACTIVE"].includes(s.status))
                       if (checkIns.length === 0) return (
                         <div className="flex flex-col items-center justify-center py-16 text-center">
                           <Hotel size={40} className="text-gray-700 mb-3" />
@@ -1077,7 +1059,7 @@ export default function ReceptionDashboard() {
 
                     {/* ── CHECK-OUT TAB ── */}
                     {rightTab === "check_out" && (() => {
-                      const checkOuts = filteredSubmissions.filter(s => s.status === "check_out" || (s.status === "guests" && s.inquiryType === "check_out"))
+                      const checkOuts = filteredSubmissions.filter(s => ["CHECKOUT_PENDING", "CHECKED_OUT", "CHECKOUT_APPROVED", "check_out", "pending"].includes(s.status))
                       if (checkOuts.length === 0) return (
                         <div className="flex flex-col items-center justify-center py-16 text-center">
                           <Key size={40} className="text-gray-700 mb-3" />
@@ -1104,7 +1086,7 @@ export default function ReceptionDashboard() {
 
                     {/* ── SUBMISSIONS TAB: pending only ── */}
                     {rightTab === "submissions" && (() => {
-                      const pending = filteredSubmissions.filter(s => s.status === "pending")
+                      const pending = filteredSubmissions.filter(s => s.status === "CHECKIN_PENDING")
                       if (pending.length === 0) return (
                         <div className="flex flex-col items-center justify-center py-16 text-center">
                           <ClipboardList size={40} className="text-gray-700 mb-3" />
@@ -1126,7 +1108,7 @@ export default function ReceptionDashboard() {
 
                     {/* ── REJECTED TAB ── */}
                     {rightTab === "rejected" && (() => {
-                      const rejected = filteredSubmissions.filter(s => s.status === "rejected")
+                      const rejected = filteredSubmissions.filter(s => ["REJECTED", "rejected"].includes(s.status))
                       if (rejected.length === 0) return (
                         <div className="flex flex-col items-center justify-center py-16 text-center">
                           <XCircle size={40} className="text-gray-700 mb-3" />
