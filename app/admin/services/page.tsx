@@ -132,6 +132,7 @@ export default function AdminServicesPage() {
   const [reviewNote, setReviewNote] = useState("")
   const [actioning, setActioning] = useState(false)
   const [extendDate, setExtendDate] = useState("")
+  const [fetchingRequestId, setFetchingRequestId] = useState<string | null>(null)
   const receptionDatePickerRef = useRef<HTMLInputElement>(null)
 
   const INQUIRY_TYPES: Record<string, { label: string; icon: any }> = {
@@ -965,11 +966,38 @@ export default function AdminServicesPage() {
 
                                     {/* Action Button */}
                                     <div className="flex gap-2 pt-2">
-                                      <button onClick={() => { setSelectedRequest(r); setReviewNote(r.reviewNote || "") }}
-                                        className="flex-1 flex items-center justify-center gap-2 py-3.5 bg-white overflow-hidden relative group/btn rounded-2xl transition-all hover:scale-[1.02] active:scale-[0.98] shadow-xl">
+                                      <button 
+                                        onClick={async () => {
+                                          setFetchingRequestId(r._id);
+                                          try {
+                                            const res = await fetch(`/api/reception-requests/${r._id}`, {
+                                              headers: { Authorization: `Bearer ${token}` }
+                                            });
+                                            if (res.ok) {
+                                              const full = await res.json();
+                                              setSelectedRequest(full);
+                                              setReviewNote(full.reviewNote || "");
+                                            } else {
+                                              setSelectedRequest(r);
+                                              setReviewNote(r.reviewNote || "");
+                                            }
+                                          } catch {
+                                            setSelectedRequest(r);
+                                            setReviewNote(r.reviewNote || "");
+                                          } finally {
+                                            setFetchingRequestId(null);
+                                          }
+                                        }}
+                                        disabled={fetchingRequestId === r._id}
+                                        className="flex-1 flex items-center justify-center gap-2 py-3.5 bg-white overflow-hidden relative group/btn rounded-2xl transition-all hover:scale-[1.02] active:scale-[0.98] shadow-xl disabled:opacity-60 disabled:cursor-wait">
                                         <div className="absolute inset-0 bg-gradient-to-r from-[#d4af37] to-[#f3cf7a] opacity-0 group-hover/btn:opacity-100 transition-opacity" />
-                                        <Eye size={16} className="text-[#0f1110] relative z-10" />
-                                        <span className="text-[#0f1110] font-black text-[10px] uppercase tracking-[0.2em] relative z-10">Review</span>
+                                        {fetchingRequestId === r._id
+                                          ? <RefreshCw size={16} className="text-[#0f1110] relative z-10 animate-spin" />
+                                          : <Eye size={16} className="text-[#0f1110] relative z-10" />
+                                        }
+                                        <span className="text-[#0f1110] font-black text-[10px] uppercase tracking-[0.2em] relative z-10">
+                                          {fetchingRequestId === r._id ? 'Loading...' : 'Review'}
+                                        </span>
                                       </button>
                                       
                                       {["CHECKIN_PENDING", "CHECKOUT_PENDING", "EXTEND_PENDING", "pending"].includes(r.status) && (

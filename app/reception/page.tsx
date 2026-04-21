@@ -109,7 +109,7 @@ function GuestCard({ s, rooms, token, notify, fetchSubmissions, setExtendGuest, 
   const remainingDays = calcRemainingDays()
 
   return (
-    <div key={s._id} className="relative bg-[#151716] rounded-[2rem] border border-white/5 overflow-hidden group hover:border-[#d4af37]/30 transition-all flex flex-col shadow-2xl">
+    <div key={s._id} className="relative bg-[#151716] rounded-[2rem] border border-white/5 overflow-hidden group hover:border-[#d4af37]/30 transition-all flex flex-col shadow-2xl min-w-[380px] w-[380px] flex-shrink-0 snap-start">
       {/* Top Accent Bar */}
       <div className={`h-1.5 w-full ${
         s.status === 'check_in' ? 'bg-blue-500' : 
@@ -311,7 +311,7 @@ function SubmissionCard({ s }: { s: any }) {
   const type = INQUIRY_TYPES.find(t => t.value === s.inquiryType)
 
   return (
-    <div className="relative bg-[#0f1110] rounded-[1.5rem] border border-white/5 overflow-hidden group hover:border-white/10 transition-all flex flex-col shadow-lg p-5">
+    <div className="relative bg-[#0f1110] rounded-[1.5rem] border border-white/5 overflow-hidden group hover:border-white/10 transition-all flex flex-col shadow-lg p-5 min-w-[380px] w-[380px] flex-shrink-0 snap-start">
       <div className="flex items-start justify-between gap-4 mb-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-[#1a1c1b] border border-white/5 flex items-center justify-center shrink-0">
@@ -1011,7 +1011,7 @@ export default function ReceptionDashboard() {
                         </div>
                       )
                       return (
-                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                        <div className="flex flex-row overflow-x-auto gap-4 pb-6 snap-x snap-mandatory scrollbar-thin scrollbar-thumb-[#d4af37]/20 scrollbar-track-transparent">
                           {filteredSubmissions.map((s: any) =>
                             ["CHECKIN_APPROVED", "guests", "check_in", "ACTIVE"].includes(s.status) ? (
                               <GuestCard 
@@ -1042,7 +1042,7 @@ export default function ReceptionDashboard() {
                         </div>
                       )
                       return (
-                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                        <div className="flex flex-row overflow-x-auto gap-4 pb-6 snap-x snap-mandatory scrollbar-thin scrollbar-thumb-[#d4af37]/20 scrollbar-track-transparent">
                           {checkIns.map((s: any) => (
                             <GuestCard 
                               key={s._id} 
@@ -1069,7 +1069,7 @@ export default function ReceptionDashboard() {
                         </div>
                       )
                       return (
-                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                        <div className="flex flex-row overflow-x-auto gap-4 pb-6 snap-x snap-mandatory scrollbar-thin scrollbar-thumb-[#d4af37]/20 scrollbar-track-transparent">
                           {checkOuts.map((s: any) => (
                             <GuestCard 
                               key={s._id} 
@@ -1101,7 +1101,7 @@ export default function ReceptionDashboard() {
                             <span className="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse" />
                             Awaiting Admin Approval ({pending.length})
                           </p>
-                          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                          <div className="flex flex-row overflow-x-auto gap-4 pb-6 snap-x snap-mandatory scrollbar-thin scrollbar-thumb-[#d4af37]/20 scrollbar-track-transparent">
                             {pending.map((s: any) => <SubmissionCard key={s._id} s={s} />)}
                           </div>
                         </div>
@@ -1123,7 +1123,7 @@ export default function ReceptionDashboard() {
                             <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
                             Denied by Admin ({rejected.length})
                           </p>
-                          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                          <div className="flex flex-row overflow-x-auto gap-4 pb-6 snap-x snap-mandatory scrollbar-thin scrollbar-thumb-[#d4af37]/20 scrollbar-track-transparent">
                             {rejected.map((s: any) => <SubmissionCard key={s._id} s={s} />)}
                           </div>
                         </div>

@@ -69,6 +69,7 @@ export default function AdminReceptionPage() {
   const [actioning, setActioning] = useState(false)
   const [selectedCheckOut, setSelectedCheckOut] = useState<string>("")
   const [globalOverdueCount, setGlobalOverdueCount] = useState(0)
+  const [fetchingFull, setFetchingFull] = useState<string | null>(null)
   
   const [extendGuest, setExtendGuest] = useState<any | null>(null)
   const [newCheckOut, setNewCheckOut] = useState("")
@@ -300,9 +301,9 @@ export default function AdminReceptionPage() {
                     <p className="text-[10px] font-black uppercase tracking-widest text-center">No matching records found</p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 pb-10">
+                  <div className="flex flex-row overflow-x-auto gap-4 pb-10 snap-x snap-mandatory scrollbar-thin scrollbar-thumb-[#d4af37]/20 scrollbar-track-transparent">
                     {filteredRequests.map(r => (
-                      <div key={r._id} className="bg-[#151716] rounded-xl border border-white/5 hover:border-white/10 transition-all flex flex-col group relative overflow-hidden shadow-2xl">
+                      <div key={r._id} className="bg-[#151716] rounded-xl border border-white/5 hover:border-white/10 transition-all flex flex-col group relative overflow-hidden shadow-2xl min-w-[380px] w-[380px] flex-shrink-0 snap-start">
                         <div className={`absolute top-0 left-0 right-0 h-1 z-10 opacity-40 transition-opacity group-hover:opacity-100 ${
                           (r.status === 'CHECKIN_APPROVED' || r.status === 'check_in') ? 'bg-blue-500' : 
                           (r.status === 'REJECTED' || r.status === 'rejected') ? 'bg-red-500' : 
@@ -392,11 +393,35 @@ export default function AdminReceptionPage() {
                           )}
 
                           <div className="mt-auto space-y-4 pt-2">
-                             <button onClick={() => { setSelected(r); setReviewNote(r.reviewNote || ""); setSelectedCheckOut(r.checkOut || ""); }}
-                               disabled={actioning}
+                             <button 
+                               onClick={async () => { 
+                                 setFetchingFull(r._id);
+                                 try {
+                                   const res = await fetch(`/api/reception-requests/${r._id}`, { 
+                                     headers: { Authorization: `Bearer ${token}` } 
+                                   });
+                                   if (res.ok) {
+                                     const full = await res.json();
+                                     setSelected(full); 
+                                     setReviewNote(full.reviewNote || ""); 
+                                     setSelectedCheckOut(full.checkOut || "");
+                                   } else {
+                                     setSelected(r); 
+                                     setReviewNote(r.reviewNote || ""); 
+                                     setSelectedCheckOut(r.checkOut || "");
+                                   }
+                                 } catch {
+                                   setSelected(r); 
+                                   setReviewNote(r.reviewNote || ""); 
+                                   setSelectedCheckOut(r.checkOut || "");
+                                 } finally {
+                                   setFetchingFull(null);
+                                 }
+                               }}
+                               disabled={actioning || fetchingFull === r._id}
                                className="w-full flex items-center justify-center gap-3 py-3.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] bg-[#1a1c1b] border border-white/5 hover:border-[#d4af37]/30 text-[#f3cf7a]">
-                               {actioning ? <RefreshCw size={16} className="animate-spin" /> : <Eye size={16} />}
-                               {actioning ? 'Processing...' : 'REVIEW'}
+                               {actioning || fetchingFull === r._id ? <RefreshCw size={16} className="animate-spin" /> : <Eye size={16} />}
+                               {actioning ? 'Processing...' : fetchingFull === r._id ? 'Loading Photos...' : 'REVIEW'}
                              </button>
 
                              {/* Quick actions for pending approvals */}
@@ -512,13 +537,48 @@ export default function AdminReceptionPage() {
                       return `${(roomPrice * nights).toLocaleString()} ETB`;
                     })()
                   },
-                ].map((item, idx) => (
+                ].map((item: any, idx) => (
                   <div key={idx} className="bg-[#0f1110] p-4 rounded-xl border border-white/5 space-y-1 shadow-inner">
                     <p className="text-[9px] font-black uppercase tracking-widest text-gray-600">{item.label}</p>
                     <p className="text-white font-bold text-sm tracking-tight">{item.value}</p>
                   </div>
                 ))}
               </div>
+
+              {/* ID Photos Review Section */}
+              {(selected.idPhotoFront || selected.idPhotoBack) && (
+                <div className="space-y-4">
+                  <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-[#d4af37] border-b border-white/5 pb-2">Uploaded Identity Documents</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    {selected.idPhotoFront && (
+                      <div className="space-y-2">
+                        <p className="text-[9px] font-black uppercase tracking-widest text-gray-600">ID Front Side</p>
+                        <div className="relative group rounded-xl overflow-hidden border border-white/10 aspect-video bg-black/40">
+                          <img src={selected.idPhotoFront} alt="ID Front" className="w-full h-full object-contain" />
+                          <button 
+                            onClick={() => window.open(selected.idPhotoFront, '_blank')}
+                            className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-white border border-white/20 px-4 py-2 rounded-lg">View Full Resolution</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                    {selected.idPhotoBack && (
+                      <div className="space-y-2">
+                        <p className="text-[9px] font-black uppercase tracking-widest text-gray-600">ID Back Side</p>
+                        <div className="relative group rounded-xl overflow-hidden border border-white/10 aspect-video bg-black/40">
+                          <img src={selected.idPhotoBack} alt="ID Back" className="w-full h-full object-contain" />
+                          <button 
+                            onClick={() => window.open(selected.idPhotoBack, '_blank')}
+                            className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-white border border-white/20 px-4 py-2 rounded-lg">View Full Resolution</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
               <div className="space-y-4">
                 <div className="space-y-2.5">

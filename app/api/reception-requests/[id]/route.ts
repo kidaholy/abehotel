@@ -4,6 +4,29 @@ import ReceptionRequest from "@/lib/models/reception-request"
 import Room from "@/lib/models/room"
 import { validateSession } from "@/lib/auth"
 
+// GET - fetch single request details (including photos)
+export async function GET(request: Request, context: any) {
+  try {
+    const params = await context.params
+    const decoded = await validateSession(request)
+    if (!["admin", "reception"].includes(decoded.role)) {
+      return NextResponse.json({ message: "Forbidden" }, { status: 403 })
+    }
+
+    await connectDB()
+    const doc = await ReceptionRequest.findById(params.id).lean()
+    if (!doc) return NextResponse.json({ message: "Request not found" }, { status: 404 })
+
+    return NextResponse.json({
+      ...doc,
+      _id: doc._id?.toString()
+    })
+  } catch (error: any) {
+    return NextResponse.json({ message: "Failed to get request" }, { status: 500 })
+  }
+}
+
+
 // PUT - admin approves/denies OR reception requests extension
 export async function PUT(request: Request, context: any) {
   try {
