@@ -5,8 +5,9 @@ import { ProtectedRoute } from "@/components/protected-route"
 import { BentoNavbar } from "@/components/bento-navbar"
 import { useAuth } from "@/context/auth-context"
 import { useLanguage } from "@/context/language-context"
+import { useSettings } from "@/context/settings-context"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { ShoppingBag, RefreshCw } from 'lucide-react'
+import { ShoppingBag, RefreshCw, DollarSign } from 'lucide-react'
 
 interface OrderItem {
   menuItemId: string
@@ -32,11 +33,17 @@ interface Order {
 
 export default function CashierOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([])
+  const [todayRevenue, setTodayRevenue] = useState<{ enabled: boolean; totalRevenue: number; totalOrders: number }>({
+    enabled: false,
+    totalRevenue: 0,
+    totalOrders: 0
+  })
   const [loading, setLoading] = useState(true)
   const [filterStatus, setFilterStatus] = useState<"all" | "preparing" | "completed">("all")
   const [mainCategoryFilter, setMainCategoryFilter] = useState<"all" | "Food" | "Drinks">("all")
   const { token, user } = useAuth()
   const { t } = useLanguage()
+  const { settings } = useSettings()
 
   useEffect(() => {
     fetchOrders()
@@ -52,7 +59,7 @@ export default function CashierOrdersPage() {
       window.removeEventListener('focus', handleRefresh)
       window.removeEventListener('storage', handleStorage)
     }
-  }, [token])
+  }, [token, settings.enable_cashier_today_revenue])
 
   const fetchOrders = async () => {
     try {
@@ -60,6 +67,19 @@ export default function CashierOrdersPage() {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (response.ok) setOrders(await response.json())
+
+      if (settings.enable_cashier_today_revenue === "true") {
+        const revenueResponse = await fetch("/api/cashier/today-revenue", {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        if (revenueResponse.ok) {
+          setTodayRevenue(await revenueResponse.json())
+        } else {
+          setTodayRevenue({ enabled: false, totalRevenue: 0, totalOrders: 0 })
+        }
+      } else {
+        setTodayRevenue({ enabled: false, totalRevenue: 0, totalOrders: 0 })
+      }
     } catch (err) {
       console.error("Failed to load orders")
     } finally {
@@ -124,6 +144,28 @@ export default function CashierOrdersPage() {
               </div>
             </div>
           </div>
+
+          {todayRevenue.enabled && (
+            <div className="bg-[#151716] rounded-xl p-6 shadow-2xl border border-[#d4af37]/30">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-[#d4af37]/10 rounded-lg border border-[#d4af37]/20">
+                    <DollarSign className="h-7 w-7 text-[#f3cf7a]" />
+                  </div>
+                  <div>
+                    <h2 className="text-sm font-black uppercase tracking-widest text-gray-500">Today's Total Revenue</h2>
+                    <p className="text-3xl font-playfair italic font-bold text-[#f3cf7a] mt-1">
+                      {todayRevenue.totalRevenue.toLocaleString()} ETB
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-gray-500">Revenue Orders</p>
+                  <p className="text-xl font-black text-white">{todayRevenue.totalOrders}</p>
+                </div>
+              </div>
+            </div>
+          )}
 
 
           {/* Orders List */}

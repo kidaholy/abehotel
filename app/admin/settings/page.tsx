@@ -19,12 +19,13 @@ interface AdminSettings {
   app_tagline: string
   vat_rate: string
   enable_cashier_printing: string
+  enable_cashier_today_revenue: string
 }
 
 export default function AdminSettingsPage() {
   const { token } = useAuth()
   const { t } = useLanguage()
-  const { settings, refreshSettings } = useSettings()
+  const { settings, loading: settingsLoading, refreshSettings } = useSettings()
   const { confirmationState, confirm, closeConfirmation, notificationState, notify, closeNotification } = useConfirmation()
   const [formData, setFormData] = useState<AdminSettings>({
     logo_url: "",
@@ -32,12 +33,14 @@ export default function AdminSettingsPage() {
     app_name: "Prime Addis",
     app_tagline: "Coffee Management",
     vat_rate: "0.08",
-    enable_cashier_printing: "true"
+    enable_cashier_printing: "true",
+    enable_cashier_today_revenue: "false"
   })
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [uploadMethod, setUploadMethod] = useState<"url" | "file">("url")
+  const [settingsReady, setSettingsReady] = useState(false)
 
   // State Management Refs
   const isInitialized = useRef(false)
@@ -70,18 +73,20 @@ export default function AdminSettingsPage() {
   }
 
   useEffect(() => {
-    if (settings && !isDirty.current) {
+    if (!settingsLoading && settings && !isDirty.current) {
       setFormData({
         logo_url: settings.logo_url || "",
         favicon_url: settings.favicon_url || "",
         app_name: settings.app_name || "Prime Addis",
         app_tagline: settings.app_tagline || "Coffee Management",
         vat_rate: settings.vat_rate || "0.08",
-        enable_cashier_printing: settings.enable_cashier_printing || "true"
+        enable_cashier_printing: settings.enable_cashier_printing || "true",
+        enable_cashier_today_revenue: settings.enable_cashier_today_revenue || "false"
       })
       isInitialized.current = true
+      setSettingsReady(true)
     }
-  }, [settings])
+  }, [settings, settingsLoading])
 
   useEffect(() => {
     if (activeTab === "tables") {
@@ -262,6 +267,14 @@ export default function AdminSettingsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!settingsReady || settingsLoading) {
+      notify({
+        title: "Settings Not Ready",
+        message: "Please wait for settings to fully load, then try saving again.",
+        type: "error"
+      })
+      return
+    }
     setSaving(true)
 
     try {
@@ -271,7 +284,8 @@ export default function AdminSettingsPage() {
         { key: "app_name", value: formData.app_name, type: "string", desc: t("adminSettings.applicationName") },
         { key: "app_tagline", value: formData.app_tagline, type: "string", desc: t("adminSettings.applicationTagline") },
         { key: "vat_rate", value: formData.vat_rate, type: "number", desc: "Value Added Tax (VAT) rate" },
-        { key: "enable_cashier_printing", value: formData.enable_cashier_printing, type: "boolean", desc: "Auto-print setting" }
+        { key: "enable_cashier_printing", value: formData.enable_cashier_printing, type: "boolean", desc: "Auto-print setting" },
+        { key: "enable_cashier_today_revenue", value: formData.enable_cashier_today_revenue, type: "boolean", desc: "Allow cashiers to view today's total revenue" }
       ]
 
       for (const s of settingsToSave) {
@@ -798,11 +812,52 @@ export default function AdminSettingsPage() {
                       </div>
                     </div>
 
+                    {/* Cashier Revenue Visibility Toggle */}
+                    <div className="space-y-4 p-8 bg-[#0f1110] rounded-[2.5rem] border border-white/5 shadow-inner mt-8">
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+                        <div className="flex-1 space-y-3">
+                          <label className="text-lg font-playfair italic font-bold text-white flex items-center gap-3">
+                            <span className="p-2 bg-[#151716] rounded-xl border border-white/10 shadow-sm text-xl">💰</span>
+                            Cashier Total Revenue View
+                            {formData.enable_cashier_today_revenue === "true" ? (
+                              <span className="text-[9px] bg-[#1a2e20] text-[#4ade80] px-2.5 py-1 rounded-md border border-[#4ade80]/30 uppercase tracking-widest ml-2 font-black">ENABLED</span>
+                            ) : (
+                              <span className="text-[9px] bg-[#1a1c1b] text-gray-500 px-2.5 py-1 rounded-md border border-white/10 uppercase tracking-widest ml-2 font-black">DISABLED</span>
+                            )}
+                          </label>
+                          <p className="text-xs text-gray-400 font-medium leading-relaxed pl-14 sm:pl-0">
+                            {formData.enable_cashier_today_revenue === "true"
+                              ? "Cashiers CAN see today's total revenue in their orders page."
+                              : "Cashiers CANNOT see today's total revenue. The revenue card stays hidden."}
+                          </p>
+                        </div>
+                        <div className="flex flex-col items-center gap-3 pl-14 sm:pl-0 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => updateFormData(prev => ({
+                              ...prev,
+                              enable_cashier_today_revenue: prev.enable_cashier_today_revenue === "true" ? "false" : "true"
+                            }))}
+                            className={`relative inline-flex h-8 w-16 items-center rounded-full transition-all duration-500 shadow-inner focus:outline-none ${formData.enable_cashier_today_revenue === "true" ? "bg-[#1a2e20] border border-[#4ade80]/50" : "bg-[#1a1c1b] border border-white/10"
+                              }`}
+                          >
+                            <span
+                              className={`inline-block h-6 w-6 transform rounded-full shadow-xl transition-transform duration-500 ${formData.enable_cashier_today_revenue === "true" ? "translate-x-9 bg-[#4ade80]" : "translate-x-1 bg-[#0f1110]"
+                                }`}
+                            />
+                          </button>
+                          <span className={`text-[9px] font-black uppercase tracking-widest ${formData.enable_cashier_today_revenue === "true" ? "text-[#4ade80]" : "text-gray-500"}`}>
+                            {formData.enable_cashier_today_revenue === "true" ? "Revenue ON" : "Revenue OFF"}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
                     {/* Save Button */}
                     <div className="flex justify-end pt-8 border-t border-white/5 mt-10">
                       <button
                         type="submit"
-                        disabled={saving}
+                        disabled={saving || settingsLoading || !settingsReady}
                         className="bg-gradient-to-r from-[#b38822] to-[#d4af37] text-white px-10 py-4 rounded-2xl font-bold transition-all shadow-lg hover:shadow-[#d4af37]/20 transform hover:-translate-y-1 active:scale-95 disabled:opacity-50 disabled:transform-none flex items-center gap-3 uppercase tracking-widest text-xs"
                       >
                         {saving ? (
