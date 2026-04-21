@@ -26,10 +26,18 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url)
     const period = searchParams.get("period") || "month"
+    const startDateParam = searchParams.get("startDate")
+    const endDateParam = searchParams.get("endDate")
 
     const now = new Date()
     let startDate: Date
-    if (period === "today") {
+    let endDate: Date | null = null
+
+    if (startDateParam) {
+      // Explicit date range (custom)
+      startDate = new Date(startDateParam)
+      endDate = endDateParam ? new Date(endDateParam) : null
+    } else if (period === "today") {
       startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate())
     } else if (period === "week") {
       startDate = new Date(now); startDate.setDate(now.getDate() - 7)
@@ -39,10 +47,24 @@ export async function GET(request: Request) {
       startDate = new Date(now.getFullYear(), now.getMonth(), 1)
     }
 
+    const dateFilter: any = { $gte: startDate }
+    if (endDate) dateFilter.$lte = endDate
+
     const bookings = await ReceptionRequest.find({
-      status: { $in: ["guests", "check_in", "check_out"] },
-      inquiryType: { $in: ["check_in", "reservation"] },
-      createdAt: { $gte: startDate },
+      status: { $in: [
+        // Canonical statuses
+        "CHECKIN_APPROVED",
+        "ACTIVE",
+        "CHECKOUT_PENDING",
+        "CHECKOUT_APPROVED",
+        "CHECKED_OUT",
+        // Legacy statuses
+        "guests",
+        "check_in",
+        "check_out",
+      ]},
+      inquiryType: { $in: ["check_in", "check_out", "reservation"] },
+      createdAt: dateFilter,
     }).lean()
 
     // Helper: calculate nights between checkIn and checkOut strings

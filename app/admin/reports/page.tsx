@@ -80,21 +80,29 @@ export default function ReportsPage() {
             let salesUrl = `/api/reports/sales?period=${timeRange}`
             let ordersUrl = getOrdersUrl(timeRange)
 
+            let bedroomUrl = `/api/reports/bedroom-revenue?period=${timeRange}`
+
             if (timeRange === 'custom' && selectedDate) {
                 const d = new Date(selectedDate)
                 const startDateStr = new Date(d.setHours(0, 0, 0, 0)).toISOString()
                 const endDateStr   = new Date(d.setHours(23, 59, 59, 999)).toISOString()
                 salesUrl  += `&startDate=${startDateStr}&endDate=${endDateStr}`
                 ordersUrl  = `/api/orders?startDate=${startDateStr}&endDate=${endDateStr}&includeDeleted=true&limit=1000`
+                bedroomUrl += `&startDate=${startDateStr}&endDate=${endDateStr}`
             }
 
-            // Fetch critical data first (financial + orders), then secondary
-            const [salesRes, ordersRes] = await Promise.all([
+            // Fetch critical data first (financial + orders + reception revenue), then secondary
+            const [salesRes, ordersRes, bedroomRes] = await Promise.all([
                 fetch(salesUrl,  { headers: { Authorization: `Bearer ${token}` } }),
                 fetch(ordersUrl, { headers: { Authorization: `Bearer ${token}` } }),
+                fetch(bedroomUrl, { headers: { Authorization: `Bearer ${token}` } }),
             ])
             if (salesRes.ok)  setPeriodData(await salesRes.json())
             if (ordersRes.ok) setOrders(await ordersRes.json())
+            if (bedroomRes.ok) {
+                const bd = await bedroomRes.json()
+                setReceptionRevenue(bd.totalRevenue || 0)
+            }
 
             setInitialized(true)
 
@@ -108,19 +116,14 @@ export default function ReportsPage() {
             setLoadingSlide(false)
 
             // Secondary data in background — don't block render
-            const [stockRes, usageRes, menuRes, bedroomRes] = await Promise.all([
+            const [stockRes, usageRes, menuRes] = await Promise.all([
                 fetch(`/api/stock`,                                    { headers: { Authorization: `Bearer ${token}` } }),
                 fetch(`/api/reports/stock-usage?period=${timeRange}`,  { headers: { Authorization: `Bearer ${token}` } }),
                 fetch(`/api/menu?all=true`,                            { headers: { Authorization: `Bearer ${token}` } }),
-                fetch(`/api/reports/bedroom-revenue?period=${timeRange}`, { headers: { Authorization: `Bearer ${token}` } }),
             ])
             if (stockRes.ok) setStockItems(await stockRes.json())
             if (usageRes.ok) setStockUsageData(await usageRes.json())
             if (menuRes.ok)  setMenuItems(await menuRes.json())
-            if (bedroomRes.ok) {
-                const bd = await bedroomRes.json()
-                setReceptionRevenue(bd.totalRevenue || 0)
-            }
         } catch (error) {
             console.error("Failed to load report data:", error)
             setInitialized(true)
@@ -543,15 +546,20 @@ export default function ReportsPage() {
                                                 // Trigger fetch for custom date
                                                 if (date && token) {
                                                     const d = new Date(date)
-                                                    const startDateStr = new Date(d.setHours(0,0,0,0)).toISOString()
-                                                    const endDateStr   = new Date(d.setHours(23,59,59,999)).toISOString()
+                                                    const startDateStr = new Date(new Date(d).setHours(0,0,0,0)).toISOString()
+                                                    const endDateStr   = new Date(new Date(d).setHours(23,59,59,999)).toISOString()
                                                     setLoadingSlide(true)
                                                     Promise.all([
                                                         fetch(`/api/reports/sales?period=custom&startDate=${startDateStr}&endDate=${endDateStr}`, { headers: { Authorization: `Bearer ${token}` } }),
                                                         fetch(`/api/orders?startDate=${startDateStr}&endDate=${endDateStr}&includeDeleted=true&limit=1000`, { headers: { Authorization: `Bearer ${token}` } }),
-                                                    ]).then(async ([sRes, oRes]) => {
+                                                        fetch(`/api/reports/bedroom-revenue?period=custom&startDate=${startDateStr}&endDate=${endDateStr}`, { headers: { Authorization: `Bearer ${token}` } }),
+                                                    ]).then(async ([sRes, oRes, bRes]) => {
                                                         if (sRes.ok) setPeriodData(await sRes.json())
                                                         if (oRes.ok) setOrders(await oRes.json())
+                                                        if (bRes.ok) {
+                                                            const bd = await bRes.json()
+                                                            setReceptionRevenue(bd.totalRevenue || 0)
+                                                        }
                                                     }).finally(() => setLoadingSlide(false))
                                                 }
                                             }}
