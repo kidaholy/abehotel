@@ -41,7 +41,7 @@ export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([])
   const [filter, setFilter] = useState<string>("all")
   const [searchTerm, setSearchTerm] = useState("")
-  const [timeRange, setTimeRange] = useState<string>("today")
+  const [timeRange, setTimeRange] = useState<string>("week")
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date())
   const [categoryFilter, setCategoryFilter] = useState<"all" | "Food" | "Drinks">("all")
   const [deleting, setDeleting] = useState<string | null>(null)
@@ -121,8 +121,8 @@ export default function AdminOrdersPage() {
       }
     }
 
-    // Add includeDeleted for admin view
-    url += (url.includes('?') ? '&' : '?') + "includeDeleted=true&limit=200"
+    // Add includeDeleted for admin view; do not hard-cap results so cashier totals stay accurate
+    url += (url.includes('?') ? '&' : '?') + "includeDeleted=true"
 
     return url
   }
@@ -412,6 +412,8 @@ export default function AdminOrdersPage() {
   const readyOrders = orders.filter(o => !o.isDeleted && o.status !== 'cancelled' && o.status === 'ready')
   const servedOrders = orders.filter(o => !o.isDeleted && o.status !== 'cancelled' && (o.status === 'served' || o.status === 'completed'))
   const deletedHistory = orders.filter(o => !!o.isDeleted || o.status === 'cancelled')
+  const getCashierRevenueOrders = (cashierName: string) =>
+    orders.filter(o => o.status !== "cancelled" && (o.createdBy?.name || "Unknown") === cashierName)
 
   const stats = {
     all: {
@@ -758,8 +760,7 @@ export default function AdminOrdersPage() {
                           <div className="flex flex-col">
                             <span className="text-gray-500 text-[8px] font-bold uppercase tracking-widest">Total Revenue</span>
                             <span className="text-lg font-black text-[#4ade80]">
-                              {orders
-                                .filter(o => o.status !== "cancelled" && !o.isDeleted && (o.createdBy?.name || "Unknown") === cashierList[activeCashierIdx])
+                              {getCashierRevenueOrders(cashierList[activeCashierIdx])
                                 .reduce((sum, o) => sum + o.totalAmount, 0)
                                 .toLocaleString()} Br
                             </span>
@@ -768,9 +769,7 @@ export default function AdminOrdersPage() {
                           <div className="flex flex-col">
                             <span className="text-gray-500 text-[8px] font-bold uppercase tracking-widest">Total Orders</span>
                             <span className="text-lg font-black text-white">
-                              {orders
-                                .filter(o => o.status !== "cancelled" && !o.isDeleted && (o.createdBy?.name || "Unknown") === cashierList[activeCashierIdx])
-                                .length}
+                              {getCashierRevenueOrders(cashierList[activeCashierIdx]).length}
                             </span>
                           </div>
                         </div>
