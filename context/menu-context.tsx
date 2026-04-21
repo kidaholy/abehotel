@@ -34,6 +34,9 @@ const MenuContext = createContext<MenuContextValue>({
 })
 
 const CACHE_KEY = "pos_menu_cache_v9"
+const MENU_SYNC_EVENT = "menuUpdated"
+const MENU_SYNC_CHANNEL = "abehotel-menu-sync"
+const MENU_POLL_INTERVAL_MS = 10000
 
 // Clear all old cache keys on module load
 if (typeof window !== "undefined") {
@@ -119,16 +122,58 @@ export function MenuProvider({ children }: { children: ReactNode }) {
     fetchMenu()
   }, [token])
 
-  // Listen for admin menu updates from other tabs
+  // Listen for menu updates from other tabs/windows and periodic sync
   useEffect(() => {
+    if (!token) return
+
     const handleStorage = (e: StorageEvent) => {
-      if (e.key === "menuUpdated") {
+      if (e.key === MENU_SYNC_EVENT) {
         fetchingRef.current = false
         fetchMenu()
       }
     }
+
+    const handleMenuUpdated = () => {
+      fetchingRef.current = false
+      fetchMenu()
+    }
+
+    const handleVisibilityOrFocus = () => {
+      if (!document.hidden) {
+        fetchingRef.current = false
+        fetchMenu()
+      }
+    }
+
+    const poller = window.setInterval(() => {
+      if (!document.hidden) {
+        fetchMenu()
+      }
+    }, MENU_POLL_INTERVAL_MS)
+
+    let channel: BroadcastChannel | null = null
+    if (typeof BroadcastChannel !== "undefined") {
+      channel = new BroadcastChannel(MENU_SYNC_CHANNEL)
+      channel.onmessage = (event) => {
+        if (event?.data?.type === MENU_SYNC_EVENT) {
+          fetchingRef.current = false
+          fetchMenu()
+        }
+      }
+    }
+
     window.addEventListener("storage", handleStorage)
-    return () => window.removeEventListener("storage", handleStorage)
+    window.addEventListener(MENU_SYNC_EVENT, handleMenuUpdated)
+    window.addEventListener("focus", handleVisibilityOrFocus)
+    document.addEventListener("visibilitychange", handleVisibilityOrFocus)
+    return () => {
+      window.removeEventListener("storage", handleStorage)
+      window.removeEventListener(MENU_SYNC_EVENT, handleMenuUpdated)
+      window.removeEventListener("focus", handleVisibilityOrFocus)
+      document.removeEventListener("visibilitychange", handleVisibilityOrFocus)
+      window.clearInterval(poller)
+      if (channel) channel.close()
+    }
   }, [token])
 
   const refetchMenu = () => {

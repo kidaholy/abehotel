@@ -29,6 +29,8 @@ interface CartSidebarProps {
   isEmbedded?: boolean
   tableNumber: string
   setTableNumber: (val: string) => void
+  batchNumber: string
+  setBatchNumber: (val: string) => void
   isMeatOnly?: boolean
   isDrinksOnly?: boolean
   isButcherOrder?: boolean
@@ -52,6 +54,8 @@ export function CartSidebar({
   isEmbedded = false,
   tableNumber,
   setTableNumber,
+  batchNumber,
+  setBatchNumber,
   isMeatOnly = false,
   isDrinksOnly = false,
   isButcherOrder = false,
@@ -324,6 +328,19 @@ export function CartSidebar({
 
           </div>
         )}
+
+        <div className="flex items-center gap-2">
+          <div className="flex-1 bg-[#0f1110] border border-white/5 rounded-xl px-4 py-3 text-xs font-bold flex items-center gap-2 hover:border-[#d4af37]/30 transition-all">
+            <span className="text-gray-500 font-bold">🏷️</span>
+            <input
+              type="text"
+              value={batchNumber}
+              onChange={(e) => setBatchNumber(e.target.value)}
+              placeholder="Batch Number"
+              className="w-full bg-transparent outline-none text-white placeholder:text-gray-500 font-bold text-xs"
+            />
+          </div>
+        </div>
 
         {isButcherOrder && (
           <div className="bg-[#8B4513]/10 border border-dashed border-[#8B4513]/30 rounded-xl py-3 px-4 text-center">

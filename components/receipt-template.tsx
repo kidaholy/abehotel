@@ -12,6 +12,8 @@ interface ReceiptItem {
 interface ReceiptTemplateProps {
   orderNumber: string
   tableNumber: string
+  batchNumber?: string
+  distributions?: string[]
   items: ReceiptItem[]
   subtotal: number
   tax: number
@@ -28,6 +30,8 @@ interface ReceiptTemplateProps {
 export const getReceiptHTML = ({
   orderNumber,
   tableNumber,
+  batchNumber,
+  distributions = [],
   items,
   subtotal,
   tax,
@@ -109,10 +113,22 @@ export const getReceiptHTML = ({
               <span>Table:</span>
               <span class="font-bold">${tableNumber || "N/A"}</span>
             </div>
+            ${batchNumber ? `
+            <div class="flex justify-between">
+              <span>Batch:</span>
+              <span class="font-bold">${batchNumber}</span>
+            </div>
+            ` : ""}
             ${floorName ? `
             <div class="flex justify-between">
               <span>Floor:</span>
               <span class="font-bold">${floorName}</span>
+            </div>
+            ` : ""}
+            ${distributions.length > 0 ? `
+            <div class="flex justify-between">
+              <span>Distribution:</span>
+              <span class="font-bold">${distributions.join(", ")}</span>
             </div>
             ` : ""}
           </div>

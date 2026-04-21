@@ -78,6 +78,9 @@ interface MenuManagementSectionProps {
   publicMenuUrl?: string
 }
 
+const MENU_SYNC_EVENT = "menuUpdated"
+const MENU_SYNC_CHANNEL = "abehotel-menu-sync"
+
 export function MenuManagementSection({ 
   confirm, 
   notify, 
@@ -140,6 +143,17 @@ export function MenuManagementSection({
 
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 20
+
+  const broadcastMenuUpdate = () => {
+    const stamp = Date.now().toString()
+    localStorage.setItem(MENU_SYNC_EVENT, stamp)
+    window.dispatchEvent(new Event(MENU_SYNC_EVENT))
+    if (typeof BroadcastChannel !== "undefined") {
+      const channel = new BroadcastChannel(MENU_SYNC_CHANNEL)
+      channel.postMessage({ type: MENU_SYNC_EVENT, at: stamp })
+      channel.close()
+    }
+  }
 
   useEffect(() => {
     if (token) {
@@ -377,7 +391,7 @@ export function MenuManagementSection({
       if (response.ok) {
         notify({ title: "Success", message: "Menu IDs re-indexed successfully!", type: "success" })
         fetchMenuItems()
-        localStorage.setItem('menuUpdated', Date.now().toString())
+        broadcastMenuUpdate()
       } else {
         const errorData = await response.json()
         notify({ title: "Error", message: errorData.message || "Normalization failed", type: "error" })
@@ -425,12 +439,10 @@ export function MenuManagementSection({
           type: "success"
         })
         resetForm()
-        // Increase delay and force refresh
-        setTimeout(() => {
-          fetchMenuItems()
-          setImageInputType('file')
-        }, 800)
-        localStorage.setItem('menuUpdated', Date.now().toString())
+        // Refresh immediately and broadcast update to cashier sessions
+        fetchMenuItems()
+        setImageInputType('file')
+        broadcastMenuUpdate()
       } else {
         const errorData = await response.json()
         notify({
@@ -520,7 +532,7 @@ export function MenuManagementSection({
 
       if (response.ok) {
         fetchMenuItems()
-        localStorage.setItem('menuUpdated', Date.now().toString())
+        broadcastMenuUpdate()
       }
     } catch (error) {
       console.error("Error deleting menu item:", error)

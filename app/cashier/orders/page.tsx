@@ -24,6 +24,7 @@ interface Order {
   paymentMethod: string
   status: "preparing" | "ready" | "completed" | "cancelled"
   tableNumber: string
+  batchNumber?: string
   floorNumber?: string
   createdAt: string
   updatedAt: string
@@ -247,6 +248,11 @@ export default function CashierOrdersPage() {
                               <span className="inline-flex items-center px-2 py-0.5 rounded bg-blue-50 text-blue-700 text-[10px] font-black border border-blue-100 w-fit">
                                 Table {order.tableNumber}
                               </span>
+                              {order.batchNumber && (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded bg-amber-50 text-amber-700 text-[10px] font-black border border-amber-100 w-fit">
+                                  Batch {order.batchNumber}
+                                </span>
+                              )}
                               {order.distributions && order.distributions.length > 0 && (
                                 <div className="flex flex-wrap gap-1 mt-1">
                                   {order.distributions.map((dist, idx) => (

@@ -178,8 +178,8 @@ export async function POST(request: Request) {
     console.log("📊 Database connected successfully")
 
     const body = await request.json()
-    const { items, totalAmount, subtotal, tax, paymentMethod, customerName, tableNumber, tableId, distributions } = body
-    console.log("📝 Order data received:", { items: items.length, totalAmount, subtotal, tax, tableNumber, tableId })
+    const { items, totalAmount, subtotal, tax, paymentMethod, customerName, tableNumber, tableId, distributions, batchNumber } = body
+    console.log("📝 Order data received:", { items: items.length, totalAmount, subtotal, tax, tableNumber, tableId, batchNumber })
 
     // Validate required fields
     if (!items || !Array.isArray(items) || items.length === 0) {
@@ -288,6 +288,7 @@ export async function POST(request: Request) {
       paymentMethod: paymentMethod || "cash",
       customerName: customerName || `Table ${tableNumber}`,
       tableNumber,
+      batchNumber: batchNumber ? String(batchNumber).trim() : undefined,
       tableId,
       floorId,
       floorNumber,

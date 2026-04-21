@@ -21,6 +21,7 @@ interface Order {
   createdAt: string
   customerName?: string
   tableNumber: string
+  batchNumber?: string
   floorNumber?: string
   delayMinutes?: number
   thresholdMinutes?: number
@@ -787,6 +788,11 @@ export default function AdminOrdersPage() {
                                 <p className="text-[10px] text-gray-500 font-bold tracking-tighter mt-1">
                                   {order.floorNumber ? `${order.floorNumber} - ` : ''}{order.tableNumber}
                                 </p>
+                                {order.batchNumber && (
+                                  <p className="text-[9px] text-amber-400 font-black tracking-widest uppercase mt-1">
+                                    Batch {order.batchNumber}
+                                  </p>
+                                )}
                               </div>
                                 <div className="flex-1 min-w-0 bg-[#151716] p-2 px-4 rounded-xl border border-white/5">
                                   <p className="text-[9px] text-gray-400 line-clamp-1 uppercase tracking-wide">

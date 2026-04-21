@@ -55,6 +55,7 @@ export function POSPage({ fixedTier }: POSPageProps) {
   const [showOrderAnimation, setShowOrderAnimation] = useState(false)
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false)
   const [tableNumber, setTableNumber] = useState("")
+  const [batchNumber, setBatchNumber] = useState("")
   const [isButcherOrder, setIsButcherOrder] = useState(false)
   const [isDrinksOrder, setIsDrinksOrder] = useState(false)
   const [showCart, setShowCart] = useState(false)
@@ -206,7 +207,8 @@ export function POSPage({ fixedTier }: POSPageProps) {
           items: cartItems.map((item) => ({ menuItemId: item.id, name: item.name, quantity: item.quantity, price: item.price, menuTier: fixedTier })),
           totalAmount, subtotal, tax, paymentMethod: "cash", status: "pending",
           tableNumber: finalTableNumber, floorId: selectedFloorId || user?.floorId,
-          distributions
+          distributions,
+          batchNumber: batchNumber.trim() || undefined
         }),
       })
       if (response.ok) {
@@ -216,6 +218,7 @@ export function POSPage({ fixedTier }: POSPageProps) {
         const snapshotCart = [...cartItems]
         setCartItems([])
         setTableNumber("")
+        setBatchNumber("")
         setDistributions([])
         setIsButcherOrder(false)
         setIsDrinksOrder(false)
@@ -231,6 +234,8 @@ export function POSPage({ fixedTier }: POSPageProps) {
           const printSingleReceipt = (copyType: 'KITCHEN' | 'CUSTOMER') => {
             const receiptHtml = getReceiptHTML({
               orderNumber: data.orderNumber, tableNumber: finalTableNumber,
+              batchNumber: batchNumber.trim() || undefined,
+              distributions,
               items: snapshotCart.map(item => ({ menuId: item.menuId, name: item.name, quantity: item.quantity, price: item.price })),
               subtotal, tax, total: totalAmount, paperWidth: 80,
               appName: settings.app_name, appTagline: settings.app_tagline, vatRate: settings.vat_rate,
@@ -296,6 +301,7 @@ export function POSPage({ fixedTier }: POSPageProps) {
     items: cartItems, onRemove: handleRemoveFromCart, onQuantityChange: handleQuantityChange,
     onCheckout: handleCheckout, isLoading: isCheckoutLoading, isEmbedded: true,
     tableNumber, setTableNumber, isMeatOnly, isDrinksOnly, isButcherOrder, setIsButcherOrder,
+    batchNumber, setBatchNumber,
     isDrinksOrder, setIsDrinksOrder,
     assignedFloorId: selectedFloorId || user?.floorId, setSelectedFloorId, onClear: handleClearCart,
     distribution: distributions, setDistribution: setDistributions,
