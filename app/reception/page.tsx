@@ -64,7 +64,7 @@ interface Floor { _id: string; floorNumber: string; isVIP: boolean }
 
 const EMPTY_FORM = {
   guestName: "", faydaId: "", phone: "", roomNumber: "", floorId: "",
-  inquiryType: "", checkIn: "", checkOut: "", checkInTime: "", checkOutTime: "",
+  inquiryType: "", stayDays: "",
   guests: "1", paymentMethod: "cash", chequeNumber: "", notes: "",
   idPhotoFront: "", idPhotoBack: "", roomPrice: "", paymentReference: "", transactionUrl: "", photoUrl: "",
 }
@@ -285,7 +285,7 @@ function GuestCard({ s, rooms, token, notify, fetchSubmissions, setExtendGuest, 
           )}
           {["CHECKIN_APPROVED", "check_in", "guests", "ACTIVE"].includes(s.status) && (
             <button type="button"
-              onClick={() => { setExtendGuest(s); setNewCheckOut(s.checkOut || "") }}
+              onClick={() => { setExtendGuest(s); setNewCheckOut(""); setExtendDays("") }}
               className="flex items-center justify-center gap-2 px-6 py-3 bg-[#d4af37]/10 border border-[#d4af37]/30 text-[#f3cf7a] hover:bg-[#d4af37]/20 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
               <Calendar size={14} /> Extend
             </button>
@@ -385,6 +385,7 @@ export default function ReceptionDashboard() {
   const datePickerRef = useRef<HTMLInputElement>(null)
   const [extendGuest, setExtendGuest] = useState<any | null>(null)
   const [newCheckOut, setNewCheckOut] = useState("")
+  const [extendDays, setExtendDays] = useState("")
   const [extending, setExtending] = useState(false)
   const [rooms, setRooms] = useState<Room[]>([])
   const [floors, setFloors] = useState<Floor[]>([])
@@ -438,13 +439,10 @@ export default function ReceptionDashboard() {
 
   // Auto-calculate duration and total payment
   const calcDuration = () => {
-    if (!formData.checkIn || !formData.checkOut) return null
-    const inDate  = new Date(`${formData.checkIn}T${formData.checkInTime || "12:00"}`)
-    const outDate = new Date(`${formData.checkOut}T${formData.checkOutTime || "12:00"}`)
-    const diffMs  = outDate.getTime() - inDate.getTime()
-    if (diffMs <= 0) return null
-    const totalHours = diffMs / (1000 * 60 * 60)
-    const nights = Math.ceil(totalHours / 24)
+    const stayDays = Number(formData.stayDays)
+    if (!Number.isInteger(stayDays) || stayDays <= 0) return null
+    const nights = stayDays
+    const totalHours = nights * 24
     const savedPrice = parseFloat(formData.roomPrice || "0")
     const pricePerNight = savedPrice > 0 ? savedPrice : (selectedRoom?.price || 0)
     const total = nights * pricePerNight
@@ -470,12 +468,33 @@ export default function ReceptionDashboard() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!formData.inquiryType) { notify({ title: "Missing Field", message: "Please select an inquiry type.", type: "error" }); return }
+    if (!formData.guestName.trim()) { notify({ title: "Missing Field", message: "Guest name is required.", type: "error" }); return }
+    if (!formData.phone.trim()) { notify({ title: "Missing Field", message: "Phone number is required.", type: "error" }); return }
+    if (!formData.idPhotoFront || !formData.idPhotoBack) { notify({ title: "Missing Field", message: "Both front and back guest ID photos are required.", type: "error" }); return }
+    if (!formData.floorId || !formData.roomNumber) { notify({ title: "Missing Field", message: "Floor and room are required.", type: "error" }); return }
+    if (!formData.guests) { notify({ title: "Missing Field", message: "Guest number is required.", type: "error" }); return }
+    const stayDays = Number(formData.stayDays)
+    if (!Number.isInteger(stayDays) || stayDays <= 0) { notify({ title: "Missing Field", message: "Stay duration in days is required.", type: "error" }); return }
+    if (formData.paymentMethod === "cash" && !formData.paymentReference.trim()) {
+      notify({ title: "Missing Field", message: "Receipt number is required for cash payment.", type: "error" }); return
+    }
+    if (formData.paymentMethod !== "cash" && !formData.transactionUrl.trim()) {
+      notify({ title: "Missing Field", message: "Receipt URL is required for non-cash payments.", type: "error" }); return
+    }
     setSubmitting(true)
     try {
+      const checkInDate = new Date()
+      const checkOutDate = new Date(checkInDate)
+      checkOutDate.setDate(checkOutDate.getDate() + stayDays)
+      const payload = {
+        ...formData,
+        checkIn: checkInDate.toISOString().split("T")[0],
+        checkOut: checkOutDate.toISOString().split("T")[0],
+      }
       const res = await fetch("/api/reception-requests", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       })
       if (res.ok) {
         notify({ title: "Submitted!", message: `Request for ${formData.guestName} recorded.`, type: "success" })
@@ -489,7 +508,21 @@ export default function ReceptionDashboard() {
   }
 
   const handleExtend = async () => {
-    if (!extendGuest || !newCheckOut) return
+    if (!extendGuest) return
+    const daysToAdd = Number(extendDays)
+    if (!Number.isInteger(daysToAdd) || daysToAdd <= 0) {
+      notify({ title: "Invalid Days", message: "Please enter how many days to extend (minimum 1).", type: "error" })
+      return
+    }
+    const baseDate = extendGuest.checkOut || extendGuest.checkIn
+    if (!baseDate) {
+      notify({ title: "Missing Date", message: "Cannot extend because current stay date is missing.", type: "error" })
+      return
+    }
+    const nextDate = new Date(`${baseDate}T12:00`)
+    nextDate.setDate(nextDate.getDate() + daysToAdd)
+    const computedCheckOut = nextDate.toISOString().split("T")[0]
+    setNewCheckOut(computedCheckOut)
     setExtending(true)
     try {
       const res = await fetch(`/api/reception-requests/${extendGuest._id}`, {
@@ -497,14 +530,15 @@ export default function ReceptionDashboard() {
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({
           status: "EXTEND_PENDING",
-          reviewNote: `Extension requested: new check-out ${newCheckOut}`,
-          checkOut: newCheckOut,
+          reviewNote: `Extension requested: +${daysToAdd} day(s), new check-out ${computedCheckOut}`,
+          checkOut: computedCheckOut,
         }),
       })
       if (res.ok) {
-        notify({ title: "Extension Requested", message: `New check-out date ${newCheckOut} sent for admin approval.`, type: "success" })
+        notify({ title: "Extension Requested", message: `Extended by ${daysToAdd} day(s). New check-out date ${computedCheckOut} sent for admin approval.`, type: "success" })
         setExtendGuest(null)
         setNewCheckOut("")
+        setExtendDays("")
         fetchSubmissions()
       } else {
         const err = await res.json()
@@ -639,7 +673,7 @@ export default function ReceptionDashboard() {
                     </div>
                     <div>
                       <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1.5 flex items-center gap-1"><Phone size={11} /> Phone</label>
-                      <input name="phone" type="tel" value={formData.phone} onChange={handleChange} placeholder="+251 9XX XXX XXX" className={ic} />
+                      <input required name="phone" type="tel" value={formData.phone} onChange={handleChange} placeholder="+251 9XX XXX XXX" className={ic} />
                     </div>
                   </div>
 
@@ -688,7 +722,7 @@ export default function ReceptionDashboard() {
                     {/* File mode — front & back */}
                     <div>
                       <p className="text-[9px] font-black text-gray-600 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
-                        2. ID Card Upload <span className="text-gray-500 font-normal normal-case tracking-normal">(Optional fallback if URL is empty or unavailable)</span>
+                        2. ID Card Upload <span className="text-red-400">*</span>
                       </p>
                       <div className="grid grid-cols-2 gap-3 mt-2">
                         {(["front", "back"] as const).map(side => {
@@ -733,8 +767,8 @@ export default function ReceptionDashboard() {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1.5">Floor</label>
-                      <select value={formData.floorId} onChange={e => handleFloorChange(e.target.value)} className={ic + " appearance-none"}>
-                        <option value="">All Floors</option>
+                      <select required value={formData.floorId} onChange={e => handleFloorChange(e.target.value)} className={ic + " appearance-none"}>
+                        <option value="">Select Floor…</option>
                         {floors.map(f => <option key={f._id} value={f._id}>Floor {f.floorNumber}{f.isVIP ? " (VIP)" : ""}</option>)}
                       </select>
                     </div>
@@ -761,31 +795,26 @@ export default function ReceptionDashboard() {
                   {/* Guests */}
                   <div>
                     <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1.5">Number of Guests</label>
-                    <select name="guests" value={formData.guests} onChange={handleChange} className={ic + " appearance-none"}>
+                    <select required name="guests" value={formData.guests} onChange={handleChange} className={ic + " appearance-none"}>
                       {[1,2,3,4,5,6,7,8].map(n => <option key={n} value={n}>{n} Guest{n > 1 ? "s" : ""}</option>)}
                     </select>
                   </div>
 
-                  {/* Check-In / Check-Out */}
+                  {/* Stay Duration */}
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1.5">Check-In Date</label>
-                      <input name="checkIn" type="date" value={formData.checkIn} onChange={handleChange}
-                        className={ic + " [color-scheme:dark]"} />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1.5">Check-Out Date</label>
-                      <input name="checkOut" type="date" value={formData.checkOut} onChange={handleChange}
-                        min={formData.checkIn || undefined}
-                        className={ic + " [color-scheme:dark]"} />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1.5">Check-In Time</label>
-                      <input name="checkInTime" type="time" value={formData.checkInTime} onChange={handleChange} className={ic} />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1.5">Check-Out Time</label>
-                      <input name="checkOutTime" type="time" value={formData.checkOutTime} onChange={handleChange} className={ic} />
+                      <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1.5">Stay Duration (Days) *</label>
+                      <input
+                        required
+                        name="stayDays"
+                        type="number"
+                        min={1}
+                        step={1}
+                        value={formData.stayDays}
+                        onChange={handleChange}
+                        placeholder="How many days?"
+                        className={ic}
+                      />
                     </div>
                   </div>
 
@@ -842,6 +871,7 @@ export default function ReceptionDashboard() {
                            : "Cheque Number"}
                         </label>
                         <input name="paymentReference" value={formData.paymentReference} onChange={handleChange}
+                          required={formData.paymentMethod === "cash"}
                           placeholder={
                             formData.paymentMethod === "cash"            ? "Enter receipt number"
                             : formData.paymentMethod === "mobile_banking" ? "Enter transaction number"
@@ -857,6 +887,7 @@ export default function ReceptionDashboard() {
                               <span className="text-red-400">*</span>
                             </label>
                             <input name="transactionUrl" value={formData.transactionUrl} onChange={handleChange}
+                              required={formData.paymentMethod !== "cash"}
                               placeholder="Paste receipt link from Telebirr / CBE Birr / HelloCash…"
                               className={ic} />
                             {formData.transactionUrl && (
@@ -1163,15 +1194,20 @@ export default function ReceptionDashboard() {
               </div>
 
               <div>
-                <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1.5">New Check-Out Date</label>
-                <input type="date" value={newCheckOut}
-                  min={extendGuest.checkOut || extendGuest.checkIn || undefined}
-                  onChange={e => setNewCheckOut(e.target.value)}
-                  className="w-full bg-[#0f1110] border border-white/10 text-white rounded-xl px-4 py-3 text-sm outline-none focus:border-[#d4af37]/50 transition-all [color-scheme:dark]" />
+                <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1.5">How Many Days to Extend?</label>
+                <input
+                  type="number"
+                  min={1}
+                  step={1}
+                  value={extendDays}
+                  onChange={e => setExtendDays(e.target.value)}
+                  placeholder="Enter number of days"
+                  className="w-full bg-[#0f1110] border border-white/10 text-white rounded-xl px-4 py-3 text-sm outline-none focus:border-[#d4af37]/50 transition-all"
+                />
               </div>
 
               <div className="bg-[#0f1110] rounded-xl p-3 border border-[#d4af37]/10 text-[10px] text-gray-500">
-                This will send an extension request to admin for approval.
+                This sends an extension request to admin with the added number of days.
               </div>
 
               <div className="flex gap-3">
@@ -1179,7 +1215,7 @@ export default function ReceptionDashboard() {
                   className="flex-1 py-3 bg-[#0f1110] border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-white transition-all">
                   Cancel
                 </button>
-                <button onClick={handleExtend} disabled={extending || !newCheckOut}
+                <button onClick={handleExtend} disabled={extending || !extendDays}
                   className="flex-[2] py-3 bg-gradient-to-b from-[#f3cf7a] to-[#b38822] text-[#2a1708] border border-[#f5db8b] rounded-xl font-black text-[10px] uppercase tracking-widest shadow-[0_4px_15px_rgba(212,175,55,0.2)] disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all">
                   {extending ? <><RefreshCw size={12} className="animate-spin" /> Sending…</> : <><Calendar size={12} /> Request Extension</>}
                 </button>

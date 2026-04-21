@@ -135,6 +135,34 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "Guest name and inquiry type are required" }, { status: 400 })
     }
 
+    if (!phone || !String(phone).trim()) {
+      return NextResponse.json({ message: "Phone number is required" }, { status: 400 })
+    }
+
+    if (!idPhotoFront || !idPhotoBack) {
+      return NextResponse.json({ message: "Front and back guest ID photos are required" }, { status: 400 })
+    }
+
+    if (!floorId || !roomNumber) {
+      return NextResponse.json({ message: "Floor and room are required" }, { status: 400 })
+    }
+
+    if (!guests) {
+      return NextResponse.json({ message: "Guest number is required" }, { status: 400 })
+    }
+
+    if (!checkIn || !checkOut) {
+      return NextResponse.json({ message: "Check-in and check-out dates are required" }, { status: 400 })
+    }
+
+    if (paymentMethod === "cash" && (!paymentReference || !String(paymentReference).trim())) {
+      return NextResponse.json({ message: "Receipt number is required for cash payment" }, { status: 400 })
+    }
+
+    if (paymentMethod !== "cash" && (!transactionUrl || !String(transactionUrl).trim())) {
+      return NextResponse.json({ message: "Receipt URL is required for non-cash payments" }, { status: 400 })
+    }
+
     const doc = await ReceptionRequest.create({
       guestName, faydaId, phone, idPhotoFront, idPhotoBack, photoUrl, floorId, roomNumber, roomPrice,
       inquiryType, checkIn, checkOut, checkInTime, checkOutTime, guests, paymentMethod, chequeNumber, paymentReference, transactionUrl, notes,
