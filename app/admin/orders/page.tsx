@@ -756,20 +756,21 @@ export default function AdminOrdersPage() {
                         <h3 className="text-2xl font-playfair italic font-bold text-white mb-4">{cashierList[activeCashierIdx]}</h3>
                         <div className="flex items-center gap-4">
                           <div className="flex flex-col">
-                            <span className="text-gray-500 text-[8px] font-bold uppercase tracking-widest">Revenue</span>
+                            <span className="text-gray-500 text-[8px] font-bold uppercase tracking-widest">Total Revenue</span>
                             <span className="text-lg font-black text-[#4ade80]">
-                              {filteredOrders.filter(o => {
-                                return (o.createdBy?.name || "Unknown") === cashierList[activeCashierIdx];
-                              }).reduce((sum, o) => sum + o.totalAmount, 0).toLocaleString()} Br
+                              {orders
+                                .filter(o => o.status !== "cancelled" && !o.isDeleted && (o.createdBy?.name || "Unknown") === cashierList[activeCashierIdx])
+                                .reduce((sum, o) => sum + o.totalAmount, 0)
+                                .toLocaleString()} Br
                             </span>
                           </div>
                           <div className="w-px h-8 bg-white/10" />
                           <div className="flex flex-col">
-                            <span className="text-gray-500 text-[8px] font-bold uppercase tracking-widest">Orders</span>
+                            <span className="text-gray-500 text-[8px] font-bold uppercase tracking-widest">Total Orders</span>
                             <span className="text-lg font-black text-white">
-                              {filteredOrders.filter(o => {
-                                return (o.createdBy?.name || "Unknown") === cashierList[activeCashierIdx];
-                              }).length}
+                              {orders
+                                .filter(o => o.status !== "cancelled" && !o.isDeleted && (o.createdBy?.name || "Unknown") === cashierList[activeCashierIdx])
+                                .length}
                             </span>
                           </div>
                         </div>
