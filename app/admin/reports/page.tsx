@@ -182,7 +182,8 @@ export default function ReportsPage() {
 
     // Calculations
     const salesSummary = periodData?.summary || {}
-    const totalRevenue = salesSummary.totalRevenue || 0
+    const orderRevenue = salesSummary.totalRevenue || 0
+    const totalRevenue = orderRevenue + receptionRevenue
     const periodInvestment = (salesSummary.periodStockInvestment || 0) + (salesSummary.totalOtherExpenses || 0)
     const periodProfit = salesSummary.periodNetProfit || 0
     const totalOperationalExpenses = salesSummary.totalOperationalExpenses || 0
@@ -266,7 +267,7 @@ export default function ReportsPage() {
     // Export functions
     const exportFinancialReport = () => {
         const data = [
-            { Metric: "Total Revenue", Type: "INCOME", Amount: `${totalRevenue.toLocaleString()} ETB`, Description: "Total completed orders value for this period" },
+            { Metric: "Total Revenue", Type: "INCOME", Amount: `${totalRevenue.toLocaleString()} ETB`, Description: "Combined revenue (orders + approved room bookings) for this period" },
             ...cashierRevenue.map(c => ({
                 Metric: `  - Cashier: ${c.name}`,
                 Type: "BREAKDOWN",
@@ -657,7 +658,7 @@ export default function ReportsPage() {
                                                         <td className="p-4 text-white">Total Revenue</td>
                                                         <td className="p-4 text-center"><span className="bg-[#1a2e20] text-[#4ade80] border border-[#4ade80]/30 py-1 px-3 rounded-md text-[9px] font-black uppercase tracking-widest">INCOME</span></td>
                                                         <td className="p-4 text-right font-black text-[#4ade80]">+{totalRevenue.toLocaleString()} ETB</td>
-                                                        <td className="p-4 text-gray-500 text-xs text-medium">Total completed orders value for this period</td>
+                                                        <td className="p-4 text-gray-500 text-xs text-medium">Combined value of completed orders and approved room bookings for this period</td>
                                                     </tr>
                                                     <tr className="hover:bg-white/5 transition-colors">
                                                         <td className="p-4 text-gray-300 pl-8 flex items-center gap-2"><div className="w-1.5 h-4 bg-blue-400 rounded-full"></div> Reception Revenue</td>
@@ -697,7 +698,7 @@ export default function ReportsPage() {
                                                                         {c.amount.toLocaleString()} <span className="text-[10px]">Br</span>
                                                                     </td>
                                                                     <td className="p-4 text-gray-500 text-[10px] italic">
-                                                                        <div>{((c.amount / (totalRevenue || 1)) * 100).toFixed(1)}% of total revenue</div>
+                                                                        <div>{((c.amount / (orderRevenue || 1)) * 100).toFixed(1)}% of order revenue</div>
                                                                     </td>
                                                                 </tr>
                                                             ))}
@@ -1319,7 +1320,7 @@ export default function ReportsPage() {
                                                         <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest mb-1">Total Contribution</p>
                                                         <h3 className="text-3xl font-black text-[#4ade80]">{cashierRevenue[activeCashierIdx]?.amount.toLocaleString()} <span className="text-sm font-bold opacity-60">Br</span></h3>
                                                         <p className="text-[10px] text-gray-400 mt-2 font-bold uppercase tracking-tighter">
-                                                            {((cashierRevenue[activeCashierIdx]?.amount / (totalRevenue || 1)) * 100).toFixed(1)}% of total revenue
+                                                            {((cashierRevenue[activeCashierIdx]?.amount / (orderRevenue || 1)) * 100).toFixed(1)}% of order revenue
                                                         </p>
                                                     </div>
 
