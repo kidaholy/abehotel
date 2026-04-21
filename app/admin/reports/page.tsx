@@ -203,68 +203,52 @@ export default function ReportsPage() {
     const cashierRevenueMap = filteredOrders
         .filter(o => o.status !== "cancelled" && !o.isDeleted)
         .reduce((acc, o) => {
-            const floorNum = (o.floorNumber || "OTHER").trim().toUpperCase();
-            let managementGroup = "Unknown Management";
+            // Group by cashier name (staff member), not by management group
+            const cashierName = o.createdBy?.name || "Unknown Cashier";
             
-            if (floorNum === "01" || floorNum.includes("ROOMS")) {
-                managementGroup = "Room Management";
-            } else if (floorNum === "02") {
-                managementGroup = "Floor 2 Management";
-            } else if (floorNum === "GROUND") {
-                managementGroup = "Ground Floor Management";
-            } else {
-                managementGroup = `${floorNum} Management`;
-            }
-
-            const key = managementGroup;
-            
-            if (!acc[key]) {
-                acc[key] = { 
+            if (!acc[cashierName]) {
+                acc[cashierName] = { 
                     total: 0, 
                     breakdowns: {} as Record<string, number>,
-                    staff: new Set<string>()
+                    floors: new Set<string>()
                 };
             }
             
-            acc[key].total += (o.totalAmount || 0);
-            if (o.createdBy?.name) acc[key].staff.add(o.createdBy.name);
-
+            acc[cashierName].total += (o.totalAmount || 0);
+            
             const floorLabel = o.floorNumber || "Other";
-            acc[key].breakdowns[floorLabel] = (acc[key].breakdowns[floorLabel] || 0) + (o.totalAmount || 0);
+            acc[cashierName].breakdowns[floorLabel] = (acc[cashierName].breakdowns[floorLabel] || 0) + (o.totalAmount || 0);
+            acc[cashierName].floors.add(floorLabel);
             
             return acc;
-        }, {} as Record<string, { total: number, breakdowns: Record<string, number>, staff: Set<string> }>);
+        }, {} as Record<string, { total: number, breakdowns: Record<string, number>, floors: Set<string> }>);
 
     const cashierRevenue = Object.entries(cashierRevenueMap)
-        .map(([group, data]: [string, any]) => {
-            const staffList = Array.from(data.staff).join(", ");
-            // Use staff names as primary, group in brackets
+        .map(([cashierName, data]: [string, any]) => {
+            const floorsList = Array.from(data.floors).join(", ");
+            // Show cashier name with floors they worked in
             return { 
-                name: staffList ? `${staffList} (${group})` : group, 
+                name: cashierName, 
                 amount: data.total, 
-                breakdowns: data.breakdowns 
+                breakdowns: data.breakdowns,
+                floors: floorsList
             }
         })
         .sort((a, b) => b.amount - a.amount);
 
     const menuItemSalesMap = filteredOrders.reduce((acc, order) => {
         if (order.status === 'cancelled' || order.isDeleted) return acc;
-        const floorNum = (order.floorNumber || "OTHER").trim().toUpperCase();
-        let managementGroup = "Unknown Management";
-        if (floorNum === "01" || floorNum.includes("ROOMS")) managementGroup = "Room Management";
-        else if (floorNum === "02") managementGroup = "Floor 2 Management";
-        else if (floorNum === "GROUND") managementGroup = "Ground Floor Management";
-        else managementGroup = `${floorNum} Management`;
-
-        const cashierLabel = managementGroup;
+        
+        // Use cashier name instead of management group
+        const cashierName = order.createdBy?.name || "Unknown Cashier";
 
         order.items.forEach((item: any) => {
             const name = item.name;
-            const key = `${name} | ${cashierLabel}`;
+            const key = `${name} | ${cashierName}`;
             if (!acc[key]) {
                 acc[key] = { 
                     name: name, 
-                    cashier: cashierLabel,
+                    cashier: cashierName,
                     category: item.category || 'N/A', 
                     mainCategory: item.mainCategory || 'Food', 
                     quantity: 0, 
