@@ -92,7 +92,9 @@ jobs:
 
   upload-local:
     needs: dump
-    runs-on: self-hosted
+    # Pin to Windows self-hosted runner labels so this job
+    # does not accidentally match the wrong runner type.
+    runs-on: [self-hosted, windows, x64]
     steps:
       - name: Download dump
         uses: actions/download-artifact@v4
