@@ -1352,6 +1352,23 @@ export default function AdminServicesPage() {
                       </select>
                     </div>
                   </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Room Price (ETB)</label>
+                      <input required type="number" value={roomForm.price} onChange={e => setRoomForm({ ...roomForm, price: e.target.value })}
+                        className="w-full bg-[#0f1110] border border-white/5 rounded-xl px-4 py-3 text-sm font-bold text-[#f3cf7a] outline-none focus:border-[#d4af37]/50 focus:ring-1 focus:ring-[#d4af37]/50 transition-all" />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Initial Status</label>
+                      <select value={roomForm.status} onChange={e => setRoomForm({ ...roomForm, status: e.target.value })}
+                        className="w-full bg-[#0f1110] border border-white/5 rounded-xl px-4 py-3 text-sm font-bold text-white outline-none focus:border-[#d4af37]/50 focus:ring-1 focus:ring-[#d4af37]/50 transition-all">
+                        <option value="available" className="text-black bg-white">Available</option>
+                        <option value="occupied" className="text-black bg-white">Occupied</option>
+                        <option value="maintenance" className="text-black bg-white">Maintenance</option>
+                        <option value="dirty" className="text-black bg-white">Dirty</option>
+                      </select>
+                    </div>
+                  </div>
                   <button type="submit" disabled={formLoading} className="w-full bg-gradient-to-r from-[#d4af37] to-[#f3cf7a] text-[#0f1110] py-4 rounded-xl font-bold text-[10px] uppercase tracking-widest shadow-[0_0_15px_rgba(212,175,55,0.2)] hover:shadow-[0_0_20px_rgba(212,175,55,0.4)] transition-all">
                     {formLoading ? "Saving…" : "Save Room"}
                   </button>
