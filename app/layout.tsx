@@ -6,7 +6,7 @@ import "./globals.css"
 import { AuthProvider } from "@/context/auth-context"
 import { ThemeProvider } from "@/context/theme-context"
 import { SettingsProvider } from "@/context/settings-context"
-import { NotificationCenter } from "@/components/notification-center"
+import { NotificationProvider } from "@/context/notification-context"
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" })
 const playfair = Playfair_Display({ subsets: ["latin"], variable: "--font-playfair" })
@@ -86,8 +86,9 @@ export default function RootLayout({
           <ThemeProvider>
             <SettingsProvider>
               <AuthProvider>
-                <NotificationCenter />
-                {children}
+                <NotificationProvider>
+                  {children}
+                </NotificationProvider>
               </AuthProvider>
             </SettingsProvider>
           </ThemeProvider>

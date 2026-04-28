@@ -1,109 +1,81 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useAuth } from "@/context/auth-context"
-
-interface Notification {
-  id: string
-  type: "info" | "success" | "warning" | "error"
-  message: string
-  timestamp: Date | string
-  read: boolean
-}
+import { useNotifications } from "@/context/notification-context"
+import { Check, CheckCircle2, Info, XCircle, AlertTriangle, Trash2 } from "lucide-react"
 
 export function NotificationCenter() {
-  const [notifications, setNotifications] = useState<Notification[]>([])
-  const [lastCheck, setLastCheck] = useState<Date>(new Date())
-  const { token } = useAuth()
+  const { notifications, markAsRead, markAllAsRead } = useNotifications()
+  const unreadOnly = notifications.filter(n => !n.read)
 
-  // Poll for new notifications every 3 seconds
-  useEffect(() => {
-    if (!token) return
-
-    const fetchNotifications = async () => {
-      try {
-        const response = await fetch("/api/notifications", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
-
-        if (response.ok) {
-          const newNotifications = await response.json()
-
-          // Filter for notifications newer than last check
-          const recentNotifications = newNotifications.filter(
-            (notif: Notification) => {
-              const notifTime = new Date(notif.timestamp)
-              return notifTime > lastCheck
-            }
-          )
-
-          if (recentNotifications.length > 0) {
-            setNotifications(prev => {
-              const combined = [...recentNotifications, ...prev]
-              return combined.slice(0, 10) // Keep only latest 10
-            })
-
-            setLastCheck(new Date())
-
-            // Play notification sound
-            try {
-              const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUarm7blmGgU7k9n1unEiBC13yO/eizEIHWq+8+OWT')
-              audio.volume = 0.3
-              audio.play().catch(() => { }) // Ignore errors if audio fails
-            } catch (error) {
-              // Ignore audio errors
-            }
-          }
-        }
-      } catch (error) {
-        console.error("Failed to fetch notifications:", error)
-      }
-    }
-
-    // Initial fetch
-    fetchNotifications()
-
-    // Set up polling (every 5 seconds)
-    const interval = setInterval(fetchNotifications, 5000)
-    return () => clearInterval(interval)
-  }, [token, lastCheck])
-
-  // Auto-remove notifications after 8 seconds
-  useEffect(() => {
-    notifications.forEach(notif => {
-      setTimeout(() => {
-        setNotifications(prev => prev.filter(n => n.id !== notif.id))
-      }, 8000)
-    })
-  }, [notifications])
+  if (unreadOnly.length === 0) {
+    return (
+      <div className="p-8 text-center bg-[#0f1110]">
+        <Info className="h-8 w-8 text-gray-500 mx-auto mb-2 opacity-20" />
+        <p className="text-[10px] font-black uppercase tracking-widest text-gray-500">No New Notifications</p>
+      </div>
+    )
+  }
 
   return (
-    <div className="fixed top-4 right-4 space-y-2 z-50 max-w-sm">
-      {notifications.map((notif) => (
-        <div
-          key={notif.id}
-          className={`p-4 rounded-lg shadow-lg animate-bounce-in hover-glow cursor-pointer ${getNotificationColor(notif.type)}`}
-          onClick={() => setNotifications(prev => prev.filter(n => n.id !== notif.id))}
+    <div className="flex flex-col max-h-[400px] w-80">
+      <div className="flex items-center justify-between p-4 border-b border-white/5 bg-[#0f1110]">
+        <h3 className="text-[10px] font-black uppercase tracking-widest text-[#f3cf7a]">Notifications</h3>
+        <button 
+          onClick={markAllAsRead}
+          className="text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-white transition-colors"
         >
-          <p className="font-semibold">{notif.message}</p>
-          <p className="text-xs opacity-75 mt-1">{new Date(notif.timestamp).toLocaleTimeString()}</p>
-        </div>
-      ))}
+          Mark all as read
+        </button>
+      </div>
+      <div className="overflow-y-auto custom-scrollbar">
+        {unreadOnly.map((notif) => (
+          <div
+            key={notif.id}
+            className={`p-4 border-b border-white/5 transition-all hover:bg-white/5 relative group ${notif.read ? 'opacity-40' : 'opacity-100'}`}
+          >
+            <div className="flex gap-3">
+              <div className={`mt-0.5 ${getIconColor(notif.type)}`}>
+                {getIcon(notif.type)}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className={`text-[11px] font-bold leading-relaxed ${notif.read ? 'text-gray-500 line-through' : 'text-white'}`}>
+                  {notif.message}
+                </p>
+                <p className="text-[9px] text-gray-600 font-bold mt-1 uppercase tracking-tighter">
+                  {new Date(notif.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </p>
+              </div>
+              {!notif.read && (
+                <button
+                  onClick={() => markAsRead(notif.id)}
+                  className="p-1 hover:bg-[#d4af37]/20 rounded-md text-[#d4af37] opacity-0 group-hover:opacity-100 transition-all"
+                  title="Mark as read"
+                >
+                  <Check size={14} />
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
 
-function getNotificationColor(type: Notification["type"]) {
+function getIcon(type: string) {
   switch (type) {
-    case "success":
-      return "bg-success/20 text-success border border-success/30"
-    case "error":
-      return "bg-danger/20 text-danger border border-danger/30"
-    case "warning":
-      return "bg-warning/20 text-warning border border-warning/30"
-    default:
-      return "bg-info/20 text-info border border-info/30"
+    case "success": return <CheckCircle2 size={16} />
+    case "error": return <XCircle size={16} />
+    case "warning": return <AlertTriangle size={16} />
+    default: return <Info size={16} />
+  }
+}
+
+function getIconColor(type: string) {
+  switch (type) {
+    case "success": return "text-emerald-500"
+    case "error": return "text-red-500"
+    case "warning": return "text-amber-500"
+    default: return "text-blue-500"
   }
 }

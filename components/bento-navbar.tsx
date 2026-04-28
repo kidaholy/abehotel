@@ -8,10 +8,15 @@ import { Menu, X } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useLanguage } from "@/context/language-context"
 import { LanguageSwitcher } from "@/components/language-switcher"
+import { Bell } from "lucide-react"
+import { useNotifications } from "@/context/notification-context"
+import { NotificationCenter } from "@/components/notification-center"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 
 export function BentoNavbar() {
     const pathname = usePathname()
     const { user, logout, token } = useAuth()
+    const { unreadCount } = useNotifications()
     const { t } = useLanguage()
     const [isMenuOpen, setIsMenuOpen] = useState(false)
     const [pendingReception, setPendingReception] = useState(0)
@@ -167,6 +172,23 @@ export function BentoNavbar() {
                 </div>
 
                 <div className="flex items-center gap-4">
+                    {user && (
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <button className="relative p-2 hover:bg-white/5 rounded-full transition-all group">
+                                    <Bell className="h-5 w-5 text-gray-400 group-hover:text-[#f3cf7a] transition-colors" />
+                                    {unreadCount > 0 && (
+                                        <span className="absolute top-1.5 right-1.5 min-w-[14px] h-[14px] bg-red-500 text-white text-[8px] font-bold rounded-full flex items-center justify-center border border-[#151716] animate-pulse">
+                                            {unreadCount > 9 ? "9+" : unreadCount}
+                                        </span>
+                                    )}
+                                </button>
+                            </PopoverTrigger>
+                            <PopoverContent align="end" className="p-0 border border-white/5 shadow-2xl bg-[#0f1110] rounded-2xl overflow-hidden">
+                                <NotificationCenter />
+                            </PopoverContent>
+                        </Popover>
+                    )}
                     <LanguageSwitcher />
                     {user ? (
                         <div className="flex items-center gap-4">
