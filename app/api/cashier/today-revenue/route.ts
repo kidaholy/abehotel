@@ -23,14 +23,26 @@ export async function GET(request: Request) {
     const todayStart = getStartOfTodayUTC3()
     const revenueOrders = await Order.find({
       createdAt: { $gte: todayStart },
-      status: { $ne: "cancelled" }
-    }).select("totalAmount").lean()
+      status: { $ne: "cancelled" },
+      createdBy: decoded.id
+    }).select("totalAmount items").lean()
+
+    let foodRevenue = 0
+    let drinksRevenue = 0
+    revenueOrders.forEach((order: any) => {
+      ;(order.items || []).forEach((item: any) => {
+        if (item.mainCategory === 'Food') foodRevenue += (item.price * item.quantity || 0)
+        else if (item.mainCategory === 'Drinks') drinksRevenue += (item.price * item.quantity || 0)
+      })
+    })
 
     const totalRevenue = revenueOrders.reduce((sum: number, order: any) => sum + (order.totalAmount || 0), 0)
 
     return NextResponse.json({
       enabled: true,
       totalRevenue,
+      foodRevenue,
+      drinksRevenue,
       totalOrders: revenueOrders.length
     })
   } catch (error: any) {

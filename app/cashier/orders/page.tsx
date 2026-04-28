@@ -7,7 +7,7 @@ import { useAuth } from "@/context/auth-context"
 import { useLanguage } from "@/context/language-context"
 import { useSettings } from "@/context/settings-context"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { ShoppingBag, RefreshCw, DollarSign } from 'lucide-react'
+import { ShoppingBag, RefreshCw, DollarSign, Wine } from 'lucide-react'
 
 interface OrderItem {
   menuItemId: string
@@ -34,9 +34,11 @@ interface Order {
 
 export default function CashierOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([])
-  const [todayRevenue, setTodayRevenue] = useState<{ enabled: boolean; totalRevenue: number; totalOrders: number }>({
+  const [todayRevenue, setTodayRevenue] = useState<{ enabled: boolean; totalRevenue: number; foodRevenue: number; drinksRevenue: number; totalOrders: number }>({
     enabled: false,
     totalRevenue: 0,
+    foodRevenue: 0,
+    drinksRevenue: 0,
     totalOrders: 0
   })
   const [loading, setLoading] = useState(true)
@@ -76,10 +78,10 @@ export default function CashierOrdersPage() {
         if (revenueResponse.ok) {
           setTodayRevenue(await revenueResponse.json())
         } else {
-          setTodayRevenue({ enabled: false, totalRevenue: 0, totalOrders: 0 })
+          setTodayRevenue({ enabled: false, totalRevenue: 0, foodRevenue: 0, drinksRevenue: 0, totalOrders: 0 })
         }
       } else {
-        setTodayRevenue({ enabled: false, totalRevenue: 0, totalOrders: 0 })
+        setTodayRevenue({ enabled: false, totalRevenue: 0, foodRevenue: 0, drinksRevenue: 0, totalOrders: 0 })
       }
     } catch (err) {
       console.error("Failed to load orders")
@@ -147,22 +149,52 @@ export default function CashierOrdersPage() {
           </div>
 
           {todayRevenue.enabled && (
-            <div className="bg-[#151716] rounded-xl p-6 shadow-2xl border border-[#d4af37]/30">
-              <div className="flex items-center justify-between gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="bg-[#151716] rounded-xl p-6 shadow-2xl border border-[#d4af37]/30">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 bg-[#d4af37]/10 rounded-lg border border-[#d4af37]/20">
+                      <DollarSign className="h-7 w-7 text-[#f3cf7a]" />
+                    </div>
+                    <div>
+                      <h2 className="text-sm font-black uppercase tracking-widest text-gray-500">Today's Revenue</h2>
+                      <p className="text-3xl font-playfair italic font-bold text-[#f3cf7a] mt-1">
+                        {todayRevenue.totalRevenue.toLocaleString()} ETB
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-500">Orders</p>
+                    <p className="text-xl font-black text-white">{todayRevenue.totalOrders}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-[#151716] rounded-xl p-6 shadow-2xl border border-blue-500/30">
                 <div className="flex items-center gap-4">
-                  <div className="p-3 bg-[#d4af37]/10 rounded-lg border border-[#d4af37]/20">
-                    <DollarSign className="h-7 w-7 text-[#f3cf7a]" />
+                  <div className="p-3 bg-blue-500/10 rounded-lg border border-blue-500/20">
+                    <ShoppingBag className="h-7 w-7 text-blue-400" />
                   </div>
                   <div>
-                    <h2 className="text-sm font-black uppercase tracking-widest text-gray-500">Today's Total Revenue</h2>
-                    <p className="text-3xl font-playfair italic font-bold text-[#f3cf7a] mt-1">
-                      {todayRevenue.totalRevenue.toLocaleString()} ETB
+                    <h2 className="text-sm font-black uppercase tracking-widest text-gray-500">Food Revenue</h2>
+                    <p className="text-2xl font-black text-white mt-1">
+                      {todayRevenue.foodRevenue.toLocaleString()} ETB
                     </p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-gray-500">Revenue Orders</p>
-                  <p className="text-xl font-black text-white">{todayRevenue.totalOrders}</p>
+              </div>
+
+              <div className="bg-[#151716] rounded-xl p-6 shadow-2xl border border-emerald-500/30">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-emerald-500/10 rounded-lg border border-emerald-500/20">
+                    <Wine className="h-7 w-7 text-emerald-400" />
+                  </div>
+                  <div>
+                    <h2 className="text-sm font-black uppercase tracking-widest text-gray-500">Drinks Revenue</h2>
+                    <p className="text-2xl font-black text-white mt-1">
+                      {todayRevenue.drinksRevenue.toLocaleString()} ETB
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
