@@ -64,6 +64,7 @@ export default function ReportsPage() {
     const [initialized, setInitialized] = useState(false)
     const [receptionRevenue, setReceptionRevenue] = useState(0)
     const [activeCashierIdx, setActiveCashierIdx] = useState(0)
+    const [menuCashierFilter, setMenuCashierFilter] = useState("All")
 
     // Context
     const { t } = useLanguage()
@@ -421,7 +422,7 @@ export default function ReportsPage() {
         ReportExporter.exportToCSV({
             title: `${mainCat} Menu Item Sales Summary`,
             period: timeRange,
-            headers: ["Menu Item", "Sub Category", "Quantity Sold", "Total Revenue"],
+            headers: ["Menu Item", "Cashier", "Sub Category", "Quantity Sold", "Total Revenue"],
             data
         })
     }
@@ -1167,7 +1168,8 @@ export default function ReportsPage() {
                                                 <div>
                                                     <h2 className="text-xl font-playfair italic font-bold text-white">Menu Item Sales</h2>
                                                     <div className="flex gap-2">
-                                                        <div className="flex bg-[#0f1110] border border-white/5 p-1 rounded-xl mt-1">
+                                                     <div className="flex flex-wrap gap-2 mt-1">
+                                                        <div className="flex bg-[#0f1110] border border-white/5 p-1 rounded-xl">
                                                             {['Food', 'Drinks'].map((tab) => (
                                                                 <button
                                                                     key={tab}
@@ -1178,12 +1180,25 @@ export default function ReportsPage() {
                                                                 </button>
                                                             ))}
                                                         </div>
+                                                        
+                                                        <select
+                                                            value={menuCashierFilter}
+                                                            onChange={(e) => setMenuCashierFilter(e.target.value)}
+                                                            className="bg-[#0f1110] border border-white/5 text-gray-400 text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#d4af37]"
+                                                        >
+                                                            <option value="All">All Cashiers</option>
+                                                            {Array.from(new Set(filteredOrders.map(o => o.createdBy?.name || "Unknown Cashier"))).sort().map(name => (
+                                                                <option key={name} value={name}>{name}</option>
+                                                            ))}
+                                                        </select>
+
                                                         <button 
                                                             onClick={() => exportMenuSalesCSV(menuSalesTab)}
-                                                            className="flex items-center gap-1.5 px-3 py-1 rounded-xl mt-1 bg-[#1a2e20] text-[#4ade80] border border-[#4ade80]/30 font-bold text-[10px] uppercase tracking-widest hover:bg-[#1a2e20]/80 transition-all"
+                                                            className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-[#1a2e20] text-[#4ade80] border border-[#4ade80]/30 font-bold text-[10px] uppercase tracking-widest hover:bg-[#1a2e20]/80 transition-all"
                                                         >
                                                             <Download size={12} /> CSV
                                                         </button>
+                                                    </div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -1210,7 +1225,12 @@ export default function ReportsPage() {
                                                 </thead>
                                                 <tbody className="divide-y divide-white/5">
                                                     {menuItemSales
-                                                        .filter((item) => item.mainCategory === menuSalesTab && item.name.toLowerCase().includes(menuSearchTerm.toLowerCase()))
+                                                        .filter((item) => {
+                                                            const matchCat = item.mainCategory === menuSalesTab;
+                                                            const matchSearch = item.name.toLowerCase().includes(menuSearchTerm.toLowerCase());
+                                                            const matchCashier = menuCashierFilter === "All" || item.cashier === menuCashierFilter;
+                                                            return matchCat && matchSearch && matchCashier;
+                                                        })
                                                         .map((item, idx) => (
                                                             <tr key={idx} className="hover:bg-white/5 transition-colors">
                                                                 <td className="p-4">
@@ -1237,7 +1257,12 @@ export default function ReportsPage() {
                                         {/* Mobile View */}
                                         <div className="lg:hidden space-y-4 flex-1 overflow-y-auto custom-scrollbar">
                                             {menuItemSales
-                                                .filter((item) => item.mainCategory === menuSalesTab && item.name.toLowerCase().includes(menuSearchTerm.toLowerCase()))
+                                                .filter((item) => {
+                                                    const matchCat = item.mainCategory === menuSalesTab;
+                                                    const matchSearch = item.name.toLowerCase().includes(menuSearchTerm.toLowerCase());
+                                                    const matchCashier = menuCashierFilter === "All" || item.cashier === menuCashierFilter;
+                                                    return matchCat && matchSearch && matchCashier;
+                                                })
                                                 .map((item, idx) => (
                                                     <div key={idx} className="bg-[#0f1110] rounded-2xl p-4 border border-white/5 shadow-2xl flex flex-col space-y-3">
                                                         <div className="flex justify-between items-start">
